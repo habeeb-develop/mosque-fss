@@ -1,0 +1,360 @@
+/* =========================
+   FSSMC CENTRAL MOSQUE CSS
+============================ */
+
+/* ===== RESET & BASE ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+  background-color: #fdfcf6;
+  color: #222;
+  line-height: 1.6;
+}
+
+/* ===== HERO SECTION ===== */
+.hero {
+  background: url('/images/hero-bg.jpg') center/cover no-repeat;
+  height: 80vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  text-align: center;
+  color: #fff;
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  top:0; left:0;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.5);
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.ramadan-greeting {
+  font-size: 1.8rem;
+  color: #ffd700;
+}
+
+/* ===== NAVIGATION ===== */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #004d40;
+  padding: 1rem 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar .nav-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #fff;
+}
+
+.navbar .nav-links {
+  list-style: none;
+  display: flex;
+  gap: 1rem;
+}
+
+.navbar .nav-links li a {
+  color: #fff;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  transition: 0.3s;
+  border-radius: 5px;
+}
+
+.navbar .nav-links li a:hover,
+.navbar .nav-links li a.active {
+  background: #00796b;
+}
+
+.menu-toggle {
+  display: none;
+  font-size: 1.8rem;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* ===== MAIN SECTIONS ===== */
+.section {
+  padding: 4rem 2rem;
+}
+
+.section h2 {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.section p {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 2rem;
+  font-size: 1.1rem;
+}
+
+/* ===== ABOUT DROPDOWNS ===== */
+.dropdown {
+  margin: 1.5rem 0;
+}
+
+.dropdown-btn {
+  background: #00796b;
+  color: #fff;
+  padding: 0.8rem 1rem;
+  border: none;
+  width: 100%;
+  text-align: left;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dropdown-btn:hover {
+  background: #004d40;
+}
+
+.dropdown-menu {
+  list-style: none;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.5s ease;
+  background: #e0f2f1;
+  border-radius: 5px;
+  margin-top: 0.5rem;
+  padding: 0 1rem;
+}
+
+.dropdown-menu li {
+  padding: 1rem 0;
+  border-bottom: 1px solid #b2dfdb;
+}
+
+.dropdown-menu li:last-child {
+  border-bottom: none;
+}
+
+/* ===== CARDS ===== */
+.program-cards,
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-top: 2rem;
+}
+
+.card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+}
+
+.card-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ===== TABLE ===== */
+.prayer-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 2rem 0;
+}
+
+.prayer-table th,
+.prayer-table td {
+  padding: 0.8rem;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.prayer-table th {
+  background: #00796b;
+  color: #fff;
+}
+
+/* ===== FORMS ===== */
+input, select, textarea {
+  width: 100%;
+  padding: 0.8rem;
+  margin: 0.5rem 0 1rem;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+button[type="submit"] {
+  background: #00796b;
+  color: #fff;
+  border: none;
+  padding: 0.8rem 1.5rem;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: 0.3s;
+}
+
+button[type="submit"]:hover {
+  background: #004d40;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  background: #004d40;
+  color: #fff;
+  padding: 3rem 2rem 1rem;
+}
+
+.footer h3 {
+  margin-bottom: 1rem;
+}
+
+.footer-section {
+  margin-bottom: 1.5rem;
+}
+
+.footer-section ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-section ul li a {
+  color: #fff;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.footer-section ul li a:hover {
+  text-decoration: underline;
+}
+
+.footer .social-icons a {
+  margin-right: 0.5rem;
+}
+
+.footer-bottom {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  border-top: 1px solid #00796b;
+  padding-top: 1rem;
+}
+
+/* ===== FLOATING CONTACT BUTTONS ===== */
+.floating-contact {
+  position: fixed;
+  bottom: 1rem;
+  right: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 200;
+}
+
+.floating-contact a {
+  background: #25d366;
+  color: #fff;
+  padding: 0.6rem 1rem;
+  border-radius: 5px;
+  text-decoration: none;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.floating-contact a:hover {
+  opacity: 0.85;
+}
+
+/* ===== AYAH SLIDER ===== */
+.ayah-slider {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.ayah-slide {
+  display: none;
+  font-size: 1.2rem;
+  margin: 1rem 0;
+}
+
+.ayah-slide.active {
+  display: block;
+}
+
+.ayah-ar {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.ayah-ref {
+  display: block;
+  margin-top: 0.5rem;
+  font-style: italic;
+  color: #00796b;
+}
+
+/* ===== MEDIA QUERIES ===== */
+@media (max-width: 768px) {
+  .menu-toggle {
+    display: block;
+  }
+
+  .nav-links {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #004d40;
+    flex-direction: column;
+    width: 200px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .nav-links.show {
+    max-height: 500px;
+  }
+
+  .nav-links li {
+    margin: 0;
+  }
+
+  .nav-links li a {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FSSSMC Mosque | Prayer Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
+
+    <!-- External CSS -->
+    <link rel="stylesheet" href="css/prayer.css">
+</head>
+<body>
+
+<!-- ================= HEADER ================= -->
+<header>
+    <nav class="navbar">
+        <div class="logo">
+            <img src="images/fsssmc.jpeg" alt="FSSSMC Logo">
+            <span>FSSSMC</span>
+        </div>
+
+        <ul class="menu">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="prayer.html">Prayer</a></li>
+            <li><a href="services.html">Services</a></li>
+            <li><a href="events.html" class="active">Events</a></li>
+            <li><a href="learn.html">Learn</a></li>
+            <li><a href="get-involved.html">Get Involved</a></li>
+            <li><a href="contact.html">Contact</a></li>
+        </ul>
+    </nav>
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero">
+    <div class="hero-content">
+        <h1>Welcome to FSSSMC Mosque</h1>
+        <p>Your place for worship, guidance, and community.</p>
+        <p class="arabic">وَأَقِيمُوا الصَّلَاةَ وَآتُوا الزَّكَاةَ</p>
+    </div>
+</section>
+
+<!-- ================= LOAD BUTTON ================= -->
+<section class="section center">
+    <button id="load-prayer-btn" class="load-prayer-btn">
+        Load Today's Prayer Times
+    </button>
+</section>
+
+<!-- ================= NEXT PRAYER ================= -->
+<section class="section box">
+    <h2>Next Prayer</h2>
+    <div class="next-prayer-box">
+        <h3 id="next-prayer-name">--</h3>
+        <p id="next-prayer-countdown">--</p>
+    </div>
+</section>
+
+<!-- ================= PRAYER TIMES ================= -->
+<div class="prayer-container">
+    <div class="prayer-card">
+        <h3>Fajr</h3>
+        <p id="fajr"></p>
+    </div>
+
+    <div class="prayer-card">
+        <h3>Zuhr</h3>
+        <p id="zuhr"></p>
+    </div>
+
+    <div class="prayer-card active">
+        <h3>Asr</h3>
+        <p id="asr"></p>
+    </div>
+
+    <div class="prayer-card">
+        <h3>Maghrib</h3>
+        <p id="maghrib"></p>
+    </div>
+
+    <div class="prayer-card">
+        <h3>Isha</h3>
+        <p id="isha"></p>
+    </div>
+</div>
+
+<!-- ================= SPECIAL PRAYERS ================= -->
+<section class="section box">
+    <h2>Special Prayers</h2>
+    <ul class="special-prayers">
+        <li>Jumu’ah: Every Friday at 1:15 PM</li>
+        <li>Taraweeh: Ramadan nights after Isha</li>
+        <li>Eid Prayer: During Eid al-Fitr & Eid al-Adha</li>
+    </ul>
+</section>
+
+<!-- ================= GUIDELINES ================= -->
+<section class="section box">
+    <h2>Prayer Guidelines</h2>
+    <ul class="guidelines">
+        <li>Perform Wudu (Ablution) before prayer.</li>
+        <li>Face the Qibla while praying.</li>
+        <li>Observe Sunnah and Fard properly.</li>
+        <li>Pray at the correct prescribed time.</li>
+        <li>Maintain humility and concentration.</li>
+    </ul>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer class="footer">
+    <div class="footer-container">
+
+        <div class="footer-section">
+            <h3>FSSSMC Mosque</h3>
+            <p>
+                A spiritual home dedicated to prayer, knowledge,
+                unity, and community service.
+            </p>
+        </div>
+
+        <div class="footer-section">
+            <h4>Location</h4>
+            <p>Lagos, Nigeria</p>
+            <p>📞 +234 XXX XXX XXXX</p>
+            <p>✉ info@fsssmc.org</p>
+        </div>
+
+        <div class="footer-section">
+            <h4>Weekly Programs</h4>
+            <ul>
+                <li>Friday Khutbah</li>
+                <li>Qur'an Study Circle</li>
+                <li>Youth Islamic Classes</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <div class="footer-bottom">
+        © 2026 FSSSMC Mosque. All Rights Reserved.
+    </div>
+</footer>
+
+<!-- Adhan Audio -->
+<audio id="adhan-audio" src="audio/adhan.mp3" preload="auto"></audio>
+
+<!-- JavaScript -->
+<script src="js/prayer.js"></script>
+
+</body>
+</html>
