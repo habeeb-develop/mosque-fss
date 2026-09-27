@@ -1,55 +1,328 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}{{ "Edit Member" if member else "Add Member" }} | FSSSMC Admin{% endblock %}
+
+{% if member %}
+    {% set form_title = "Edit Member" %}
+    {% set form_description = "Update the member's information below." %}
+{% else %}
+    {% set form_title = "Add Member" %}
+    {% set form_description = "Register a new member in the mosque directory." %}
+{% endif %}
+
+
+{% block title %}
+{{ form_title }} | FSSSMC Administration
+{% endblock %}
+
+
+{% block page_name %}
+{{ form_title }}
+{% endblock %}
+
+
 {% block content %}
-<div class="admin-title">
-    <div>
-        <h1>{{ "Edit Member" if member else "Add Member" }}</h1>
-        <p>{{ "Update this membership record." if member else "Create a new membership record." }}</p>
+
+<div class="page-heading">
+
+    <div class="page-heading-copy">
+
+        <div class="page-eyebrow">
+            Member Management
+        </div>
+
+        <h1>
+            {{ form_title }}
+        </h1>
+
+        <p>
+            {{ form_description }}
+        </p>
+
     </div>
-    <a class="btn btn-outline" href="{{ url_for('admin_members') }}">Back to Members</a>
+
+
+    <a
+        href="{{ url_for('admin_members') }}"
+        class="btn btn-light"
+    >
+        ← Back to Members
+    </a>
+
 </div>
 
-<div class="form-card">
-    <form class="form-layout" method="post">
-        <div class="form-group">
-            <label for="name">First name *</label>
-            <input id="name" name="name" value="{{ member.name if member else '' }}" required>
+
+<form
+    method="POST"
+    class="form-panel"
+>
+
+
+    <!-- PERSONAL INFORMATION -->
+
+    <section class="form-section">
+
+        <div class="form-section-heading">
+
+            <h3>
+                Personal Information
+            </h3>
+
+            <p>
+                Enter the member's basic identification details.
+            </p>
+
         </div>
-        <div class="form-group">
-            <label for="surname">Surname *</label>
-            <input id="surname" name="surname" value="{{ member.surname if member else '' }}" required>
+
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="name"
+                >
+                    First Name
+                    <span>*</span>
+                </label>
+
+                <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    class="form-control"
+                    value="{{ member['name'] if member else '' }}"
+                    placeholder="Enter first name"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="surname"
+                >
+                    Surname
+                    <span>*</span>
+                </label>
+
+                <input
+                    id="surname"
+                    name="surname"
+                    type="text"
+                    class="form-control"
+                    value="{{ member['surname'] if member else '' }}"
+                    placeholder="Enter surname"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="phone"
+                >
+                    Phone Number
+                    <span>*</span>
+                </label>
+
+                <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    class="form-control"
+                    value="{{ member['phone'] if member else '' }}"
+                    placeholder="08012345678"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="email"
+                >
+                    Email Address
+                </label>
+
+                <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    class="form-control"
+                    value="{{ member['email'] if member else '' }}"
+                    placeholder="member@example.com"
+                >
+
+            </div>
+
         </div>
-        <div class="form-group">
-            <label for="phone">Phone *</label>
-            <input id="phone" name="phone" type="tel" value="{{ member.phone if member else '' }}" required>
+
+    </section>
+
+
+    <!-- ADDRESS -->
+
+    <section class="form-section">
+
+        <div class="form-section-heading">
+
+            <h3>
+                Contact & Address
+            </h3>
+
+            <p>
+                Record the member's current contact location.
+            </p>
+
         </div>
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input id="email" name="email" type="email" value="{{ member.email if member else '' }}">
+
+
+        <div class="form-grid">
+
+            <div class="form-group full">
+
+                <label
+                    class="form-label"
+                    for="address"
+                >
+                    Address
+                    <span>*</span>
+                </label>
+
+                <textarea
+                    id="address"
+                    name="address"
+                    class="form-control"
+                    placeholder="Enter complete residential address"
+                    required
+                >{{ member['address'] if member else '' }}</textarea>
+
+            </div>
+
         </div>
-        <div class="form-group full">
-            <label for="address">Address *</label>
-            <textarea id="address" name="address" required>{{ member.address if member else '' }}</textarea>
+
+    </section>
+
+
+    <!-- MOSQUE ROLE -->
+
+    <section class="form-section">
+
+        <div class="form-section-heading">
+
+            <h3>
+                Mosque Information
+            </h3>
+
+            <p>
+                Select the member's current post or role.
+            </p>
+
         </div>
-        <div class="form-group">
-            <label for="post">Profession / Post *</label>
-            <select id="post" name="post" required>
-                <option value="">Select one</option>
-                {% for item in posts %}
-                <option value="{{ item }}" {% if member and member.post == item %}selected{% endif %}>{{ item }}</option>
-                {% endfor %}
-            </select>
+
+
+        <div class="form-grid">
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="post"
+                >
+                    Post / Role
+                    <span>*</span>
+                </label>
+
+                <select
+                    id="post"
+                    name="post"
+                    class="form-control"
+                    required
+                >
+
+                    <option value="">
+                        Select a post
+                    </option>
+
+                    {% for item in posts %}
+
+                        <option
+                            value="{{ item }}"
+                            {% if member and member['post'] == item %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ item }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="notes"
+                >
+                    Notes
+                </label>
+
+                <input
+                    id="notes"
+                    name="notes"
+                    type="text"
+                    class="form-control"
+                    value="{{ member['notes'] if member else '' }}"
+                    placeholder="Optional notes"
+                >
+
+            </div>
+
         </div>
-        <div class="form-group">
-            <label for="notes">Notes</label>
-            <input id="notes" name="notes" value="{{ member.notes if member else '' }}">
-        </div>
-        <div class="form-actions">
-            <button class="btn btn-green" type="submit">
-                {{ "Save Changes" if member else "Create Member" }}
-            </button>
-            <a class="btn btn-outline" href="{{ url_for('admin_members') }}">Cancel</a>
-        </div>
-    </form>
-</div>
+
+    </section>
+
+
+    <!-- ACTIONS -->
+
+    <div class="form-actions">
+
+        <a
+            href="{{ url_for('admin_members') }}"
+            class="btn btn-light"
+        >
+            Cancel
+        </a>
+
+
+        <button
+            type="submit"
+            class="btn btn-green"
+        >
+
+            {% if member %}
+                Save Changes
+            {% else %}
+                Create Member
+            {% endif %}
+
+        </button>
+
+    </div>
+
+</form>
+
 {% endblock %}

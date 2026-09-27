@@ -1,57 +1,240 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Announcements | FSSSMC Admin{% endblock %}
+
+{% block title %}
+Announcements | FSSSMC Administration
+{% endblock %}
+
+{% block page_name %}
+Announcements
+{% endblock %}
+
+
 {% block content %}
-<div class="admin-title">
-    <div>
-        <h1>Announcements</h1>
-        <p>Publish updates that appear on the public website.</p>
+
+<div class="page-heading">
+
+    <div class="page-heading-copy">
+
+        <div class="page-eyebrow">
+            Communication
+        </div>
+
+        <h1>
+            Announcements
+        </h1>
+
+        <p>
+            Publish important mosque news, notices and community updates.
+        </p>
+
     </div>
+
 </div>
 
-<div class="admin-panels">
-    <section class="admin-panel">
-        <div class="admin-panel-head"><h2>Create Announcement</h2></div>
-        <div class="admin-panel-body">
-            <form class="form-layout" method="post">
-                <div class="form-group full">
-                    <label for="title">Title *</label>
-                    <input id="title" name="title" required>
-                </div>
-                <div class="form-group full">
-                    <label for="body">Announcement *</label>
-                    <textarea id="body" name="body" required></textarea>
-                </div>
-                <div class="form-group full">
-                    <label>
-                        <input type="checkbox" name="published" checked>
-                        Publish immediately
-                    </label>
-                </div>
-                <div class="form-actions">
-                    <button class="btn btn-green" type="submit">Create Announcement</button>
-                </div>
-            </form>
-        </div>
+
+<div class="announcement-layout">
+
+
+    <!-- CREATE -->
+
+    <section class="announcement-create">
+
+        <h3>
+            Create Announcement
+        </h3>
+
+        <p>
+            Publish a new notice for the FSSSMC community.
+        </p>
+
+
+        <form
+            method="POST"
+        >
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="title"
+                >
+                    Announcement Title
+                    <span>*</span>
+                </label>
+
+                <input
+                    id="title"
+                    name="title"
+                    type="text"
+                    class="form-control"
+                    placeholder="Enter announcement title"
+                    required
+                >
+
+            </div>
+
+
+            <br>
+
+
+            <div class="form-group">
+
+                <label
+                    class="form-label"
+                    for="body"
+                >
+                    Announcement
+                    <span>*</span>
+                </label>
+
+                <textarea
+                    id="body"
+                    name="body"
+                    class="form-control"
+                    placeholder="Write the announcement..."
+                    required
+                ></textarea>
+
+            </div>
+
+
+            <div class="check-row">
+
+                <input
+                    id="published"
+                    name="published"
+                    type="checkbox"
+                    checked
+                >
+
+                <label for="published">
+
+                    Publish this announcement immediately.
+
+                </label>
+
+            </div>
+
+
+            <br>
+
+
+            <button
+                type="submit"
+                class="btn btn-green"
+                style="width:100%;"
+            >
+                Publish Announcement
+            </button>
+
+        </form>
+
     </section>
 
-    <section class="admin-panel">
-        <div class="admin-panel-head"><h2>Existing Announcements</h2></div>
-        <div class="admin-panel-body">
+
+    <!-- EXISTING -->
+
+    <section>
+
+        <div class="announcement-list">
+
             {% if announcements %}
-                {% for item in announcements %}
-                <div class="info-card" style="margin-bottom:12px;">
-                    <p class="section-kicker">{{ item.created_at }}</p>
-                    <h3>{{ item.title }}</h3>
-                    <p>{{ item.body }}</p>
-                    <form method="post" action="{{ url_for('admin_delete_announcement', announcement_id=item.id) }}">
-                        <button class="btn btn-small danger" type="submit">Delete</button>
-                    </form>
-                </div>
+
+                {% for announcement in announcements %}
+
+                    <article class="announcement-card">
+
+                        <div class="announcement-card-top">
+
+                            <div>
+
+                                <h3>
+                                    {{ announcement["title"] }}
+                                </h3>
+
+                                <div class="announcement-date">
+                                    {{ announcement["created_at"] or "Recently" }}
+                                </div>
+
+                            </div>
+
+
+                            {% if announcement["published"] %}
+
+                                <span class="badge badge-published">
+                                    Published
+                                </span>
+
+                            {% else %}
+
+                                <span class="badge badge-unpublished">
+                                    Draft
+                                </span>
+
+                            {% endif %}
+
+                        </div>
+
+
+                        <div class="announcement-body">
+                            {{ announcement["body"] }}
+                        </div>
+
+
+                        <div class="announcement-actions">
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'admin_delete_announcement',
+                                    announcement_id=announcement['id']
+                                ) }}"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-danger btn-small"
+                                >
+                                    Delete
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </article>
+
                 {% endfor %}
+
             {% else %}
-                <div class="empty">No announcements yet.</div>
+
+                <div class="panel">
+
+                    <div class="empty-state">
+
+                        <div class="empty-icon">
+                            ◉
+                        </div>
+
+                        <h3>
+                            No announcements yet
+                        </h3>
+
+                        <p>
+                            Your published mosque announcements
+                            will appear here.
+                        </p>
+
+                    </div>
+
+                </div>
+
             {% endif %}
+
         </div>
+
     </section>
+
 </div>
+
 {% endblock %}

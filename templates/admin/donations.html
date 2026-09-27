@@ -1,166 +1,349 @@
 {% extends "admin/base_admin.html" %}
 
-{% block title %}Donations | FSSSMC Admin{% endblock %}
+{% block title %}
+Donations | FSSSMC Administration
+{% endblock %}
+
+{% block page_name %}
+Donations
+{% endblock %}
+
 
 {% block content %}
 
-<div class="admin-title">
-    <div>
-        <h1>Donations</h1>
-        <p>Review and manage recorded donations.</p>
+<div class="page-heading">
+
+    <div class="page-heading-copy">
+
+        <div class="page-eyebrow">
+            Finance
+        </div>
+
+        <h1>
+            Donations
+        </h1>
+
+        <p>
+            Monitor donation records and payment status.
+        </p>
+
     </div>
+
 </div>
 
-{% if donations %}
 
-<div class="table-wrap">
-    <table class="data-table">
+{% set total_amount = 0 %}
+{% set paid_count = 0 %}
+{% set pending_count = 0 %}
 
-        <thead>
-            <tr>
-                <th>Donor</th>
-                <th>Amount</th>
-                <th>Purpose</th>
-                <th>Method</th>
-                <th>Status</th>
-                <th>Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
+{% for donation in donations %}
 
-        <tbody>
+    {% if donation["payment_status"]|lower == "paid" %}
 
-        {% for donation in donations %}
+        {% set total_amount =
+            total_amount + (donation["amount"] or 0)
+        %}
 
-        <tr>
+        {% set paid_count = paid_count + 1 %}
 
-            <td>
-                <strong>{{ donation.donor_name }}</strong>
-            </td>
+    {% elif donation["payment_status"]|lower == "pending" %}
 
-            <td>
-                <strong>₦{{ "{:,.2f}".format(donation.amount) }}</strong>
-            </td>
+        {% set pending_count = pending_count + 1 %}
 
-            <td>
-                {{ donation.purpose }}
-            </td>
+    {% endif %}
 
-            <td>
-                {{ donation.payment_method }}
-            </td>
+{% endfor %}
 
-            <td>
 
-                {% if donation.payment_status == "Paid" %}
+<div class="donation-summary">
 
-                    <span class="status-badge status-paid">
-                        Paid
-                    </span>
+    <div class="donation-summary-card">
 
-                {% elif donation.payment_status == "Pending" %}
+        <span>
+            Total Records
+        </span>
 
-                    <span class="status-badge status-pending">
-                        Pending
-                    </span>
+        <strong>
+            {{ donations|length }}
+        </strong>
 
-                {% elif donation.payment_status == "Cancelled" %}
+    </div>
 
-                    <span class="status-badge status-cancelled">
-                        Cancelled
-                    </span>
 
-                {% else %}
+    <div class="donation-summary-card">
 
-                    <span class="status-badge">
-                        {{ donation.payment_status }}
-                    </span>
+        <span>
+            Paid Donations
+        </span>
 
-                {% endif %}
+        <strong>
+            {{ paid_count }}
+        </strong>
 
-            </td>
+    </div>
 
-            <td>
-                {{ donation.created_at }}
-            </td>
 
-            <td>
+    <div class="donation-summary-card">
 
-                <div class="action-group">
+        <span>
+            Pending
+        </span>
 
-                    <form
-                        class="inline-form"
-                        method="post"
-                        action="{{ url_for('admin_update_donation_status', donation_id=donation.id) }}"
-                    >
+        <strong>
+            {{ pending_count }}
+        </strong>
 
-                        <select
-                            class="status-select"
-                            name="status"
+    </div>
+
+</div>
+
+
+<section class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+
+            <div class="panel-title-icon">
+                ₦
+            </div>
+
+            <div>
+
+                <h3>
+                    Donation Records
+                </h3>
+
+                <p>
+                    Complete donation history
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% if donations %}
+
+    <div class="table-wrap">
+
+        <table class="admin-table">
+
+            <thead>
+
+                <tr>
+                    <th>Donor</th>
+                    <th>Contact</th>
+                    <th>Purpose</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for donation in donations %}
+
+                {% set status =
+                    donation["payment_status"]|lower
+                    if donation["payment_status"]
+                    else "pending"
+                %}
+
+
+                <tr>
+
+                    <td>
+
+                        <div class="person-cell">
+
+                            <div class="person-avatar">
+                                ₦
+                            </div>
+
+                            <div class="person-info">
+
+                                <strong>
+                                    {{ donation["donor_name"] }}
+                                </strong>
+
+                                <span>
+                                    #{{ donation["id"] }}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+
+                        <div class="person-info">
+
+                            <strong>
+                                {{ donation["phone"] or "—" }}
+                            </strong>
+
+                            <span>
+                                {{ donation["email"] or "No email" }}
+                            </span>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        {{ donation["purpose"] or "General" }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="amount">
+                            ₦{{ "{:,.2f}".format(
+                                donation["amount"] or 0
+                            ) }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        <span class="badge badge-neutral">
+                            {{ donation["payment_method"] or "—" }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+
+                        {% if status == "paid" %}
+
+                            <span class="badge badge-paid">
+                                Paid
+                            </span>
+
+                        {% elif status == "pending" %}
+
+                            <span class="badge badge-pending">
+                                Pending
+                            </span>
+
+                        {% elif status == "cancelled" %}
+
+                            <span class="badge badge-cancelled">
+                                Cancelled
+                            </span>
+
+                        {% else %}
+
+                            <span class="badge badge-neutral">
+                                {{ donation["payment_status"] }}
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for(
+                                'admin_update_donation_status',
+                                donation_id=donation['id']
+                            ) }}"
+                            class="inline-form"
                         >
 
-                            {% for status in ["Pending", "Paid", "Cancelled"] %}
-
-                            <option
-                                value="{{ status }}"
-                                {% if donation.payment_status == status %}
-                                selected
-                                {% endif %}
+                            <select
+                                name="status"
+                                class="inline-select"
                             >
-                                {{ status }}
-                            </option>
 
-                            {% endfor %}
+                                <option
+                                    value="Pending"
+                                    {% if status == "pending" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Pending
+                                </option>
 
-                        </select>
+                                <option
+                                    value="Paid"
+                                    {% if status == "paid" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Paid
+                                </option>
 
-                        <button
-                            class="btn btn-green btn-small"
-                            type="submit"
-                        >
-                            Update
-                        </button>
+                                <option
+                                    value="Cancelled"
+                                    {% if status == "cancelled" %}
+                                        selected
+                                    {% endif %}
+                                >
+                                    Cancelled
+                                </option>
 
-                    </form>
+                            </select>
 
 
-                    <form
-                        class="inline-form"
-                        method="post"
-                        action="{{ url_for('admin_delete_donation', donation_id=donation.id) }}"
-                        onsubmit="return confirm('Delete this donation record?');"
-                    >
+                            <button
+                                type="submit"
+                                class="btn btn-green btn-small"
+                            >
+                                Save
+                            </button>
 
-                        <button
-                            class="btn btn-small danger"
-                            type="submit"
-                        >
-                            Delete
-                        </button>
+                        </form>
 
-                    </form>
+                    </td>
 
-                </div>
+                </tr>
 
-            </td>
+            {% endfor %}
 
-        </tr>
+            </tbody>
 
-        {% endfor %}
+        </table>
 
-        </tbody>
+    </div>
 
-    </table>
-</div>
+    {% else %}
 
-{% else %}
+    <div class="empty-state">
 
-<div class="empty">
-    <div class="empty-icon">₦</div>
-    <h3>No Donations Yet</h3>
-    <p>No donations have been recorded.</p>
-</div>
+        <div class="empty-icon">
+            ₦
+        </div>
 
-{% endif %}
+        <h3>
+            No donation records
+        </h3>
+
+        <p>
+            Donations will appear here after they are created.
+        </p>
+
+    </div>
+
+    {% endif %}
+
+</section>
 
 {% endblock %}

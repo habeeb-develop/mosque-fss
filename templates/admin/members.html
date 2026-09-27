@@ -1,47 +1,254 @@
 {% extends "admin/base_admin.html" %}
-{% block title %}Members | FSSSMC Admin{% endblock %}
+
+{% block title %}
+Members | FSSSMC Administration
+{% endblock %}
+
+{% block page_name %}
+Members
+{% endblock %}
+
+
 {% block content %}
-<div class="admin-title">
-    <div>
-        <h1>Members</h1>
-        <p>Manage community membership records.</p>
+
+<div class="page-heading">
+
+    <div class="page-heading-copy">
+
+        <div class="page-eyebrow">
+            Community
+        </div>
+
+        <h1>
+            Members
+        </h1>
+
+        <p>
+            Manage registered members of FSSSMC Central Mosque.
+        </p>
+
     </div>
-    <a class="btn btn-green" href="{{ url_for('admin_add_member') }}">Add New Member</a>
+
+
+    <a
+        href="{{ url_for('admin_add_member') }}"
+        class="btn btn-green"
+    >
+        + Add Member
+    </a>
+
 </div>
 
-{% if members %}
-<div class="table-wrap">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Post</th>
-                <th>Address</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for member in members %}
-            <tr>
-                <td><strong>{{ member.name }} {{ member.surname }}</strong></td>
-                <td>{{ member.phone }}</td>
-                <td>{{ member.email or "—" }}</td>
-                <td>{{ member.post }}</td>
-                <td>{{ member.address }}</td>
-                <td>
-                    <a class="btn btn-outline btn-small" href="{{ url_for('admin_edit_member', member_id=member.id) }}">Edit</a>
-                    <form class="inline-form" method="post" action="{{ url_for('admin_delete_member', member_id=member.id) }}">
-                        <button class="btn btn-small danger" type="submit">Delete</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+
+<div class="toolbar">
+
+    <div class="toolbar-left">
+
+        <div class="search-box">
+
+            <input
+                type="search"
+                placeholder="Search members..."
+            >
+
+        </div>
+
+    </div>
+
+
+    <div class="toolbar-right">
+
+        <span class="badge badge-neutral">
+            {{ members|length }} member(s)
+        </span>
+
+    </div>
+
 </div>
-{% else %}
-<div class="empty">No registered members yet.</div>
-{% endif %}
+
+
+<section class="panel">
+
+    <div class="panel-header">
+
+        <div class="panel-title">
+
+            <div class="panel-title-icon">
+                ♙
+            </div>
+
+            <div>
+
+                <h3>
+                    Registered Members
+                </h3>
+
+                <p>
+                    Member directory
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {% if members %}
+
+    <div class="table-wrap">
+
+        <table class="admin-table">
+
+            <thead>
+
+                <tr>
+                    <th>Member</th>
+                    <th>Phone</th>
+                    <th>Email</th>
+                    <th>Post</th>
+                    <th>Address</th>
+                    <th>Actions</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+            {% for member in members %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="person-cell">
+
+                            <div class="person-avatar">
+
+                                {{ member["name"][0]|upper
+                                }}{{ member["surname"][0]|upper }}
+
+                            </div>
+
+                            <div class="person-info">
+
+                                <strong>
+                                    {{ member["name"] }}
+                                    {{ member["surname"] }}
+                                </strong>
+
+                                <span>
+                                    Member #{{ member["id"] }}
+                                </span>
+
+                            </div>
+
+                        </div>
+
+                    </td>
+
+
+                    <td>
+                        {{ member["phone"] or "—" }}
+                    </td>
+
+
+                    <td>
+                        {{ member["email"] or "—" }}
+                    </td>
+
+
+                    <td>
+
+                        <span class="badge badge-neutral">
+                            {{ member["post"] or "—" }}
+                        </span>
+
+                    </td>
+
+
+                    <td>
+                        {{ member["address"] or "—" }}
+                    </td>
+
+
+                    <td>
+
+                        <div class="inline-form">
+
+                            <a
+                                href="{{ url_for(
+                                    'admin_edit_member',
+                                    member_id=member['id']
+                                ) }}"
+                                class="btn btn-light btn-small"
+                            >
+                                Edit
+                            </a>
+
+
+                            <form
+                                method="POST"
+                                action="{{ url_for(
+                                    'admin_delete_member',
+                                    member_id=member['id']
+                                ) }}"
+                                onsubmit="return confirm('Delete this member?');"
+                            >
+
+                                <button
+                                    type="submit"
+                                    class="btn btn-danger btn-small"
+                                >
+                                    Delete
+                                </button>
+
+                            </form>
+
+                        </div>
+
+                    </td>
+
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-state">
+
+        <div class="empty-icon">
+            ♙
+        </div>
+
+        <h3>
+            No members found
+        </h3>
+
+        <p>
+            Start by adding the first registered member.
+        </p>
+
+        <br>
+
+        <a
+            href="{{ url_for('admin_add_member') }}"
+            class="btn btn-green"
+        >
+            Add First Member
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
 {% endblock %}
