@@ -60,6 +60,11 @@ PAYSTACK_SECRET_KEY = os.environ.get(
     "sk_test_0d971bb72ebed6d23d0471924df87bd5941db555"
 ).strip()
 
+PAYSTACK_PUBLIC_KEY = os.environ.get(
+    "PAYSTACK_PUBLIC_KEY",
+    "pk_test_3a23b0594bd9ee4878b78d7d090f4d4a12a62721"
+).strip()
+
 PAYSTACK_BASE_URL = "https://api.paystack.co"
 
 
