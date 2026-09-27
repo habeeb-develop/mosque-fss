@@ -50,10 +50,14 @@ app = Flask(__name__)
 # IMPORTANT:
 # On Render, create a SECRET_KEY environment variable.
 # Keep the same value permanently.
-app.secret_key = os.environ.get(
-    "SECRET_KEY",
-    "FsssmcCentralMosque_2026!Secure"
-)
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+
+if not SECRET_KEY:
+    # A random fallback keeps local development usable.
+    # On Render, ALWAYS set SECRET_KEY in Environment Variables.
+    SECRET_KEY = secrets.token_hex(32)
+
+app.secret_key = SECRET_KEY
 
 # Session configuration
 app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -67,6 +71,10 @@ app.config["SESSION_COOKIE_SECURE"] = (
 
 app.config["SESSION_COOKIE_NAME"] = "fsssmc_session"
 app.config["SESSION_COOKIE_PATH"] = "/"
+app.config["SESSION_COOKIE_DOMAIN"] = None
+
+# Flask may sit behind Render's HTTPS reverse proxy.
+app.config["PREFERRED_URL_SCHEME"] = "https"
 
 BASE_DIR = os.path.dirname(
     os.path.abspath(__file__)
@@ -96,12 +104,12 @@ print("DATABASE LOCATION:", DATABASE)
 
 PAYSTACK_SECRET_KEY = os.environ.get(
     "PAYSTACK_SECRET_KEY",
-    "sk_test_0d971bb72ebed6d23d0471924df87bd5941db555"
+    ""
 ).strip()
 
 PAYSTACK_PUBLIC_KEY = os.environ.get(
     "PAYSTACK_PUBLIC_KEY",
-    "pk_test_3a23b0594bd9ee4878b78d7d090f4d4a12a62721"
+    ""
 ).strip()
 
 PAYSTACK_BASE_URL = os.environ.get(
@@ -118,7 +126,7 @@ PAYSTACK_CURRENCY = "NGN"
 
 MAILBOXLAYER_ACCESS_KEY = os.environ.get(
     "MAILBOXLAYER_ACCESS_KEY",
-    "edb349802dd334a9479417e4b16e060a"
+    ""
 ).strip()
 
 MAILBOXLAYER_URL = (
@@ -144,17 +152,17 @@ SMTP_PORT = int(
 
 SMTP_USERNAME = os.environ.get(
     "SMTP_USERNAME",
-    "ojugbelehabeeb06@gmail.com"
+    ""
 ).strip()
 
 SMTP_PASSWORD = os.environ.get(
     "SMTP_PASSWORD",
-    "clwyraarljdpvgvj"
+    ""
 ).strip()
 
 SMTP_FROM = os.environ.get(
     "SMTP_FROM",
-    "ojugbelehabeeb06@gmail.com"
+    ""
 ).strip() or SMTP_USERNAME
 
 OTP_EXPIRY_MINUTES = 10
@@ -469,6 +477,50 @@ def init_db():
     )
 
     # ------------------------------------------------------------
+    # SAFE MIGRATIONS FOR OLDER DATABASES
+    # ------------------------------------------------------------
+
+    # Older copies of the project may have created these tables before
+    # some fields were added. SQLite lets us add nullable columns without
+    # destroying existing records.
+    migrations = [
+        ("members", "email", "TEXT"),
+        ("members", "notes", "TEXT"),
+        ("members", "created_at", "TEXT"),
+        ("members", "updated_at", "TEXT"),
+
+        ("donations", "phone", "TEXT"),
+        ("donations", "email", "TEXT"),
+        ("donations", "amount", "REAL"),
+        ("donations", "purpose", "TEXT"),
+        ("donations", "payment_reference", "TEXT"),
+        ("donations", "payment_method", "TEXT DEFAULT 'paystack'"),
+        ("donations", "payment_status", "TEXT DEFAULT 'pending'"),
+        ("donations", "notes", "TEXT"),
+        ("donations", "created_at", "TEXT"),
+        ("donations", "paid_at", "TEXT"),
+
+        ("announcements", "published", "INTEGER DEFAULT 1"),
+        ("announcements", "created_at", "TEXT"),
+        ("announcements", "updated_at", "TEXT"),
+    ]
+
+    for table_name, column_name, definition in migrations:
+        try:
+            add_column_if_missing(
+                table_name,
+                column_name,
+                definition
+            )
+        except sqlite3.OperationalError as error:
+            app.logger.warning(
+                "Could not migrate %s.%s: %s",
+                table_name,
+                column_name,
+                error
+            )
+
+    # ------------------------------------------------------------
     # INDEXES
     # ------------------------------------------------------------
 
@@ -543,6 +595,40 @@ def init_db():
             )
         )
 
+    else:
+        # Keep the administrator password synchronized with the Render
+        # ADMIN_PASSWORD environment variable. This also fixes the common
+        # case where the database was created with an older default password.
+        existing_admin_row = db.execute(
+            """
+            SELECT password_hash
+            FROM admins
+            WHERE email = ?
+            """,
+            (admin_email,)
+        ).fetchone()
+
+        try:
+            password_matches = check_password_hash(
+                existing_admin_row["password_hash"],
+                admin_password
+            )
+        except Exception:
+            password_matches = False
+
+        if not password_matches:
+            db.execute(
+                """
+                UPDATE admins
+                SET password_hash = ?
+                WHERE email = ?
+                """,
+                (
+                    generate_password_hash(admin_password),
+                    admin_email
+                )
+            )
+
     db.commit()
 
 
@@ -605,6 +691,55 @@ def inject_globals():
             "user_email"
         )
     }
+
+
+# ================================================================
+# SAFE TEMPLATE RENDERING
+# ================================================================
+
+def safe_render(template_name, **context):
+    """
+    Render a normal template. If a deployment accidentally missed a
+    template, return a useful HTML response instead of causing a second
+    TemplateNotFound exception inside the 500 handler.
+    """
+    try:
+        return render_template(template_name, **context)
+    except Exception as error:
+        from jinja2 import TemplateNotFound
+
+        if isinstance(error, TemplateNotFound):
+            app.logger.error(
+                "MISSING TEMPLATE: %s. "
+                "Make sure the templates folder is committed and pushed.",
+                template_name
+            )
+            return (
+                f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FSSSMC Central Mosque</title>
+<style>
+body{{font-family:Arial,sans-serif;background:#f7f8f7;margin:0;padding:40px;color:#17352d}}
+.box{{max-width:720px;margin:40px auto;background:white;padding:32px;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08)}}
+h1{{color:#006b57}}code{{background:#eef3f1;padding:3px 7px;border-radius:5px}}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>FSSSMC Central Mosque</h1>
+<p>This page could not be loaded because the template
+<code>{template_name}</code> is missing from the deployed project.</p>
+<p>Commit and push your complete <code>templates</code> folder to GitHub,
+then let Render deploy the new commit.</p>
+</div>
+</body>
+</html>""",
+                500
+            )
+        raise
 
 
 # ================================================================
@@ -966,7 +1101,7 @@ def login():
 
     if request.method == "GET":
 
-        return render_template(
+        return safe_render(
             "login.html"
         )
 
@@ -987,7 +1122,7 @@ def login():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "login.html"
         )
 
@@ -1035,7 +1170,7 @@ def login():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "login.html"
         )
 
@@ -1059,7 +1194,7 @@ def login():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "login.html"
         )
 
@@ -1073,9 +1208,26 @@ def login():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "login.html"
         )
+
+    # Existing verified accounts can log in directly. This prevents a
+    # correct password from being blocked by a temporary SMTP problem.
+    if int(user["email_verified"] or 0) == 1:
+        session.clear()
+        session["user_id"] = int(user["id"])
+        session["user_name"] = str(user["name"])
+        session["user_surname"] = str(user["surname"])
+        session["user_email"] = str(user["email"])
+        session.modified = True
+
+        flash(
+            f"Login successful. Welcome back, {user['name']}.",
+            "success"
+        )
+
+        return redirect(url_for("profile"))
 
     session["pending_login"] = {
         "user_id": user["id"],
@@ -1090,29 +1242,21 @@ def login():
     )
 
     if not sent:
-
-        session.pop(
-            "pending_login",
-            None
-        )
-
+        session.pop("pending_login", None)
         flash(
-            "We could not send the verification code.",
+            "Your account is not verified yet, and the verification "
+            "email could not be sent. Check SMTP_USERNAME and "
+            "SMTP_PASSWORD in Render.",
             "error"
         )
-
-        return render_template(
-            "login.html"
-        )
+        return safe_render("login.html")
 
     flash(
         "A verification code has been sent to your email.",
         "success"
     )
 
-    return redirect(
-        url_for("verify_otp")
-    )
+    return redirect(url_for("verify_otp"))
 
 
 # ================================================================
@@ -1170,7 +1314,7 @@ def register():
             None
         )
 
-        return render_template(
+        return safe_render(
             "register.html"
         )
 
@@ -1216,7 +1360,7 @@ def register():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "register.html"
         )
 
@@ -1229,7 +1373,7 @@ def register():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "register.html"
         )
 
@@ -1240,7 +1384,7 @@ def register():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "register.html"
         )
 
@@ -1251,7 +1395,7 @@ def register():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "register.html"
         )
 
@@ -1264,7 +1408,7 @@ def register():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "register.html"
         )
 
@@ -1322,7 +1466,7 @@ def register():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "register.html"
         )
 
@@ -1423,7 +1567,7 @@ def verify_otp():
 
     if request.method == "GET":
 
-        return render_template(
+        return safe_render(
             "verify.html",
             email=otp_email,
             purpose=otp_purpose
@@ -1448,7 +1592,7 @@ def verify_otp():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "verify.html",
             email=otp_email,
             purpose=otp_purpose
@@ -1464,7 +1608,7 @@ def verify_otp():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "verify.html",
             email=otp_email,
             purpose=otp_purpose
@@ -1848,7 +1992,7 @@ def profile():
             url_for("login")
         )
 
-    return render_template(
+    return safe_render(
         "profile.html",
         user=user
     )
@@ -1861,7 +2005,7 @@ def profile():
 @app.route("/")
 def home():
 
-    return render_template(
+    return safe_render(
         "index.html"
     )
 
@@ -1873,7 +2017,7 @@ def home():
 @app.route("/about")
 def about():
 
-    return render_template(
+    return safe_render(
         "about.html",
         executive_members=EXECUTIVE_MEMBERS,
         facilities=FACILITIES
@@ -1896,7 +2040,7 @@ def prayer():
         "Isha": "19:11"
     }
 
-    return render_template(
+    return safe_render(
         "prayer.html",
         prayer_times=prayer_times
     )
@@ -1909,7 +2053,7 @@ def prayer():
 @app.route("/services")
 def services():
 
-    return render_template(
+    return safe_render(
         "services.html",
         facilities=FACILITIES
     )
@@ -1922,7 +2066,7 @@ def services():
 @app.route("/events")
 def events():
 
-    return render_template(
+    return safe_render(
         "events.html"
     )
 
@@ -1934,7 +2078,7 @@ def events():
 @app.route("/learn")
 def learn():
 
-    return render_template(
+    return safe_render(
         "learn.html"
     )
 
@@ -1946,7 +2090,7 @@ def learn():
 @app.route("/get-involved")
 def get_involved():
 
-    return render_template(
+    return safe_render(
         "get-involved.html"
     )
 
@@ -1958,7 +2102,7 @@ def get_involved():
 @app.route("/contact")
 def contact():
 
-    return render_template(
+    return safe_render(
         "contact.html",
         executive_members=EXECUTIVE_MEMBERS,
         past_executive=PAST_EXECUTIVE,
@@ -1985,7 +2129,7 @@ def announcements():
         """
     ).fetchall()
 
-    return render_template(
+    return safe_render(
         "announcements.html",
         announcements=rows
     )
@@ -2003,7 +2147,7 @@ def member_register():
 
     if request.method == "GET":
 
-        return render_template(
+        return safe_render(
             "member_register.html"
         )
 
@@ -2084,44 +2228,55 @@ def member_register():
 
     now = datetime.utcnow().isoformat()
 
-    db.execute(
-        """
-        INSERT INTO members (
-            name,
-            surname,
-            phone,
-            email,
-            address,
-            post,
-            notes,
-            created_at,
-            updated_at
+    try:
+        db.execute(
+            """
+            INSERT INTO members (
+                name,
+                surname,
+                phone,
+                email,
+                address,
+                post,
+                notes,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                name,
+                surname,
+                phone,
+                email,
+                address,
+                post,
+                notes,
+                now,
+                now
+            )
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            name,
-            surname,
-            phone,
-            email,
-            address,
-            post,
-            notes,
-            now,
-            now
-        )
-    )
+        db.commit()
 
-    db.commit()
+    except sqlite3.IntegrityError as error:
+        db.rollback()
+        app.logger.exception(
+            "MEMBER REGISTRATION DATABASE ERROR: %s",
+            error
+        )
+        flash(
+            "This member could not be registered because the database "
+            "rejected the information. Check the server log for details.",
+            "error"
+        )
+        return redirect(url_for("member_register"))
 
     flash(
         "Membership registration submitted successfully.",
         "success"
     )
 
-    return redirect(
-        url_for("profile")
-    )
+    return redirect(url_for("profile"))
 
 
 # ================================================================
@@ -2176,7 +2331,8 @@ def paystack_request(
 
         return (
             None,
-            "Paystack secret key is not configured."
+            "Paystack is not configured. Add PAYSTACK_SECRET_KEY "
+            "to the Render Environment Variables."
         )
 
     url = (
@@ -2221,10 +2377,18 @@ def paystack_request(
                 errors="ignore"
             )
 
-            return (
-                json.loads(body),
-                None
-            )
+            parsed = json.loads(body)
+
+            if not parsed.get("status", False):
+                return (
+                    None,
+                    parsed.get(
+                        "message",
+                        "Paystack rejected the request."
+                    )
+                )
+
+            return parsed, None
 
     except HTTPError as error:
 
@@ -2440,7 +2604,7 @@ def donate():
 
     if request.method == "GET":
 
-        return render_template(
+        return safe_render(
             "donate.html",
             donation_purposes=DONATION_PURPOSES,
             user_email=user_email,
@@ -2528,39 +2692,52 @@ def donate():
 
     db = get_db()
 
-    db.execute(
-        """
-        INSERT INTO donations (
-            donor_name,
-            phone,
-            email,
-            amount,
-            purpose,
-            payment_reference,
-            payment_method,
-            payment_status,
-            notes,
-            created_at
+    try:
+        db.execute(
+            """
+            INSERT INTO donations (
+                donor_name,
+                phone,
+                email,
+                amount,
+                purpose,
+                payment_reference,
+                payment_method,
+                payment_status,
+                notes,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                donor_name,
+                phone,
+                email,
+                float(
+                    Decimal(str(amount))
+                ),
+                purpose,
+                reference,
+                "paystack",
+                "pending",
+                notes,
+                datetime.utcnow().isoformat()
+            )
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            donor_name,
-            phone,
-            email,
-            float(
-                Decimal(str(amount))
-            ),
-            purpose,
-            reference,
-            "paystack",
-            "pending",
-            notes,
-            datetime.utcnow().isoformat()
-        )
-    )
 
-    db.commit()
+        db.commit()
+
+    except sqlite3.IntegrityError as error:
+        db.rollback()
+        app.logger.exception(
+            "DONATION DATABASE ERROR: %s",
+            error
+        )
+        flash(
+            "The donation could not be saved. Please try again.",
+            "error"
+        )
+        return redirect(url_for("donate"))
 
     callback_url = url_for(
         "paystack_callback",
@@ -2747,7 +2924,7 @@ def admin_login():
 
     if request.method == "GET":
 
-        return render_template(
+        return safe_render(
             "admin_login.html"
         )
 
@@ -2782,7 +2959,7 @@ def admin_login():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "admin_login.html"
         )
 
@@ -2868,7 +3045,7 @@ def admin_dashboard():
         """
     ).fetchone()["count"]
 
-    return render_template(
+    return safe_render(
         "admin.html",
         user_count=user_count,
         member_count=member_count,
@@ -2898,7 +3075,7 @@ def admin_members():
         """
     ).fetchall()
 
-    return render_template(
+    return safe_render(
         "admin_members.html",
         members=members
     )
@@ -2913,7 +3090,7 @@ def admin_add_member():
 
     if request.method == "GET":
 
-        return render_template(
+        return safe_render(
             "admin_member_form.html",
             member=None
         )
@@ -2967,7 +3144,7 @@ def admin_add_member():
             "error"
         )
 
-        return render_template(
+        return safe_render(
             "admin_member_form.html",
             member=None
         )
@@ -3049,7 +3226,7 @@ def admin_edit_member(
 
     if request.method == "GET":
 
-        return render_template(
+        return safe_render(
             "admin_member_form.html",
             member=member
         )
@@ -3178,7 +3355,7 @@ def admin_donations():
         """
     ).fetchall()
 
-    return render_template(
+    return safe_render(
         "admin_donations.html",
         donations=donations
     )
@@ -3363,7 +3540,7 @@ def admin_announcements():
         """
     ).fetchall()
 
-    return render_template(
+    return safe_render(
         "admin_announcements.html",
         announcements=announcements
     )
@@ -3407,16 +3584,19 @@ def admin_delete_announcement(
 @app.errorhandler(404)
 def page_not_found(error):
 
-    return render_template(
-        "404.html"
-    ), 404
+    try:
+        return safe_render("404.html"), 404
+    except Exception:
+        return (
+            "<h1>404 - Page Not Found</h1>"
+            "<p>FSSSMC Central Mosque</p>"
+        ), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
 
     try:
-
         db = g.get("db")
 
         if db:
@@ -3425,9 +3605,19 @@ def internal_error(error):
     except Exception:
         pass
 
-    return render_template(
-        "500.html"
-    ), 500
+    app.logger.exception(
+        "UNHANDLED APPLICATION ERROR: %s",
+        error
+    )
+
+    try:
+        return safe_render("500.html"), 500
+    except Exception:
+        return (
+            "<h1>500 - Server Error</h1>"
+            "<p>The server encountered an error. Check Render Live Tail "
+            "for the traceback.</p>"
+        ), 500
 
 
 # ================================================================
@@ -3447,7 +3637,7 @@ if __name__ == "__main__":
     app.run(
         debug=True,
         use_reloader=False,
-        host="127.0.0.1",
-        port=5000
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "5000"))
     )
 
