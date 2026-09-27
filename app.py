@@ -1,7 +1,12 @@
-
 from flask import (
-    Flask, render_template, request, redirect,
-    url_for, session, flash, g
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    g
 )
 
 import sqlite3
@@ -9,7 +14,6 @@ import os
 import json
 import hashlib
 import hmac
-import uuid
 import secrets
 import smtplib
 
@@ -22,7 +26,11 @@ from datetime import datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from email.message import EmailMessage
 
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
+
 from dotenv import load_dotenv
 
 
@@ -34,37 +42,56 @@ load_dotenv()
 
 
 # ================================================================
-# APP CONFIGURATION
+# APPLICATION CONFIGURATION
 # ================================================================
 
 app = Flask(__name__)
 
+# IMPORTANT:
+# On Render, create a SECRET_KEY environment variable.
+# Keep the same value permanently.
 app.secret_key = os.environ.get(
     "SECRET_KEY",
-    "ChangeThisSecretKey123!"
+    "FsssmcCentralMosque_2026!Secure"
 )
 
-# Important for Flask sessions on Render
+# Session configuration
 app.config["SESSION_COOKIE_HTTPONLY"] = True
 app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 
-# HTTPS on Render, HTTP locally
+# Render uses HTTPS.
+# Local development remains HTTP.
 app.config["SESSION_COOKIE_SECURE"] = (
     os.environ.get("RENDER", "").lower() == "true"
 )
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+app.config["SESSION_COOKIE_NAME"] = "fsssmc_session"
+app.config["SESSION_COOKIE_PATH"] = "/"
 
-DATABASE_DIR = os.path.join(BASE_DIR, "database")
-DATABASE = os.path.join(DATABASE_DIR, "fss.db")
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
 
-os.makedirs(DATABASE_DIR, exist_ok=True)
+DATABASE_DIR = os.path.join(
+    BASE_DIR,
+    "database"
+)
+
+DATABASE = os.path.join(
+    DATABASE_DIR,
+    "fss.db"
+)
+
+os.makedirs(
+    DATABASE_DIR,
+    exist_ok=True
+)
 
 print("DATABASE LOCATION:", DATABASE)
 
 
 # ================================================================
-# PAYSTACK CONFIGURATION
+# PAYSTACK
 # ================================================================
 
 PAYSTACK_SECRET_KEY = os.environ.get(
@@ -86,7 +113,7 @@ PAYSTACK_CURRENCY = "NGN"
 
 
 # ================================================================
-# MAILBOXLAYER CONFIGURATION
+# MAILBOXLAYER
 # ================================================================
 
 MAILBOXLAYER_ACCESS_KEY = os.environ.get(
@@ -100,7 +127,7 @@ MAILBOXLAYER_URL = (
 
 
 # ================================================================
-# GMAIL SMTP / OTP CONFIGURATION
+# SMTP
 # ================================================================
 
 SMTP_HOST = os.environ.get(
@@ -138,65 +165,6 @@ OTP_RESEND_SECONDS = 60
 # ================================================================
 # SITE DATA
 # ================================================================
-
-POSTS = [
-    {
-        "title": "Amir",
-        "name": "Amir Muritala Adekunle Balogun",
-        "role": "Amir"
-    },
-    {
-        "title": "Imam",
-        "name": "Imam Mustapha Motilola Alli",
-        "role": "Imam"
-    },
-    {
-        "title": "Secretary",
-        "name": "Ishaq Aderemi Abimbola",
-        "role": "Secretary"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Abdul Ganiyu Olayinka Dabiri",
-        "role": "Executive Member"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Lukman Badiru",
-        "role": "Executive Member"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Lateef Usman",
-        "role": "Executive Member"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Prof. Zaid Aderolu",
-        "role": "Executive Member"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Lasisi Abayomi Lawal",
-        "role": "Executive Member"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Hassan Muhammad Bello",
-        "role": "Executive Member"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Engr. Ismail Sanni",
-        "role": "Executive Member"
-    },
-    {
-        "title": "Executive Member",
-        "name": "Monsuru Oladehide",
-        "role": "Executive Member"
-    }
-]
-
 
 DONATION_PURPOSES = [
     "General Mosque Support",
@@ -269,8 +237,8 @@ COMMITTEES = [
     {
         "name": "Education Committee",
         "description": (
-            "Coordinates Islamic learning, lectures, classes "
-            "and educational programmes."
+            "Coordinates Islamic learning, lectures, "
+            "classes and educational programmes."
         )
     },
     {
@@ -320,11 +288,13 @@ FACILITIES = [
 
 
 # ================================================================
-# DATABASE
+# DATABASE HELPERS
 # ================================================================
 
 def get_db():
+
     if "db" not in g:
+
         g.db = sqlite3.connect(
             DATABASE,
             timeout=30
@@ -332,21 +302,34 @@ def get_db():
 
         g.db.row_factory = sqlite3.Row
 
-        g.db.execute("PRAGMA foreign_keys = ON")
-        g.db.execute("PRAGMA busy_timeout = 30000")
+        g.db.execute(
+            "PRAGMA foreign_keys = ON"
+        )
+
+        g.db.execute(
+            "PRAGMA busy_timeout = 30000"
+        )
 
     return g.db
 
 
 @app.teardown_appcontext
 def close_db(exception=None):
-    db = g.pop("db", None)
+
+    db = g.pop(
+        "db",
+        None
+    )
 
     if db is not None:
         db.close()
 
 
-def column_exists(table_name, column_name):
+def column_exists(
+    table_name,
+    column_name
+):
+
     db = get_db()
 
     columns = db.execute(
@@ -364,12 +347,14 @@ def add_column_if_missing(
     column_name,
     definition
 ):
+
     db = get_db()
 
     if not column_exists(
         table_name,
         column_name
     ):
+
         db.execute(
             f"""
             ALTER TABLE {table_name}
@@ -381,7 +366,12 @@ def add_column_if_missing(
 
 
 def init_db():
+
     db = get_db()
+
+    # ------------------------------------------------------------
+    # ADMINS
+    # ------------------------------------------------------------
 
     db.execute(
         """
@@ -393,6 +383,10 @@ def init_db():
         )
         """
     )
+
+    # ------------------------------------------------------------
+    # USERS
+    # ------------------------------------------------------------
 
     db.execute(
         """
@@ -413,6 +407,10 @@ def init_db():
         "INTEGER DEFAULT 0"
     )
 
+    # ------------------------------------------------------------
+    # MEMBERS
+    # ------------------------------------------------------------
+
     db.execute(
         """
         CREATE TABLE IF NOT EXISTS members (
@@ -429,6 +427,10 @@ def init_db():
         )
         """
     )
+
+    # ------------------------------------------------------------
+    # DONATIONS
+    # ------------------------------------------------------------
 
     db.execute(
         """
@@ -449,6 +451,10 @@ def init_db():
         """
     )
 
+    # ------------------------------------------------------------
+    # ANNOUNCEMENTS
+    # ------------------------------------------------------------
+
     db.execute(
         """
         CREATE TABLE IF NOT EXISTS announcements (
@@ -461,6 +467,10 @@ def init_db():
         )
         """
     )
+
+    # ------------------------------------------------------------
+    # INDEXES
+    # ------------------------------------------------------------
 
     db.execute(
         """
@@ -490,6 +500,10 @@ def init_db():
         """
     )
 
+    # ------------------------------------------------------------
+    # DEFAULT ADMIN
+    # ------------------------------------------------------------
+
     admin_email = os.environ.get(
         "ADMIN_EMAIL",
         "admin@fsssmc.org"
@@ -510,6 +524,7 @@ def init_db():
     ).fetchone()
 
     if not existing_admin:
+
         db.execute(
             """
             INSERT INTO admins (
@@ -532,20 +547,111 @@ def init_db():
 
 
 # ================================================================
+# AUTHENTICATION HELPERS
+# ================================================================
+
+def account_authenticated():
+
+    return bool(
+        session.get("user_id")
+    )
+
+
+def admin_authenticated():
+
+    return bool(
+        session.get("admin_id")
+    )
+
+
+def admin_required(function):
+
+    @wraps(function)
+    def decorated(*args, **kwargs):
+
+        if not admin_authenticated():
+
+            return redirect(
+                url_for("admin_login")
+            )
+
+        return function(
+            *args,
+            **kwargs
+        )
+
+    return decorated
+
+
+# ================================================================
 # TEMPLATE GLOBALS
 # ================================================================
 
 @app.context_processor
 def inject_globals():
+
     return {
         "site_name": "FSSSMC Central Mosque",
         "paystack_public_key": PAYSTACK_PUBLIC_KEY,
         "current_year": datetime.now().year,
         "logged_in": account_authenticated(),
-        "current_user_name": session.get("user_name"),
-        "current_user_surname": session.get("user_surname"),
-        "current_user_email": session.get("user_email"),
+        "current_user_name": session.get(
+            "user_name"
+        ),
+        "current_user_surname": session.get(
+            "user_surname"
+        ),
+        "current_user_email": session.get(
+            "user_email"
+        )
     }
+
+
+# ================================================================
+# LOGIN GATE
+# ================================================================
+
+@app.before_request
+def require_login():
+
+    allowed_endpoints = {
+        "login",
+        "open_registration",
+        "register",
+        "verify_otp",
+        "resend_otp",
+        "logout",
+        "static",
+        "paystack_webhook",
+        "paystack_callback",
+        "admin_login",
+        "page_not_found",
+        "internal_error"
+    }
+
+    endpoint = request.endpoint
+
+    if endpoint in allowed_endpoints:
+        return None
+
+    if endpoint is None:
+        return None
+
+    # Admin routes have their own protection.
+    if endpoint.startswith("admin_"):
+        return None
+
+    # Already logged in.
+    if account_authenticated():
+        return None
+
+    # Everyone else must log in.
+    return redirect(
+        url_for(
+            "login",
+            next=request.path
+        )
+    )
 
 
 # ================================================================
@@ -553,6 +659,7 @@ def inject_globals():
 # ================================================================
 
 def basic_email_valid(email):
+
     email = email.strip().lower()
 
     if not email:
@@ -582,33 +689,40 @@ def basic_email_valid(email):
 
 
 def validate_email_with_mailboxlayer(email):
+
     email = email.strip().lower()
 
     if not basic_email_valid(email):
         return False
 
-    # If no Mailboxlayer key is configured,
-    # allow valid-looking email addresses.
     if not MAILBOXLAYER_ACCESS_KEY:
         return True
 
     try:
+
         params = urlencode({
             "access_key": MAILBOXLAYER_ACCESS_KEY,
             "email": email,
             "format": 1
         })
 
-        url = f"{MAILBOXLAYER_URL}?{params}"
+        url = (
+            f"{MAILBOXLAYER_URL}?{params}"
+        )
 
         req = Request(
             url,
             headers={
-                "User-Agent": "FSSSMC-Membership-System"
+                "User-Agent":
+                    "FSSSMC-Membership-System"
             }
         )
 
-        with urlopen(req, timeout=10) as response:
+        with urlopen(
+            req,
+            timeout=10
+        ) as response:
+
             raw = response.read().decode(
                 "utf-8",
                 errors="ignore"
@@ -616,32 +730,1398 @@ def validate_email_with_mailboxlayer(email):
 
         data = json.loads(raw)
 
-        # API errors should not unnecessarily block users.
         if data.get("success") is False:
             return True
 
-        disposable = data.get(
+        if data.get(
             "disposable",
             False
-        )
-
-        if disposable is True:
+        ) is True:
             return False
 
         return True
 
-    except (
-        URLError,
-        HTTPError,
-        TimeoutError,
-        ValueError,
-        json.JSONDecodeError
-    ):
-        # Fail open when the external service is unavailable.
+    except Exception as error:
+
+        print(
+            "MAILBOXLAYER ERROR:",
+            error
+        )
+
+        # Fail open if Mailboxlayer itself fails.
         return True
 
-    except Exception:
+
+# ================================================================
+# OTP
+# ================================================================
+
+def generate_otp():
+
+    return "".join(
+        secrets.choice(
+            "0123456789"
+        )
+        for _ in range(OTP_LENGTH)
+    )
+
+
+def hash_otp(otp):
+
+    return hashlib.sha256(
+        otp.encode("utf-8")
+    ).hexdigest()
+
+
+def clear_otp_session():
+
+    session.pop(
+        "otp_hash",
+        None
+    )
+
+    session.pop(
+        "otp_email",
+        None
+    )
+
+    session.pop(
+        "otp_purpose",
+        None
+    )
+
+    session.pop(
+        "otp_expires",
+        None
+    )
+
+    session.pop(
+        "otp_last_sent",
+        None
+    )
+
+
+def send_otp_email(
+    email,
+    otp,
+    purpose
+):
+
+    if not SMTP_USERNAME or not SMTP_PASSWORD:
+
+        print(
+            "SMTP_USERNAME or SMTP_PASSWORD "
+            "is missing."
+        )
+
+        return False
+
+    if purpose == "registration":
+
+        subject = (
+            "FSSSMC Central Mosque - "
+            "Verify Your Account"
+        )
+
+        message = (
+            "Assalamu Alaikum,\n\n"
+            "Thank you for creating an account "
+            "with FSSSMC Central Mosque.\n\n"
+            f"Your verification code is: {otp}\n\n"
+            f"This code expires in "
+            f"{OTP_EXPIRY_MINUTES} minutes.\n\n"
+            "If you did not request this code, "
+            "please ignore this email.\n\n"
+            "FSSSMC Central Mosque"
+        )
+
+    else:
+
+        subject = (
+            "FSSSMC Central Mosque - "
+            "Login Verification Code"
+        )
+
+        message = (
+            "Assalamu Alaikum,\n\n"
+            "Your login verification code is:\n\n"
+            f"{otp}\n\n"
+            f"This code expires in "
+            f"{OTP_EXPIRY_MINUTES} minutes.\n\n"
+            "If you did not request this login, "
+            "please ignore this email.\n\n"
+            "FSSSMC Central Mosque"
+        )
+
+    msg = EmailMessage()
+
+    msg["Subject"] = subject
+    msg["From"] = SMTP_FROM
+    msg["To"] = email
+
+    msg.set_content(
+        message
+    )
+
+    try:
+
+        with smtplib.SMTP(
+            SMTP_HOST,
+            SMTP_PORT,
+            timeout=30
+        ) as server:
+
+            server.ehlo()
+
+            server.starttls()
+
+            server.ehlo()
+
+            server.login(
+                SMTP_USERNAME,
+                SMTP_PASSWORD
+            )
+
+            server.send_message(
+                msg
+            )
+
         return True
+
+    except Exception as error:
+
+        print(
+            "SMTP ERROR:",
+            error
+        )
+
+        return False
+
+
+def create_and_send_otp(
+    email,
+    purpose
+):
+
+    otp = generate_otp()
+
+    now = datetime.utcnow()
+
+    expires = (
+        now
+        + timedelta(
+            minutes=OTP_EXPIRY_MINUTES
+        )
+    )
+
+    session["otp_hash"] = hash_otp(
+        otp
+    )
+
+    session["otp_email"] = email
+
+    session["otp_purpose"] = purpose
+
+    session["otp_expires"] = (
+        expires.timestamp()
+    )
+
+    session["otp_last_sent"] = (
+        now.timestamp()
+    )
+
+    sent = send_otp_email(
+        email,
+        otp,
+        purpose
+    )
+
+    if not sent:
+        clear_otp_session()
+
+    return sent
+
+
+# ================================================================
+# LOGIN
+# ================================================================
+
+@app.route(
+    "/login",
+    methods=["GET", "POST"]
+)
+def login():
+
+    if account_authenticated():
+
+        return redirect(
+            url_for("profile")
+        )
+
+    if admin_authenticated():
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    if request.method == "GET":
+
+        return render_template(
+            "login.html"
+        )
+
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    password = request.form.get(
+        "password",
+        ""
+    )
+
+    if not email or not password:
+
+        flash(
+            "Please enter your email and password.",
+            "error"
+        )
+
+        return render_template(
+            "login.html"
+        )
+
+    db = get_db()
+
+    # ------------------------------------------------------------
+    # ADMIN LOGIN
+    # ------------------------------------------------------------
+
+    admin = db.execute(
+        """
+        SELECT *
+        FROM admins
+        WHERE email = ?
+        """,
+        (email,)
+    ).fetchone()
+
+    if admin:
+
+        if check_password_hash(
+            admin["password_hash"],
+            password
+        ):
+
+            session.clear()
+
+            session["admin_id"] = admin["id"]
+
+            session["admin_email"] = (
+                admin["email"]
+            )
+
+            flash(
+                "Admin login successful.",
+                "success"
+            )
+
+            return redirect(
+                url_for("admin_dashboard")
+            )
+
+        flash(
+            "Invalid email or password.",
+            "error"
+        )
+
+        return render_template(
+            "login.html"
+        )
+
+    # ------------------------------------------------------------
+    # USER LOGIN
+    # ------------------------------------------------------------
+
+    user = db.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE email = ?
+        """,
+        (email,)
+    ).fetchone()
+
+    if not user:
+
+        flash(
+            "Invalid email or password.",
+            "error"
+        )
+
+        return render_template(
+            "login.html"
+        )
+
+    if not check_password_hash(
+        user["password_hash"],
+        password
+    ):
+
+        flash(
+            "Invalid email or password.",
+            "error"
+        )
+
+        return render_template(
+            "login.html"
+        )
+
+    session["pending_login"] = {
+        "user_id": user["id"],
+        "name": user["name"],
+        "surname": user["surname"],
+        "email": user["email"]
+    }
+
+    sent = create_and_send_otp(
+        user["email"],
+        "login"
+    )
+
+    if not sent:
+
+        session.pop(
+            "pending_login",
+            None
+        )
+
+        flash(
+            "We could not send the verification code.",
+            "error"
+        )
+
+        return render_template(
+            "login.html"
+        )
+
+    flash(
+        "A verification code has been sent to your email.",
+        "success"
+    )
+
+    return redirect(
+        url_for("verify_otp")
+    )
+
+
+# ================================================================
+# CREATE ACCOUNT ENTRY POINT
+# ================================================================
+
+@app.route(
+    "/create-account"
+)
+def open_registration():
+
+    # This route is linked from login.html.
+    # It allows registration to be opened without
+    # opening /register directly to everybody.
+
+    session["allow_registration"] = True
+
+    return redirect(
+        url_for("register")
+    )
+
+
+# ================================================================
+# REGISTER
+# ================================================================
+
+@app.route(
+    "/register",
+    methods=["GET", "POST"]
+)
+def register():
+
+    if account_authenticated():
+
+        return redirect(
+            url_for("profile")
+        )
+
+    # ------------------------------------------------------------
+    # GET REGISTRATION PAGE
+    # ------------------------------------------------------------
+
+    if request.method == "GET":
+
+        if not session.get(
+            "allow_registration"
+        ):
+
+            return redirect(
+                url_for("login")
+            )
+
+        session.pop(
+            "allow_registration",
+            None
+        )
+
+        return render_template(
+            "register.html"
+        )
+
+    # ------------------------------------------------------------
+    # POST REGISTRATION
+    # ------------------------------------------------------------
+
+    name = request.form.get(
+        "name",
+        ""
+    ).strip()
+
+    surname = request.form.get(
+        "surname",
+        ""
+    ).strip()
+
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    password = request.form.get(
+        "password",
+        ""
+    )
+
+    confirm_password = request.form.get(
+        "confirm_password",
+        ""
+    )
+
+    if not all([
+        name,
+        surname,
+        email,
+        password,
+        confirm_password
+    ]):
+
+        flash(
+            "Please fill in all fields.",
+            "error"
+        )
+
+        return render_template(
+            "register.html"
+        )
+
+    if not basic_email_valid(
+        email
+    ):
+
+        flash(
+            "Please enter a valid email address.",
+            "error"
+        )
+
+        return render_template(
+            "register.html"
+        )
+
+    if password != confirm_password:
+
+        flash(
+            "Passwords do not match.",
+            "error"
+        )
+
+        return render_template(
+            "register.html"
+        )
+
+    if len(password) < 6:
+
+        flash(
+            "Password must be at least 6 characters.",
+            "error"
+        )
+
+        return render_template(
+            "register.html"
+        )
+
+    if not validate_email_with_mailboxlayer(
+        email
+    ):
+
+        flash(
+            "Please use a valid email address.",
+            "error"
+        )
+
+        return render_template(
+            "register.html"
+        )
+
+    db = get_db()
+
+    existing_user = db.execute(
+        """
+        SELECT id
+        FROM users
+        WHERE email = ?
+        """,
+        (email,)
+    ).fetchone()
+
+    if existing_user:
+
+        flash(
+            "An account with this email already exists. "
+            "Please log in instead.",
+            "error"
+        )
+
+        return redirect(
+            url_for("login")
+        )
+
+    # ------------------------------------------------------------
+    # STORE REGISTRATION TEMPORARILY
+    # ------------------------------------------------------------
+
+    session["pending_registration"] = {
+        "name": name,
+        "surname": surname,
+        "email": email,
+        "password_hash": generate_password_hash(
+            password
+        )
+    }
+
+    sent = create_and_send_otp(
+        email,
+        "registration"
+    )
+
+    if not sent:
+
+        session.pop(
+            "pending_registration",
+            None
+        )
+
+        flash(
+            "We could not send the verification code. "
+            "Please try again.",
+            "error"
+        )
+
+        return render_template(
+            "register.html"
+        )
+
+    flash(
+        "A verification code has been sent to your email.",
+        "success"
+    )
+
+    return redirect(
+        url_for("verify_otp")
+    )
+
+
+# ================================================================
+# VERIFY OTP
+# ================================================================
+
+@app.route(
+    "/verify",
+    methods=["GET", "POST"]
+)
+@app.route(
+    "/verify-otp",
+    methods=["GET", "POST"]
+)
+def verify_otp():
+
+    otp_email = session.get(
+        "otp_email"
+    )
+
+    otp_hash = session.get(
+        "otp_hash"
+    )
+
+    otp_purpose = session.get(
+        "otp_purpose"
+    )
+
+    otp_expires = session.get(
+        "otp_expires"
+    )
+
+    if not otp_email or not otp_hash or not otp_purpose:
+
+        return redirect(
+            url_for("login")
+        )
+
+    # ------------------------------------------------------------
+    # CHECK EXPIRATION
+    # ------------------------------------------------------------
+
+    if otp_expires:
+
+        try:
+
+            if (
+                datetime.utcnow().timestamp()
+                > float(otp_expires)
+            ):
+
+                clear_otp_session()
+
+                session.pop(
+                    "pending_login",
+                    None
+                )
+
+                session.pop(
+                    "pending_registration",
+                    None
+                )
+
+                flash(
+                    "Your verification code has expired.",
+                    "error"
+                )
+
+                return redirect(
+                    url_for("login")
+                )
+
+        except (
+            ValueError,
+            TypeError
+        ):
+
+            clear_otp_session()
+
+            return redirect(
+                url_for("login")
+            )
+
+    # ------------------------------------------------------------
+    # SHOW OTP PAGE
+    # ------------------------------------------------------------
+
+    if request.method == "GET":
+
+        return render_template(
+            "verify.html",
+            email=otp_email,
+            purpose=otp_purpose
+        )
+
+    # ------------------------------------------------------------
+    # RECEIVE OTP
+    # ------------------------------------------------------------
+
+    otp = request.form.get(
+        "otp",
+        ""
+    ).strip()
+
+    if (
+        len(otp) != OTP_LENGTH
+        or not otp.isdigit()
+    ):
+
+        flash(
+            "Please enter the 6-digit verification code.",
+            "error"
+        )
+
+        return render_template(
+            "verify.html",
+            email=otp_email,
+            purpose=otp_purpose
+        )
+
+    if not hmac.compare_digest(
+        hash_otp(otp),
+        otp_hash
+    ):
+
+        flash(
+            "Incorrect verification code.",
+            "error"
+        )
+
+        return render_template(
+            "verify.html",
+            email=otp_email,
+            purpose=otp_purpose
+        )
+
+    db = get_db()
+
+    # ============================================================
+    # REGISTRATION VERIFICATION
+    # ============================================================
+
+    if otp_purpose == "registration":
+
+        pending_registration = session.get(
+            "pending_registration"
+        )
+
+        if not pending_registration:
+
+            clear_otp_session()
+
+            flash(
+                "Registration session expired. "
+                "Please create your account again.",
+                "error"
+            )
+
+            return redirect(
+                url_for("login")
+            )
+
+        data = dict(
+            pending_registration
+        )
+
+        existing_user = db.execute(
+            """
+            SELECT id
+            FROM users
+            WHERE email = ?
+            """,
+            (data["email"],)
+        ).fetchone()
+
+        if existing_user:
+
+            clear_otp_session()
+
+            session.pop(
+                "pending_registration",
+                None
+            )
+
+            flash(
+                "An account with this email already exists.",
+                "error"
+            )
+
+            return redirect(
+                url_for("login")
+            )
+
+        # --------------------------------------------------------
+        # CREATE ACCOUNT
+        # --------------------------------------------------------
+
+        cursor = db.execute(
+            """
+            INSERT INTO users (
+                name,
+                surname,
+                email,
+                password_hash,
+                created_at,
+                email_verified
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                data["name"],
+                data["surname"],
+                data["email"],
+                data["password_hash"],
+                datetime.utcnow().isoformat(),
+                1
+            )
+        )
+
+        db.commit()
+
+        user_id = cursor.lastrowid
+
+        # --------------------------------------------------------
+        # VERY IMPORTANT
+        #
+        # DO NOT REDIRECT TO LOGIN HERE.
+        #
+        # The new account is immediately authenticated.
+        # --------------------------------------------------------
+
+        session.clear()
+
+        session["user_id"] = int(
+            user_id
+        )
+
+        session["user_name"] = str(
+            data["name"]
+        )
+
+        session["user_surname"] = str(
+            data["surname"]
+        )
+
+        session["user_email"] = str(
+            data["email"]
+        )
+
+        # Explicitly mark the session as modified.
+        session.modified = True
+
+        flash(
+            f"Account created successfully. "
+            f"Welcome, {data['name']}.",
+            "success"
+        )
+
+        # DIRECTLY ENTER THE WEBSITE
+        return redirect(
+            url_for("profile")
+        )
+
+    # ============================================================
+    # LOGIN VERIFICATION
+    # ============================================================
+
+    if otp_purpose == "login":
+
+        pending_login = session.get(
+            "pending_login"
+        )
+
+        if not pending_login:
+
+            clear_otp_session()
+
+            flash(
+                "Login session expired. "
+                "Please log in again.",
+                "error"
+            )
+
+            return redirect(
+                url_for("login")
+            )
+
+        user = db.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE id = ?
+            """,
+            (
+                pending_login["user_id"],
+            )
+        ).fetchone()
+
+        if not user:
+
+            clear_otp_session()
+
+            session.pop(
+                "pending_login",
+                None
+            )
+
+            flash(
+                "User account could not be found.",
+                "error"
+            )
+
+            return redirect(
+                url_for("login")
+            )
+
+        db.execute(
+            """
+            UPDATE users
+            SET email_verified = 1
+            WHERE id = ?
+            """,
+            (
+                user["id"],
+            )
+        )
+
+        db.commit()
+
+        session.clear()
+
+        session["user_id"] = int(
+            user["id"]
+        )
+
+        session["user_name"] = str(
+            user["name"]
+        )
+
+        session["user_surname"] = str(
+            user["surname"]
+        )
+
+        session["user_email"] = str(
+            user["email"]
+        )
+
+        session.modified = True
+
+        flash(
+            f"Login successful. "
+            f"Welcome back, {user['name']}.",
+            "success"
+        )
+
+        return redirect(
+            url_for("profile")
+        )
+
+    clear_otp_session()
+
+    return redirect(
+        url_for("login")
+    )
+
+
+# ================================================================
+# RESEND OTP
+# ================================================================
+
+@app.route(
+    "/resend-otp",
+    methods=["GET", "POST"]
+)
+def resend_otp():
+
+    email = session.get(
+        "otp_email"
+    )
+
+    purpose = session.get(
+        "otp_purpose"
+    )
+
+    if not email or not purpose:
+
+        flash(
+            "There is no active verification request.",
+            "error"
+        )
+
+        return redirect(
+            url_for("login")
+        )
+
+    last_sent = session.get(
+        "otp_last_sent"
+    )
+
+    if last_sent:
+
+        try:
+
+            elapsed = (
+                datetime.utcnow().timestamp()
+                - float(last_sent)
+            )
+
+            if elapsed < OTP_RESEND_SECONDS:
+
+                remaining = int(
+                    OTP_RESEND_SECONDS
+                    - elapsed
+                )
+
+                flash(
+                    f"Please wait {remaining} seconds "
+                    "before requesting another code.",
+                    "error"
+                )
+
+                return redirect(
+                    url_for("verify_otp")
+                )
+
+        except Exception:
+            pass
+
+    clear_otp_session()
+
+    sent = create_and_send_otp(
+        email,
+        purpose
+    )
+
+    if not sent:
+
+        flash(
+            "We could not send a new verification code.",
+            "error"
+        )
+
+        return redirect(
+            url_for("verify_otp")
+        )
+
+    flash(
+        "A new verification code has been sent.",
+        "success"
+    )
+
+    return redirect(
+        url_for("verify_otp")
+    )
+
+
+# ================================================================
+# LOGOUT
+# ================================================================
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    flash(
+        "You have been logged out.",
+        "success"
+    )
+
+    return redirect(
+        url_for("login")
+    )
+
+
+# ================================================================
+# PROFILE
+# ================================================================
+
+@app.route("/profile")
+def profile():
+
+    if not account_authenticated():
+
+        return redirect(
+            url_for("login")
+        )
+
+    db = get_db()
+
+    user = db.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE id = ?
+        """,
+        (
+            session["user_id"],
+        )
+    ).fetchone()
+
+    if not user:
+
+        session.clear()
+
+        flash(
+            "Your account could not be found.",
+            "error"
+        )
+
+        return redirect(
+            url_for("login")
+        )
+
+    return render_template(
+        "profile.html",
+        user=user
+    )
+
+
+# ================================================================
+# HOME
+# ================================================================
+
+@app.route("/")
+def home():
+
+    return render_template(
+        "index.html"
+    )
+
+
+# ================================================================
+# ABOUT
+# ================================================================
+
+@app.route("/about")
+def about():
+
+    return render_template(
+        "about.html",
+        executive_members=EXECUTIVE_MEMBERS,
+        facilities=FACILITIES
+    )
+
+
+# ================================================================
+# PRAYER
+# ================================================================
+
+@app.route("/prayer")
+def prayer():
+
+    prayer_times = {
+        "Fajr": "04:58",
+        "Sunrise": "06:20",
+        "Dhuhr": "12:13",
+        "Asr": "15:49",
+        "Maghrib": "17:52",
+        "Isha": "19:11"
+    }
+
+    return render_template(
+        "prayer.html",
+        prayer_times=prayer_times
+    )
+
+
+# ================================================================
+# SERVICES
+# ================================================================
+
+@app.route("/services")
+def services():
+
+    return render_template(
+        "services.html",
+        facilities=FACILITIES
+    )
+
+
+# ================================================================
+# EVENTS
+# ================================================================
+
+@app.route("/events")
+def events():
+
+    return render_template(
+        "events.html"
+    )
+
+
+# ================================================================
+# LEARN
+# ================================================================
+
+@app.route("/learn")
+def learn():
+
+    return render_template(
+        "learn.html"
+    )
+
+
+# ================================================================
+# GET INVOLVED
+# ================================================================
+
+@app.route("/get-involved")
+def get_involved():
+
+    return render_template(
+        "get-involved.html"
+    )
+
+
+# ================================================================
+# CONTACT
+# ================================================================
+
+@app.route("/contact")
+def contact():
+
+    return render_template(
+        "contact.html",
+        executive_members=EXECUTIVE_MEMBERS,
+        past_executive=PAST_EXECUTIVE,
+        committees=COMMITTEES,
+        jummah_imams=JUMMAH_IMAMS
+    )
+
+
+# ================================================================
+# ANNOUNCEMENTS
+# ================================================================
+
+@app.route("/announcements")
+def announcements():
+
+    db = get_db()
+
+    rows = db.execute(
+        """
+        SELECT *
+        FROM announcements
+        WHERE published = 1
+        ORDER BY created_at DESC
+        """
+    ).fetchall()
+
+    return render_template(
+        "announcements.html",
+        announcements=rows
+    )
+
+
+# ================================================================
+# MEMBER REGISTRATION
+# ================================================================
+
+@app.route(
+    "/members/register",
+    methods=["GET", "POST"]
+)
+def member_register():
+
+    if request.method == "GET":
+
+        return render_template(
+            "member_register.html"
+        )
+
+    name = request.form.get(
+        "name",
+        ""
+    ).strip()
+
+    surname = request.form.get(
+        "surname",
+        ""
+    ).strip()
+
+    phone = request.form.get(
+        "phone",
+        ""
+    ).strip()
+
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    address = request.form.get(
+        "address",
+        ""
+    ).strip()
+
+    post = request.form.get(
+        "post",
+        ""
+    ).strip()
+
+    notes = request.form.get(
+        "notes",
+        ""
+    ).strip()
+
+    if not all([
+        name,
+        surname,
+        phone,
+        email,
+        address,
+        post
+    ]):
+
+        flash(
+            "Please fill in all required fields.",
+            "error"
+        )
+
+        return redirect(
+            url_for("member_register")
+        )
+
+    db = get_db()
+
+    existing = db.execute(
+        """
+        SELECT id
+        FROM members
+        WHERE email = ?
+        """,
+        (email,)
+    ).fetchone()
+
+    if existing:
+
+        flash(
+            "A member with this email already exists.",
+            "error"
+        )
+
+        return redirect(
+            url_for("member_register")
+        )
+
+    now = datetime.utcnow().isoformat()
+
+    db.execute(
+        """
+        INSERT INTO members (
+            name,
+            surname,
+            phone,
+            email,
+            address,
+            post,
+            notes,
+            created_at,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            name,
+            surname,
+            phone,
+            email,
+            address,
+            post,
+            notes,
+            now,
+            now
+        )
+    )
+
+    db.commit()
+
+    flash(
+        "Membership registration submitted successfully.",
+        "success"
+    )
+
+    return redirect(
+        url_for("profile")
+    )
 
 
 # ================================================================
@@ -649,25 +2129,32 @@ def validate_email_with_mailboxlayer(email):
 # ================================================================
 
 def generate_payment_reference():
+
     return (
         "FSSSMC-"
-        + datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        + datetime.utcnow().strftime(
+            "%Y%m%d%H%M%S"
+        )
         + "-"
-        + secrets.token_hex(5).upper()
+        + secrets.token_hex(
+            5
+        ).upper()
     )
 
 
 def naira_to_kobo(amount):
+
     try:
-        decimal_amount = Decimal(
+
+        value = Decimal(
             str(amount)
         )
 
-        if decimal_amount <= 0:
+        if value <= 0:
             return None
 
         return int(
-            decimal_amount * Decimal("100")
+            value * Decimal("100")
         )
 
     except (
@@ -675,6 +2162,7 @@ def naira_to_kobo(amount):
         ValueError,
         TypeError
     ):
+
         return None
 
 
@@ -683,8 +2171,13 @@ def paystack_request(
     method="GET",
     payload=None
 ):
+
     if not PAYSTACK_SECRET_KEY:
-        return None, "Paystack secret key is not configured."
+
+        return (
+            None,
+            "Paystack secret key is not configured."
+        )
 
     url = (
         PAYSTACK_BASE_URL.rstrip("/")
@@ -693,22 +2186,23 @@ def paystack_request(
     )
 
     headers = {
-        "Authorization": (
-            "Bearer "
-            + PAYSTACK_SECRET_KEY
-        ),
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache"
+        "Authorization":
+            "Bearer " + PAYSTACK_SECRET_KEY,
+        "Content-Type":
+            "application/json",
+        "Cache-Control":
+            "no-cache"
     }
 
     data = None
 
     if payload is not None:
+
         data = json.dumps(
             payload
         ).encode("utf-8")
 
-    request_object = Request(
+    req = Request(
         url,
         data=data,
         headers=headers,
@@ -716,8 +2210,9 @@ def paystack_request(
     )
 
     try:
+
         with urlopen(
-            request_object,
+            req,
             timeout=30
         ) as response:
 
@@ -726,39 +2221,52 @@ def paystack_request(
                 errors="ignore"
             )
 
-            parsed = json.loads(body)
-
-            return parsed, None
+            return (
+                json.loads(body),
+                None
+            )
 
     except HTTPError as error:
+
         try:
+
             body = error.read().decode(
                 "utf-8",
                 errors="ignore"
             )
 
-            parsed = json.loads(body)
-
-            message = parsed.get(
-                "message",
-                "Paystack request failed."
+            parsed = json.loads(
+                body
             )
 
-            return None, message
+            return (
+                None,
+                parsed.get(
+                    "message",
+                    "Paystack request failed."
+                )
+            )
 
         except Exception:
-            return None, (
+
+            return (
+                None,
                 f"Paystack HTTP error {error.code}."
             )
 
     except URLError as error:
-        return None, (
-            "Could not connect to Paystack: "
-            + str(error.reason)
+
+        return (
+            None,
+            "Could not connect to Paystack."
         )
 
     except Exception as error:
-        return None, str(error)
+
+        return (
+            None,
+            str(error)
+        )
 
 
 def initialize_paystack_transaction(
@@ -768,10 +2276,11 @@ def initialize_paystack_transaction(
     callback_url,
     metadata=None
 ):
+
     payload = {
         "email": email,
         "amount": str(amount_kobo),
-        "currency": PAYSTACK_CURRENCY,
+        "currency": "NGN",
         "reference": reference,
         "callback_url": callback_url
     }
@@ -781,19 +2290,25 @@ def initialize_paystack_transaction(
 
     return paystack_request(
         "/transaction/initialize",
-        method="POST",
-        payload=payload
+        "POST",
+        payload
     )
 
 
-def verify_paystack_transaction(reference):
+def verify_paystack_transaction(
+    reference
+):
+
     return paystack_request(
         f"/transaction/verify/{reference}",
-        method="GET"
+        "GET"
     )
 
 
-def mark_donation_as_paid(reference):
+def mark_donation_as_paid(
+    reference
+):
+
     db = get_db()
 
     donation = db.execute(
@@ -850,8 +2365,10 @@ def paystack_webhook():
 
     payload = request.get_data()
 
-    expected_signature = hmac.new(
-        PAYSTACK_SECRET_KEY.encode("utf-8"),
+    expected = hmac.new(
+        PAYSTACK_SECRET_KEY.encode(
+            "utf-8"
+        ),
         payload,
         hashlib.sha512
     ).hexdigest()
@@ -861,18 +2378,19 @@ def paystack_webhook():
 
     if not hmac.compare_digest(
         signature,
-        expected_signature
+        expected
     ):
         return "", 401
 
     try:
+
         data = request.get_json(
             silent=True
         ) or {}
 
-        event = data.get("event")
-
-        if event == "charge.success":
+        if data.get(
+            "event"
+        ) == "charge.success":
 
             transaction = data.get(
                 "data",
@@ -891,1360 +2409,12 @@ def paystack_webhook():
         return "", 200
 
     except Exception:
+
         return "", 200
 
 
 # ================================================================
-# AUTHENTICATION HELPERS
-# ================================================================
-
-def account_authenticated():
-    return bool(
-        session.get("user_id")
-    )
-
-
-def admin_authenticated():
-    return bool(
-        session.get("admin_id")
-    )
-
-
-def admin_required(function):
-
-    @wraps(function)
-    def decorated(*args, **kwargs):
-
-        if not admin_authenticated():
-            return redirect(
-                url_for("admin_login")
-            )
-
-        return function(
-            *args,
-            **kwargs
-        )
-
-    return decorated
-
-
-# ================================================================
-# LOGIN GATE
-# ================================================================
-
-@app.before_request
-def require_login():
-
-    allowed_endpoints = {
-        "login",
-        "open_registration",
-        "register",
-        "verify_otp",
-        "resend_otp",
-        "logout",
-        "static",
-        "paystack_webhook",
-        "paystack_callback",
-        "page_not_found",
-        "internal_error",
-        "admin_login"
-    }
-
-    endpoint = request.endpoint
-
-    if endpoint in allowed_endpoints:
-        return None
-
-    if endpoint is None:
-        return None
-
-    # Admin pages are handled by admin_required.
-    if endpoint.startswith("admin_"):
-        return None
-
-    if account_authenticated():
-        return None
-
-    return redirect(
-        url_for(
-            "login",
-            next=request.path
-        )
-    )
-
-
-# ================================================================
-# PUBLIC WEBSITE PAGES
-# ================================================================
-
-@app.route("/")
-def home():
-    return render_template(
-        "index.html"
-    )
-
-
-@app.route("/about")
-def about():
-    return render_template(
-        "about.html",
-        executive_members=EXECUTIVE_MEMBERS,
-        facilities=FACILITIES
-    )
-
-
-@app.route("/prayer")
-def prayer():
-
-    prayer_times = {
-        "Fajr": "04:58",
-        "Sunrise": "06:20",
-        "Dhuhr": "12:13",
-        "Asr": "15:49",
-        "Maghrib": "17:52",
-        "Isha": "19:11"
-    }
-
-    return render_template(
-        "prayer.html",
-        prayer_times=prayer_times
-    )
-
-
-@app.route("/services")
-def services():
-    return render_template(
-        "services.html",
-        facilities=FACILITIES
-    )
-
-
-@app.route("/events")
-def events():
-    return render_template(
-        "events.html"
-    )
-
-
-@app.route("/learn")
-def learn():
-    return render_template(
-        "learn.html"
-    )
-
-
-@app.route("/get-involved")
-def get_involved():
-    return render_template(
-        "get-involved.html"
-    )
-
-
-@app.route("/contact")
-def contact():
-    return render_template(
-        "contact.html",
-        executive_members=EXECUTIVE_MEMBERS,
-        past_executive=PAST_EXECUTIVE,
-        committees=COMMITTEES,
-        jummah_imams=JUMMAH_IMAMS
-    )
-
-
-@app.route("/announcements")
-def announcements():
-
-    db = get_db()
-
-    rows = db.execute(
-        """
-        SELECT *
-        FROM announcements
-        WHERE published = 1
-        ORDER BY created_at DESC
-        """
-    ).fetchall()
-
-    return render_template(
-        "announcements.html",
-        announcements=rows
-    )
-
-
-# ================================================================
-# MEMBER REGISTRATION
-# ================================================================
-
-@app.route(
-    "/members/register",
-    methods=["GET", "POST"]
-)
-def member_register():
-
-    if request.method == "GET":
-        return render_template(
-            "member_register.html"
-        )
-
-    name = request.form.get(
-        "name",
-        ""
-    ).strip()
-
-    surname = request.form.get(
-        "surname",
-        ""
-    ).strip()
-
-    phone = request.form.get(
-        "phone",
-        ""
-    ).strip()
-
-    email = request.form.get(
-        "email",
-        ""
-    ).strip().lower()
-
-    address = request.form.get(
-        "address",
-        ""
-    ).strip()
-
-    post = request.form.get(
-        "post",
-        ""
-    ).strip()
-
-    notes = request.form.get(
-        "notes",
-        ""
-    ).strip()
-
-    if not all([
-        name,
-        surname,
-        phone,
-        email,
-        address,
-        post
-    ]):
-        flash(
-            "Please fill in all required fields.",
-            "error"
-        )
-
-        return redirect(
-            url_for("member_register")
-        )
-
-    if not basic_email_valid(email):
-        flash(
-            "Please enter a valid email address.",
-            "error"
-        )
-
-        return redirect(
-            url_for("member_register")
-        )
-
-    db = get_db()
-
-    existing = db.execute(
-        """
-        SELECT id
-        FROM members
-        WHERE email = ?
-        """,
-        (email,)
-    ).fetchone()
-
-    if existing:
-        flash(
-            "A member with this email already exists.",
-            "error"
-        )
-
-        return redirect(
-            url_for("member_register")
-        )
-
-    now = datetime.utcnow().isoformat()
-
-    db.execute(
-        """
-        INSERT INTO members (
-            name,
-            surname,
-            phone,
-            email,
-            address,
-            post,
-            notes,
-            created_at,
-            updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """,
-        (
-            name,
-            surname,
-            phone,
-            email,
-            address,
-            post,
-            notes,
-            now,
-            now
-        )
-    )
-
-    db.commit()
-
-    flash(
-        "Membership registration submitted successfully.",
-        "success"
-    )
-
-    return redirect(
-        url_for("profile")
-    )
-
-
-# ================================================================
-# OTP HELPERS
-# ================================================================
-
-def generate_otp():
-    return "".join(
-        secrets.choice("0123456789")
-        for _ in range(OTP_LENGTH)
-    )
-
-
-def hash_otp(otp):
-    return hashlib.sha256(
-        otp.encode("utf-8")
-    ).hexdigest()
-
-
-def send_otp_email(
-    email,
-    otp,
-    purpose="verification"
-):
-    if not SMTP_USERNAME or not SMTP_PASSWORD:
-        print(
-            "SMTP is not configured."
-        )
-
-        return False
-
-    if purpose == "registration":
-        subject = (
-            "FSSSMC Central Mosque - "
-            "Verify Your Account"
-        )
-
-        message = (
-            "Assalamu Alaikum,\n\n"
-            "Thank you for creating an account "
-            "with FSSSMC Central Mosque.\n\n"
-            f"Your verification code is: {otp}\n\n"
-            f"This code expires in "
-            f"{OTP_EXPIRY_MINUTES} minutes.\n\n"
-            "If you did not request this code, "
-            "you can ignore this email.\n\n"
-            "FSSSMC Central Mosque"
-        )
-
-    else:
-        subject = (
-            "FSSSMC Central Mosque - "
-            "Login Verification Code"
-        )
-
-        message = (
-            "Assalamu Alaikum,\n\n"
-            "Your FSSSMC Central Mosque login "
-            f"verification code is: {otp}\n\n"
-            f"This code expires in "
-            f"{OTP_EXPIRY_MINUTES} minutes.\n\n"
-            "If you did not request this login, "
-            "please ignore this email.\n\n"
-            "FSSSMC Central Mosque"
-        )
-
-    email_message = EmailMessage()
-
-    email_message["Subject"] = subject
-    email_message["From"] = SMTP_FROM
-    email_message["To"] = email
-
-    email_message.set_content(
-        message
-    )
-
-    try:
-        with smtplib.SMTP(
-            SMTP_HOST,
-            SMTP_PORT,
-            timeout=30
-        ) as server:
-
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-
-            server.login(
-                SMTP_USERNAME,
-                SMTP_PASSWORD
-            )
-
-            server.send_message(
-                email_message
-            )
-
-        return True
-
-    except Exception as error:
-        print(
-            "SMTP ERROR:",
-            error
-        )
-
-        return False
-
-
-def clear_otp_session():
-    session.pop(
-        "otp_hash",
-        None
-    )
-
-    session.pop(
-        "otp_email",
-        None
-    )
-
-    session.pop(
-        "otp_purpose",
-        None
-    )
-
-    session.pop(
-        "otp_expires",
-        None
-    )
-
-    session.pop(
-        "otp_last_sent",
-        None
-    )
-
-
-def create_and_send_otp(
-    email,
-    purpose
-):
-    otp = generate_otp()
-
-    now = datetime.utcnow()
-
-    expires = (
-        now
-        + timedelta(
-            minutes=OTP_EXPIRY_MINUTES
-        )
-    )
-
-    session["otp_hash"] = hash_otp(
-        otp
-    )
-
-    session["otp_email"] = email
-    session["otp_purpose"] = purpose
-    session["otp_expires"] = expires.timestamp()
-    session["otp_last_sent"] = now.timestamp()
-
-    sent = send_otp_email(
-        email,
-        otp,
-        purpose
-    )
-
-    if not sent:
-        clear_otp_session()
-
-    return sent
-
-
-# ================================================================
-# LOGIN
-# ================================================================
-
-@app.route(
-    "/login",
-    methods=["GET", "POST"]
-)
-def login():
-
-    if account_authenticated():
-        return redirect(
-            url_for("profile")
-        )
-
-    if admin_authenticated():
-        return redirect(
-            url_for("admin_dashboard")
-        )
-
-    if request.method == "GET":
-        return render_template(
-            "login.html"
-        )
-
-    email = request.form.get(
-        "email",
-        ""
-    ).strip().lower()
-
-    password = request.form.get(
-        "password",
-        ""
-    )
-
-    if not email or not password:
-        flash(
-            "Please enter your email and password.",
-            "error"
-        )
-
-        return render_template(
-            "login.html"
-        )
-
-    db = get_db()
-
-    # ------------------------------------------------------------
-    # ADMIN LOGIN
-    # ------------------------------------------------------------
-
-    admin = db.execute(
-        """
-        SELECT *
-        FROM admins
-        WHERE email = ?
-        """,
-        (email,)
-    ).fetchone()
-
-    if admin:
-
-        if check_password_hash(
-            admin["password_hash"],
-            password
-        ):
-            session.clear()
-
-            session["admin_id"] = admin["id"]
-            session["admin_email"] = admin["email"]
-
-            flash(
-                "Admin login successful.",
-                "success"
-            )
-
-            return redirect(
-                url_for("admin_dashboard")
-            )
-
-        flash(
-            "Invalid email or password.",
-            "error"
-        )
-
-        return render_template(
-            "login.html"
-        )
-
-    # ------------------------------------------------------------
-    # USER LOGIN
-    # ------------------------------------------------------------
-
-    user = db.execute(
-        """
-        SELECT *
-        FROM users
-        WHERE email = ?
-        """,
-        (email,)
-    ).fetchone()
-
-    if not user:
-        flash(
-            "Invalid email or password.",
-            "error"
-        )
-
-        return render_template(
-            "login.html"
-        )
-
-    if not check_password_hash(
-        user["password_hash"],
-        password
-    ):
-        flash(
-            "Invalid email or password.",
-            "error"
-        )
-
-        return render_template(
-            "login.html"
-        )
-
-    # Save the login attempt until OTP is verified.
-    session.pop(
-        "otp_hash",
-        None
-    )
-
-    session.pop(
-        "otp_email",
-        None
-    )
-
-    session.pop(
-        "otp_purpose",
-        None
-    )
-
-    session.pop(
-        "otp_expires",
-        None
-    )
-
-    session.pop(
-        "otp_last_sent",
-        None
-    )
-
-    session["pending_login"] = {
-        "user_id": user["id"],
-        "name": user["name"],
-        "surname": user["surname"],
-        "email": user["email"]
-    }
-
-    sent = create_and_send_otp(
-        user["email"],
-        "login"
-    )
-
-    if not sent:
-        session.pop(
-            "pending_login",
-            None
-        )
-
-        flash(
-            "We could not send the verification code. "
-            "Please try again later.",
-            "error"
-        )
-
-        return render_template(
-            "login.html"
-        )
-
-    flash(
-        "A verification code has been sent to your email.",
-        "success"
-    )
-
-    return redirect(
-        url_for("verify_otp")
-    )
-
-
-# ================================================================
-# OPEN REGISTRATION
-# ================================================================
-
-@app.route(
-    "/create-account"
-)
-def open_registration():
-
-    # This is the ONLY route used to open registration.
-    # It allows the login page to access /register while
-    # keeping direct access to /register controlled.
-
-    session["allow_registration"] = True
-
-    return redirect(
-        url_for("register")
-    )
-
-
-# ================================================================
-# USER REGISTRATION
-# ================================================================
-
-@app.route(
-    "/register",
-    methods=["GET", "POST"]
-)
-def register():
-
-    if account_authenticated():
-        return redirect(
-            url_for("profile")
-        )
-
-    # Direct /register access is blocked unless the user
-    # came through /create-account.
-    if request.method == "GET":
-
-        if not session.get(
-            "allow_registration"
-        ):
-            return redirect(
-                url_for("login")
-            )
-
-        # Consume the permission so direct access later
-        # does not remain open.
-        session.pop(
-            "allow_registration",
-            None
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-    name = request.form.get(
-        "name",
-        ""
-    ).strip()
-
-    surname = request.form.get(
-        "surname",
-        ""
-    ).strip()
-
-    email = request.form.get(
-        "email",
-        ""
-    ).strip().lower()
-
-    password = request.form.get(
-        "password",
-        ""
-    )
-
-    confirm_password = request.form.get(
-        "confirm_password",
-        ""
-    )
-
-    if not all([
-        name,
-        surname,
-        email,
-        password,
-        confirm_password
-    ]):
-        flash(
-            "Please fill in all fields.",
-            "error"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-    if not basic_email_valid(email):
-        flash(
-            "Please enter a valid email address.",
-            "error"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-    if password != confirm_password:
-        flash(
-            "Passwords do not match.",
-            "error"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-    if len(password) < 6:
-        flash(
-            "Password must be at least 6 characters.",
-            "error"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-    if not validate_email_with_mailboxlayer(
-        email
-    ):
-        flash(
-            "Please use a valid non-disposable email address.",
-            "error"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-    db = get_db()
-
-    existing_user = db.execute(
-        """
-        SELECT id
-        FROM users
-        WHERE email = ?
-        """,
-        (email,)
-    ).fetchone()
-
-    if existing_user:
-        flash(
-            "An account with this email already exists. "
-            "Please log in instead.",
-            "error"
-        )
-
-        return redirect(
-            url_for("login")
-        )
-
-    # Store registration information temporarily in the
-    # signed Flask session until the OTP is verified.
-    session["pending_registration"] = {
-        "name": name,
-        "surname": surname,
-        "email": email,
-        "password_hash": generate_password_hash(
-            password
-        )
-    }
-
-    sent = create_and_send_otp(
-        email,
-        "registration"
-    )
-
-    if not sent:
-        session.pop(
-            "pending_registration",
-            None
-        )
-
-        flash(
-            "We could not send the verification code. "
-            "Please try again later.",
-            "error"
-        )
-
-        return render_template(
-            "register.html"
-        )
-
-    flash(
-        "A verification code has been sent to your email.",
-        "success"
-    )
-
-    return redirect(
-        url_for("verify_otp")
-    )
-
-
-# ================================================================
-# VERIFY OTP
-# ================================================================
-
-@app.route(
-    "/verify",
-    methods=["GET", "POST"]
-)
-@app.route(
-    "/verify-otp",
-    methods=["GET", "POST"]
-)
-def verify_otp():
-
-    otp_email = session.get(
-        "otp_email"
-    )
-
-    otp_hash = session.get(
-        "otp_hash"
-    )
-
-    otp_purpose = session.get(
-        "otp_purpose"
-    )
-
-    otp_expires = session.get(
-        "otp_expires"
-    )
-
-    if not otp_email or not otp_hash or not otp_purpose:
-        return redirect(
-            url_for("login")
-        )
-
-    if otp_expires:
-
-        try:
-            if datetime.utcnow().timestamp() > float(
-                otp_expires
-            ):
-                clear_otp_session()
-
-                session.pop(
-                    "pending_login",
-                    None
-                )
-
-                session.pop(
-                    "pending_registration",
-                    None
-                )
-
-                flash(
-                    "Your verification code has expired. "
-                    "Please request a new one.",
-                    "error"
-                )
-
-                return redirect(
-                    url_for("login")
-                )
-
-        except (
-            ValueError,
-            TypeError
-        ):
-            clear_otp_session()
-
-            flash(
-                "Verification session expired.",
-                "error"
-            )
-
-            return redirect(
-                url_for("login")
-            )
-
-    if request.method == "GET":
-        return render_template(
-            "verify.html",
-            email=otp_email,
-            purpose=otp_purpose
-        )
-
-    otp = request.form.get(
-        "otp",
-        ""
-    ).strip()
-
-    if (
-        len(otp) != OTP_LENGTH
-        or not otp.isdigit()
-    ):
-        flash(
-            "Please enter the 6-digit verification code.",
-            "error"
-        )
-
-        return render_template(
-            "verify.html",
-            email=otp_email,
-            purpose=otp_purpose
-        )
-
-    if not hmac.compare_digest(
-        hash_otp(otp),
-        otp_hash
-    ):
-        flash(
-            "Incorrect verification code.",
-            "error"
-        )
-
-        return render_template(
-            "verify.html",
-            email=otp_email,
-            purpose=otp_purpose
-        )
-
-    db = get_db()
-
-    # ============================================================
-    # REGISTRATION OTP
-    # ============================================================
-
-    if otp_purpose == "registration":
-
-        pending_registration = session.get(
-            "pending_registration"
-        )
-
-        if not pending_registration:
-            clear_otp_session()
-
-            flash(
-                "Registration session expired. "
-                "Please create your account again.",
-                "error"
-            )
-
-            return redirect(
-                url_for("login")
-            )
-
-        data = dict(
-            pending_registration
-        )
-
-        existing_user = db.execute(
-            """
-            SELECT id
-            FROM users
-            WHERE email = ?
-            """,
-            (data["email"],)
-        ).fetchone()
-
-        if existing_user:
-
-            clear_otp_session()
-
-            session.pop(
-                "pending_registration",
-                None
-            )
-
-            flash(
-                "An account with this email already exists.",
-                "error"
-            )
-
-            return redirect(
-                url_for("login")
-            )
-
-        cursor = db.execute(
-            """
-            INSERT INTO users (
-                name,
-                surname,
-                email,
-                password_hash,
-                created_at,
-                email_verified
-            )
-            VALUES (?, ?, ?, ?, ?, ?)
-            """,
-            (
-                data["name"],
-                data["surname"],
-                data["email"],
-                data["password_hash"],
-                datetime.utcnow().isoformat(),
-                1
-            )
-        )
-
-        db.commit()
-
-        user_id = cursor.lastrowid
-
-        # ========================================================
-        # IMPORTANT:
-        # AUTOMATICALLY LOG THE NEW USER IN.
-        #
-        # The user DOES NOT need to enter their password again.
-        # ========================================================
-
-        session.clear()
-
-        session["user_id"] = user_id
-        session["user_name"] = data["name"]
-        session["user_surname"] = data["surname"]
-        session["user_email"] = data["email"]
-
-        flash(
-            f"Account created successfully. "
-            f"Welcome, {data['name']}.",
-            "success"
-        )
-
-        return redirect(
-            url_for("profile")
-        )
-
-    # ============================================================
-    # LOGIN OTP
-    # ============================================================
-
-    if otp_purpose == "login":
-
-        pending_login = session.get(
-            "pending_login"
-        )
-
-        if not pending_login:
-            clear_otp_session()
-
-            flash(
-                "Login session expired. "
-                "Please log in again.",
-                "error"
-            )
-
-            return redirect(
-                url_for("login")
-            )
-
-        user = db.execute(
-            """
-            SELECT *
-            FROM users
-            WHERE id = ?
-            """,
-            (
-                pending_login["user_id"],
-            )
-        ).fetchone()
-
-        if not user:
-            clear_otp_session()
-
-            session.pop(
-                "pending_login",
-                None
-            )
-
-            flash(
-                "User account could not be found.",
-                "error"
-            )
-
-            return redirect(
-                url_for("login")
-            )
-
-        db.execute(
-            """
-            UPDATE users
-            SET email_verified = 1
-            WHERE id = ?
-            """,
-            (user["id"],)
-        )
-
-        db.commit()
-
-        # Clear everything and create a clean authenticated
-        # session.
-        session.clear()
-
-        session["user_id"] = user["id"]
-        session["user_name"] = user["name"]
-        session["user_surname"] = user["surname"]
-        session["user_email"] = user["email"]
-
-        flash(
-            f"Login successful. Welcome back, "
-            f"{user['name']}.",
-            "success"
-        )
-
-        return redirect(
-            url_for("profile")
-        )
-
-    clear_otp_session()
-
-    flash(
-        "Invalid verification session.",
-        "error"
-    )
-
-    return redirect(
-        url_for("login")
-    )
-
-
-# ================================================================
-# RESEND OTP
-# ================================================================
-
-@app.route(
-    "/resend-otp",
-    methods=["POST", "GET"]
-)
-def resend_otp():
-
-    email = session.get(
-        "otp_email"
-    )
-
-    purpose = session.get(
-        "otp_purpose"
-    )
-
-    if not email or not purpose:
-        flash(
-            "There is no active verification request.",
-            "error"
-        )
-
-        return redirect(
-            url_for("login")
-        )
-
-    last_sent = session.get(
-        "otp_last_sent"
-    )
-
-    if last_sent:
-
-        try:
-            elapsed = (
-                datetime.utcnow().timestamp()
-                - float(last_sent)
-            )
-
-            if elapsed < OTP_RESEND_SECONDS:
-
-                remaining = int(
-                    OTP_RESEND_SECONDS
-                    - elapsed
-                )
-
-                flash(
-                    f"Please wait {remaining} seconds "
-                    "before requesting another code.",
-                    "error"
-                )
-
-                return redirect(
-                    url_for("verify_otp")
-                )
-
-        except (
-            ValueError,
-            TypeError
-        ):
-            pass
-
-    clear_otp_session()
-
-    sent = create_and_send_otp(
-        email,
-        purpose
-    )
-
-    if not sent:
-        flash(
-            "We could not send a new verification code.",
-            "error"
-        )
-
-        return redirect(
-            url_for("verify_otp")
-        )
-
-    flash(
-        "A new verification code has been sent.",
-        "success"
-    )
-
-    return redirect(
-        url_for("verify_otp")
-    )
-
-
-# ================================================================
-# LOGOUT
-# ================================================================
-
-@app.route("/logout")
-def logout():
-
-    session.clear()
-
-    flash(
-        "You have been logged out.",
-        "success"
-    )
-
-    return redirect(
-        url_for("login")
-    )
-
-
-# ================================================================
-# PROFILE
-# ================================================================
-
-@app.route("/profile")
-def profile():
-
-    if not account_authenticated():
-        return redirect(
-            url_for("login")
-        )
-
-    db = get_db()
-
-    user = db.execute(
-        """
-        SELECT *
-        FROM users
-        WHERE id = ?
-        """,
-        (
-            session["user_id"],
-        )
-    ).fetchone()
-
-    if not user:
-        session.clear()
-
-        flash(
-            "Your account could not be found.",
-            "error"
-        )
-
-        return redirect(
-            url_for("login")
-        )
-
-    return render_template(
-        "profile.html",
-        user=user
-    )
-
-
-# ================================================================
-# DONATIONS
+# DONATE
 # ================================================================
 
 @app.route(
@@ -2252,14 +2422,6 @@ def profile():
     methods=["GET", "POST"]
 )
 def donate():
-
-    if not account_authenticated():
-        return redirect(
-            url_for(
-                "login",
-                next=url_for("donate")
-            )
-        )
 
     user_email = session.get(
         "user_email",
@@ -2317,37 +2479,18 @@ def donate():
     ).strip()
 
     if not donor_name:
+
         donor_name = (
-            f"{user_name} "
-            f"{user_surname}"
+            f"{user_name} {user_surname}"
         ).strip()
 
     if not email:
         email = user_email
 
     if not donor_name or not email:
+
         flash(
             "Please provide your name and email.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    if not basic_email_valid(email):
-        flash(
-            "Please provide a valid email address.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    if purpose not in DONATION_PURPOSES:
-        flash(
-            "Please select a valid donation purpose.",
             "error"
         )
 
@@ -2360,8 +2503,20 @@ def donate():
     )
 
     if amount_kobo is None:
+
         flash(
             "Please enter a valid donation amount.",
+            "error"
+        )
+
+        return redirect(
+            url_for("donate")
+        )
+
+    if purpose not in DONATION_PURPOSES:
+
+        flash(
+            "Please select a valid donation purpose.",
             "error"
         )
 
@@ -2422,24 +2577,32 @@ def donate():
         ),
         "custom_fields": [
             {
-                "display_name": "Donor Name",
-                "variable_name": "donor_name",
-                "value": donor_name
+                "display_name":
+                    "Donor Name",
+                "variable_name":
+                    "donor_name",
+                "value":
+                    donor_name
             },
             {
-                "display_name": "Purpose",
-                "variable_name": "purpose",
-                "value": purpose
+                "display_name":
+                    "Purpose",
+                "variable_name":
+                    "purpose",
+                "value":
+                    purpose
             }
         ]
     }
 
-    result, error = initialize_paystack_transaction(
-        email=email,
-        amount_kobo=amount_kobo,
-        reference=reference,
-        callback_url=callback_url,
-        metadata=metadata
+    result, error = (
+        initialize_paystack_transaction(
+            email,
+            amount_kobo,
+            reference,
+            callback_url,
+            metadata
+        )
     )
 
     if error or not result:
@@ -2459,21 +2622,7 @@ def donate():
         db.commit()
 
         flash(
-            "Payment could not be initialized. "
-            "Please try again.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    if not result.get("status"):
-        flash(
-            result.get(
-                "message",
-                "Paystack could not initialize the payment."
-            ),
+            "Payment could not be initialized.",
             "error"
         )
 
@@ -2488,6 +2637,7 @@ def donate():
     )
 
     if not authorization_url:
+
         flash(
             "Paystack did not return a payment link.",
             "error"
@@ -2517,6 +2667,7 @@ def paystack_callback():
     ).strip()
 
     if not reference:
+
         flash(
             "No payment reference was provided.",
             "error"
@@ -2526,28 +2677,16 @@ def paystack_callback():
             url_for("donate")
         )
 
-    result, error = verify_paystack_transaction(
-        reference
+    result, error = (
+        verify_paystack_transaction(
+            reference
+        )
     )
 
     if error or not result:
 
         flash(
-            "Unable to verify the payment right now.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    if not result.get("status"):
-
-        flash(
-            result.get(
-                "message",
-                "Payment verification failed."
-            ),
+            "Unable to verify the payment.",
             "error"
         )
 
@@ -2560,11 +2699,11 @@ def paystack_callback():
         {}
     )
 
-    status = transaction.get(
-        "status"
-    )
-
-    if status == "success":
+    if (
+        result.get("status")
+        and transaction.get("status")
+        == "success"
+    ):
 
         mark_donation_as_paid(
             reference
@@ -2579,22 +2718,6 @@ def paystack_callback():
         return redirect(
             url_for("profile")
         )
-
-    db = get_db()
-
-    db.execute(
-        """
-        UPDATE donations
-        SET payment_status = ?
-        WHERE payment_reference = ?
-        """,
-        (
-            "failed",
-            reference
-        )
-    )
-
-    db.commit()
 
     flash(
         "The donation payment was not completed.",
@@ -2617,11 +2740,13 @@ def paystack_callback():
 def admin_login():
 
     if admin_authenticated():
+
         return redirect(
             url_for("admin_dashboard")
         )
 
     if request.method == "GET":
+
         return render_template(
             "admin_login.html"
         )
@@ -2651,6 +2776,7 @@ def admin_login():
         admin["password_hash"],
         password
     ):
+
         flash(
             "Invalid administrator credentials.",
             "error"
@@ -2786,6 +2912,7 @@ def admin_members():
 def admin_add_member():
 
     if request.method == "GET":
+
         return render_template(
             "admin_member_form.html",
             member=None
@@ -2834,8 +2961,9 @@ def admin_add_member():
         address,
         post
     ]):
+
         flash(
-            "Please complete all required member fields.",
+            "Please complete all required fields.",
             "error"
         )
 
@@ -2893,7 +3021,9 @@ def admin_add_member():
     methods=["GET", "POST"]
 )
 @admin_required
-def admin_edit_member(member_id):
+def admin_edit_member(
+    member_id
+):
 
     db = get_db()
 
@@ -2907,6 +3037,7 @@ def admin_edit_member(member_id):
     ).fetchone()
 
     if not member:
+
         flash(
             "Member not found.",
             "error"
@@ -2917,6 +3048,7 @@ def admin_edit_member(member_id):
         )
 
     if request.method == "GET":
+
         return render_template(
             "admin_member_form.html",
             member=member
@@ -2956,24 +3088,6 @@ def admin_edit_member(member_id):
         "notes",
         ""
     ).strip()
-
-    if not all([
-        name,
-        surname,
-        phone,
-        email,
-        address,
-        post
-    ]):
-        flash(
-            "Please complete all required member fields.",
-            "error"
-        )
-
-        return render_template(
-            "admin_member_form.html",
-            member=member
-        )
 
     db.execute(
         """
@@ -3015,10 +3129,12 @@ def admin_edit_member(member_id):
 
 @app.route(
     "/admin/members/<int:member_id>/delete",
-    methods=["POST", "GET"]
+    methods=["GET", "POST"]
 )
 @admin_required
-def admin_delete_member(member_id):
+def admin_delete_member(
+    member_id
+):
 
     db = get_db()
 
@@ -3082,13 +3198,12 @@ def admin_update_donation(
         ""
     ).strip().lower()
 
-    allowed_statuses = {
+    if status not in {
         "pending",
         "paid",
         "failed"
-    }
+    }:
 
-    if status not in allowed_statuses:
         flash(
             "Invalid donation status.",
             "error"
@@ -3098,12 +3213,13 @@ def admin_update_donation(
             url_for("admin_donations")
         )
 
-    db = get_db()
-
     paid_at = None
 
     if status == "paid":
+
         paid_at = datetime.utcnow().isoformat()
+
+    db = get_db()
 
     db.execute(
         """
@@ -3133,7 +3249,7 @@ def admin_update_donation(
 
 @app.route(
     "/admin/donations/<int:donation_id>/delete",
-    methods=["POST", "GET"]
+    methods=["GET", "POST"]
 )
 @admin_required
 def admin_delete_donation(
@@ -3196,8 +3312,9 @@ def admin_announcements():
         )
 
         if not title or not body:
+
             flash(
-                "Title and announcement body are required.",
+                "Title and body are required.",
                 "error"
             )
 
@@ -3254,7 +3371,7 @@ def admin_announcements():
 
 @app.route(
     "/admin/announcements/<int:announcement_id>/delete",
-    methods=["POST", "GET"]
+    methods=["GET", "POST"]
 )
 @admin_required
 def admin_delete_announcement(
@@ -3289,6 +3406,7 @@ def admin_delete_announcement(
 
 @app.errorhandler(404)
 def page_not_found(error):
+
     return render_template(
         "404.html"
     ), 404
@@ -3298,6 +3416,7 @@ def page_not_found(error):
 def internal_error(error):
 
     try:
+
         db = g.get("db")
 
         if db:
@@ -3320,10 +3439,11 @@ with app.app_context():
 
 
 # ================================================================
-# RUN APPLICATION
+# RUN
 # ================================================================
 
 if __name__ == "__main__":
+
     app.run(
         debug=True,
         use_reloader=False,
