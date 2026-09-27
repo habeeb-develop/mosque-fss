@@ -1,0 +1,758 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Dashboard | FSSSMC Admin{% endblock %}
+
+{% block content %}
+
+<!-- =========================
+     PAGE HEADER
+========================= -->
+
+<div class="admin-title dashboard-title">
+    <div>
+        <h1>Dashboard</h1>
+        <p>Overview of FSSSMC Central Mosque activities and records.</p>
+    </div>
+
+    <div class="dashboard-actions">
+        <a href="{{ url_for('admin_members') }}" class="btn btn-outline">
+            View Members
+        </a>
+
+        <a href="{{ url_for('admin_donations') }}" class="btn btn-green">
+            View Donations
+        </a>
+    </div>
+</div>
+
+
+<!-- =========================
+     STAT CARDS
+========================= -->
+
+<div class="dashboard-stat-grid">
+
+    <!-- MEMBERS -->
+
+    <div class="dashboard-stat-card">
+        <div class="dashboard-stat-top">
+            <div class="dashboard-stat-icon">
+                👥
+            </div>
+
+            <span class="dashboard-stat-label">
+                MEMBERS
+            </span>
+        </div>
+
+        <div class="dashboard-stat-number">
+            {{ total_members }}
+        </div>
+
+        <div class="dashboard-stat-footer">
+            <span>Total registered members</span>
+
+            <a href="{{ url_for('admin_members') }}">
+                View →
+            </a>
+        </div>
+    </div>
+
+
+    <!-- DONATIONS -->
+
+    <div class="dashboard-stat-card dashboard-stat-donation">
+        <div class="dashboard-stat-top">
+            <div class="dashboard-stat-icon">
+                ₦
+            </div>
+
+            <span class="dashboard-stat-label">
+                PAID DONATIONS
+            </span>
+        </div>
+
+        <div class="dashboard-stat-number dashboard-money">
+            ₦{{ "{:,.0f}".format(total_donations) }}
+        </div>
+
+        <div class="dashboard-stat-footer">
+            <span>{{ paid_donations_count }} paid donations</span>
+
+            <a href="{{ url_for('admin_donations') }}">
+                View →
+            </a>
+        </div>
+    </div>
+
+
+    <!-- PENDING -->
+
+    <div class="dashboard-stat-card dashboard-stat-pending">
+        <div class="dashboard-stat-top">
+            <div class="dashboard-stat-icon">
+                ⏳
+            </div>
+
+            <span class="dashboard-stat-label">
+                PENDING
+            </span>
+        </div>
+
+        <div class="dashboard-stat-number">
+            {{ pending_donations }}
+        </div>
+
+        <div class="dashboard-stat-footer">
+            <span>
+                ₦{{ "{:,.0f}".format(pending_amount) }} awaiting confirmation
+            </span>
+
+            <a href="{{ url_for('admin_donations') }}">
+                Review →
+            </a>
+        </div>
+    </div>
+
+
+    <!-- ANNOUNCEMENTS -->
+
+    <div class="dashboard-stat-card dashboard-stat-announcement">
+        <div class="dashboard-stat-top">
+            <div class="dashboard-stat-icon">
+                📢
+            </div>
+
+            <span class="dashboard-stat-label">
+                ANNOUNCEMENTS
+            </span>
+        </div>
+
+        <div class="dashboard-stat-number">
+            {{ total_announcements }}
+        </div>
+
+        <div class="dashboard-stat-footer">
+            <span>Published announcements</span>
+
+            <a href="{{ url_for('admin_announcements') }}">
+                View →
+            </a>
+        </div>
+    </div>
+
+</div>
+
+
+<!-- =========================
+     MAIN DASHBOARD GRID
+========================= -->
+
+<div class="dashboard-main-grid">
+
+
+    <!-- =====================
+         RECENT MEMBERS
+    ====================== -->
+
+    <section class="dashboard-panel dashboard-members-panel">
+
+        <div class="dashboard-panel-header">
+            <div>
+                <h2>Recent Members</h2>
+                <p>Latest members registered with the mosque.</p>
+            </div>
+
+            <a href="{{ url_for('admin_members') }}" class="dashboard-view-link">
+                View All
+            </a>
+        </div>
+
+
+        {% if recent_members %}
+
+        <div class="dashboard-table-wrap">
+
+            <table class="dashboard-table">
+
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Phone</th>
+                        <th>Post</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for member in recent_members %}
+
+                    <tr>
+
+                        <td>
+                            <div class="dashboard-person">
+
+                                <div class="dashboard-avatar">
+                                    {{ member.name[0]|upper }}
+                                </div>
+
+                                <div>
+                                    <strong>
+                                        {{ member.name }} {{ member.surname }}
+                                    </strong>
+
+                                    {% if member.email %}
+                                    <small>
+                                        {{ member.email }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+
+                            </div>
+                        </td>
+
+                        <td>
+                            {{ member.phone }}
+                        </td>
+
+                        <td>
+                            <span class="dashboard-post-badge">
+                                {{ member.post }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {{ member.created_at }}
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% else %}
+
+        <div class="dashboard-empty">
+            <div class="dashboard-empty-icon">👥</div>
+
+            <h3>No members yet</h3>
+
+            <p>
+                Registered members will appear here.
+            </p>
+        </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- =====================
+         MEMBER POSTS
+    ====================== -->
+
+    <section class="dashboard-panel dashboard-posts-panel">
+
+        <div class="dashboard-panel-header">
+
+            <div>
+                <h2>Member Posts</h2>
+                <p>Membership breakdown.</p>
+            </div>
+
+            <span class="dashboard-panel-icon">
+                👥
+            </span>
+
+        </div>
+
+
+        {% if member_posts %}
+
+        <div class="dashboard-post-list">
+
+            {% for item in member_posts %}
+
+            <div class="dashboard-post-row">
+
+                <div class="dashboard-post-info">
+
+                    <span class="dashboard-post-name">
+                        {{ item.post }}
+                    </span>
+
+                    <div class="dashboard-progress">
+                        <span
+                            style="width:
+                            {% if total_members > 0 %}
+                                {{ ((item.total / total_members) * 100)|round(0) }}%
+                            {% else %}
+                                0%
+                            {% endif %};
+                            "
+                        ></span>
+                    </div>
+
+                </div>
+
+                <strong>
+                    {{ item.total }}
+                </strong>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="dashboard-empty small-empty">
+
+            <div class="dashboard-empty-icon">📊</div>
+
+            <p>
+                No member data available.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     DONATION SECTION
+========================= -->
+
+<section class="dashboard-panel dashboard-donations-panel">
+
+    <div class="dashboard-panel-header">
+
+        <div>
+            <h2>Recent Donations</h2>
+
+            <p>
+                Latest donation records and their payment status.
+            </p>
+        </div>
+
+        <a href="{{ url_for('admin_donations') }}" class="dashboard-view-link">
+            View All
+        </a>
+
+    </div>
+
+
+    {% if recent_donations %}
+
+    <div class="dashboard-table-wrap">
+
+        <table class="dashboard-table donation-dashboard-table">
+
+            <thead>
+
+                <tr>
+                    <th>Donor</th>
+                    <th>Amount</th>
+                    <th>Purpose</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for donation in recent_donations %}
+
+                <tr>
+
+                    <td>
+
+                        <div class="dashboard-person">
+
+                            <div class="dashboard-avatar donation-avatar">
+                                ₦
+                            </div>
+
+                            <div>
+                                <strong>
+                                    {{ donation.donor_name }}
+                                </strong>
+                            </div>
+
+                        </div>
+
+                    </td>
+
+                    <td>
+
+                        <strong class="dashboard-amount">
+                            ₦{{ "{:,.2f}".format(donation.amount) }}
+                        </strong>
+
+                    </td>
+
+                    <td>
+                        {{ donation.purpose }}
+                    </td>
+
+                    <td>
+                        {{ donation.payment_method }}
+                    </td>
+
+                    <td>
+
+                        {% if donation.payment_status == "Paid" %}
+
+                        <span class="dashboard-status status-paid">
+                            Paid
+                        </span>
+
+                        {% elif donation.payment_status == "Pending" %}
+
+                        <span class="dashboard-status status-pending">
+                            Pending
+                        </span>
+
+                        {% else %}
+
+                        <span class="dashboard-status status-cancelled">
+                            Cancelled
+                        </span>
+
+                        {% endif %}
+
+                    </td>
+
+                    <td>
+                        {{ donation.created_at }}
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+    {% else %}
+
+    <div class="dashboard-empty">
+
+        <div class="dashboard-empty-icon">
+            ₦
+        </div>
+
+        <h3>No donations yet</h3>
+
+        <p>
+            Donation records will appear here.
+        </p>
+
+        <a href="{{ url_for('admin_donations') }}" class="btn btn-green">
+            Manage Donations
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</section>
+
+
+<!-- =========================
+     BOTTOM GRID
+========================= -->
+
+<div class="dashboard-bottom-grid">
+
+
+    <!-- DONATION SUMMARY -->
+
+    <section class="dashboard-panel">
+
+        <div class="dashboard-panel-header">
+
+            <div>
+                <h2>Donation Summary</h2>
+                <p>Current donation payment status.</p>
+            </div>
+
+        </div>
+
+
+        <div class="dashboard-summary-list">
+
+            <div class="dashboard-summary-item">
+
+                <div class="summary-left">
+
+                    <span class="summary-dot summary-paid-dot"></span>
+
+                    <span>
+                        Paid Donations
+                    </span>
+
+                </div>
+
+                <strong>
+                    {{ paid_donations_count }}
+                </strong>
+
+            </div>
+
+
+            <div class="dashboard-summary-item">
+
+                <div class="summary-left">
+
+                    <span class="summary-dot summary-pending-dot"></span>
+
+                    <span>
+                        Pending Donations
+                    </span>
+
+                </div>
+
+                <strong>
+                    {{ pending_donations_count }}
+                </strong>
+
+            </div>
+
+
+            <div class="dashboard-summary-item">
+
+                <div class="summary-left">
+
+                    <span class="summary-dot summary-cancelled-dot"></span>
+
+                    <span>
+                        Cancelled Donations
+                    </span>
+
+                </div>
+
+                <strong>
+                    {{ cancelled_donations_count }}
+                </strong>
+
+            </div>
+
+
+            <div class="dashboard-summary-item">
+
+                <div class="summary-left">
+
+                    <span class="summary-dot summary-pending-dot"></span>
+
+                    <span>
+                        Pending Amount
+                    </span>
+
+                </div>
+
+                <strong>
+                    ₦{{ "{:,.0f}".format(pending_amount) }}
+                </strong>
+
+            </div>
+
+
+            <div class="dashboard-summary-item">
+
+                <div class="summary-left">
+
+                    <span class="summary-dot summary-cancelled-dot"></span>
+
+                    <span>
+                        Cancelled Amount
+                    </span>
+
+                </div>
+
+                <strong>
+                    ₦{{ "{:,.0f}".format(cancelled_amount) }}
+                </strong>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- RECENT ANNOUNCEMENTS -->
+
+    <section class="dashboard-panel">
+
+        <div class="dashboard-panel-header">
+
+            <div>
+                <h2>Recent Announcements</h2>
+                <p>Latest mosque announcements.</p>
+            </div>
+
+            <a
+                href="{{ url_for('admin_announcements') }}"
+                class="dashboard-view-link"
+            >
+                View All
+            </a>
+
+        </div>
+
+
+        {% if recent_announcements %}
+
+        <div class="dashboard-announcement-list">
+
+            {% for announcement in recent_announcements %}
+
+            <div class="dashboard-announcement-item">
+
+                <div class="announcement-icon">
+                    📢
+                </div>
+
+                <div class="announcement-content">
+
+                    <strong>
+                        {{ announcement.title }}
+                    </strong>
+
+                    <small>
+                        {{ announcement.created_at }}
+                    </small>
+
+                </div>
+
+                {% if announcement.published %}
+
+                <span class="dashboard-published">
+                    Published
+                </span>
+
+                {% else %}
+
+                <span class="dashboard-unpublished">
+                    Draft
+                </span>
+
+                {% endif %}
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
+        {% else %}
+
+        <div class="dashboard-empty small-empty">
+
+            <div class="dashboard-empty-icon">
+                📢
+            </div>
+
+            <p>
+                No announcements yet.
+            </p>
+
+        </div>
+
+        {% endif %}
+
+    </section>
+
+</div>
+
+
+<!-- =========================
+     QUICK ACTIONS
+========================= -->
+
+<section class="dashboard-panel dashboard-quick-panel">
+
+    <div class="dashboard-panel-header">
+
+        <div>
+            <h2>Quick Actions</h2>
+            <p>Frequently used administration tools.</p>
+        </div>
+
+    </div>
+
+
+    <div class="dashboard-quick-actions">
+
+        <a
+            href="{{ url_for('admin_members') }}"
+            class="dashboard-quick-action"
+        >
+            <span class="quick-action-icon">
+                👥
+            </span>
+
+            <span>
+                <strong>Manage Members</strong>
+                <small>View and manage mosque members</small>
+            </span>
+
+            <span class="quick-arrow">→</span>
+        </a>
+
+
+        <a
+            href="{{ url_for('admin_donations') }}"
+            class="dashboard-quick-action"
+        >
+            <span class="quick-action-icon">
+                ₦
+            </span>
+
+            <span>
+                <strong>Manage Donations</strong>
+                <small>Review donation records</small>
+            </span>
+
+            <span class="quick-arrow">→</span>
+        </a>
+
+
+        <a
+            href="{{ url_for('admin_announcements') }}"
+            class="dashboard-quick-action"
+        >
+            <span class="quick-action-icon">
+                📢
+            </span>
+
+            <span>
+                <strong>Announcements</strong>
+                <small>Create and manage announcements</small>
+            </span>
+
+            <span class="quick-arrow">→</span>
+        </a>
+
+    </div>
+
+</section>
+
+{% endblock %}

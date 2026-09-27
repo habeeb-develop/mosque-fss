@@ -1,0 +1,47 @@
+{% extends "admin/base_admin.html" %}
+{% block title %}Members | FSSSMC Admin{% endblock %}
+{% block content %}
+<div class="admin-title">
+    <div>
+        <h1>Members</h1>
+        <p>Manage community membership records.</p>
+    </div>
+    <a class="btn btn-green" href="{{ url_for('admin_add_member') }}">Add New Member</a>
+</div>
+
+{% if members %}
+<div class="table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Post</th>
+                <th>Address</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for member in members %}
+            <tr>
+                <td><strong>{{ member.name }} {{ member.surname }}</strong></td>
+                <td>{{ member.phone }}</td>
+                <td>{{ member.email or "—" }}</td>
+                <td>{{ member.post }}</td>
+                <td>{{ member.address }}</td>
+                <td>
+                    <a class="btn btn-outline btn-small" href="{{ url_for('admin_edit_member', member_id=member.id) }}">Edit</a>
+                    <form class="inline-form" method="post" action="{{ url_for('admin_delete_member', member_id=member.id) }}">
+                        <button class="btn btn-small danger" type="submit">Delete</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="empty">No registered members yet.</div>
+{% endif %}
+{% endblock %}

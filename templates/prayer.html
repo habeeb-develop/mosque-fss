@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Prayer Times | FSSSMC Central Mosque{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="breadcrumb">FSSSMC / Prayer</p>
+        <h1>Prayer Times</h1>
+        <p>Prayer times are retrieved dynamically from the prayer-time API for Lagos, Nigeria.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container split">
+        <div class="prayer-board">
+            <div class="prayer-board-head">
+                <h2>Today's Times</h2>
+                <p>{{ prayer_date }}{% if hijri_date %} · {{ hijri_date }} AH{% endif %}</p>
+            </div>
+
+            {% if prayer_error %}
+                <div class="notice" style="margin: 18px;">{{ prayer_error }}</div>
+            {% endif %}
+
+            {% set labels = [
+                ("Fajr", "Fajr"),
+                ("Sunrise", "Sunrise"),
+                ("Dhuhr", "Dhuhr"),
+                ("Asr", "Asr"),
+                ("Maghrib", "Maghrib"),
+                ("Isha", "Isha")
+            ] %}
+
+            {% for key, label in labels %}
+            <div class="prayer-row">
+                <span>{{ label }}</span>
+                <strong>{{ prayer_times.get(key, "--:--") }}</strong>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div>
+            <p class="section-kicker">Live API Data</p>
+            <div class="section-head">
+                <h2>Prayer information for Lagos.</h2>
+            </div>
+            <div class="prose">
+                <p><strong>Location:</strong> {{ location }}</p>
+                <p><strong>Calculation:</strong> {{ prayer_method }}</p>
+                <p>
+                    The times displayed on this page are not manually written into
+                    the HTML. The Flask application requests the current values from
+                    the prayer-time API when the page loads.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

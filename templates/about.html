@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}About | FSSSMC Central Mosque{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="breadcrumb">FSSSMC / About</p>
+        <h1>About the Mosque</h1>
+        <p>A place of worship, knowledge, peace, unity and community service.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container split">
+        <div>
+            <p class="section-kicker">Our Purpose</p>
+            <div class="section-head">
+                <h2>Serving the Ummah through worship, knowledge and service.</h2>
+            </div>
+            <div class="prose">
+                <p>
+                    FSSSMC Central Mosque exists as a place for congregational worship,
+                    Islamic learning, community engagement and service to the Ummah.
+                </p>
+                <p>
+                    The mosque’s work is rooted in the Qur’an and Sunnah and is supported
+                    by a leadership structure responsible for administrative and spiritual
+                    decision-making and approval.
+                </p>
+            </div>
+            <ul class="feature-list">
+                <li>Congregational prayer and Jummah service</li>
+                <li>Islamic education and learning</li>
+                <li>Community welfare and service</li>
+                <li>Da'awa and community engagement</li>
+                <li>Masjid maintenance and development</li>
+            </ul>
+        </div>
+        <div>
+            <img class="editorial-image"
+                 src="{{ url_for('static', filename='images/fssmc structure 2.jpeg') }}"
+                 alt="FSSSMC Central Mosque structure">
+        </div>
+    </div>
+</section>
+
+<section class="section section-soft">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Facilities</p>
+            <h2>Supporting the daily life of the mosque.</h2>
+        </div>
+        <div class="info-grid">
+            {% for title, description in facilities %}
+            <article class="info-card">
+                <h3>{{ title }}</h3>
+                <p>{{ description }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}

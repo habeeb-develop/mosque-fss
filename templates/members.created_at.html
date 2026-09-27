@@ -1,0 +1,160 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Members{% endblock %}
+
+{% block content %}
+
+<div class="members-page">
+
+    <div class="page-header">
+        <div>
+            <span class="page-label">FSSSMC CENTRAL MOSQUE</span>
+            <h1>Members</h1>
+            <p>View and manage registered mosque members.</p>
+        </div>
+
+        <a href="{{ url_for('admin_member_add') }}" class="btn btn-primary">
+            + Add Member
+        </a>
+    </div>
+
+    {% if members %}
+
+    <div class="members-card">
+
+        <div class="table-wrapper">
+            <table class="members-table">
+
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Address</th>
+                        <th>Post</th>
+                        <th>Created</th>
+                        <th>Updated</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for member in members %}
+
+                    <tr>
+
+                        <td class="member-id">
+                            {{ member.id }}
+                        </td>
+
+                        <td>
+                            <div class="member-name">
+                                {{ member.name }} {{ member.surname }}
+                            </div>
+                        </td>
+
+                        <td>
+                            {{ member.phone }}
+                        </td>
+
+                        <td>
+                            {{ member.email or '—' }}
+                        </td>
+
+                        <td class="address-cell">
+                            {{ member.address }}
+                        </td>
+
+                        <td>
+                            <span class="post-badge">
+                                {{ member.post }}
+                            </span>
+                        </td>
+
+                        <td>
+                            <div class="date-cell">
+                                <strong>
+                                    {{ member.created_at[:10] if member.created_at else '—' }}
+                                </strong>
+
+                                {% if member.created_at and member.created_at|length > 10 %}
+                                <small>
+                                    {{ member.created_at[11:19] }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="date-cell">
+                                <strong>
+                                    {{ member.updated_at[:10] if member.updated_at else '—' }}
+                                </strong>
+
+                                {% if member.updated_at and member.updated_at|length > 10 %}
+                                <small>
+                                    {{ member.updated_at[11:19] }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </td>
+
+                        <td>
+                            <div class="action-buttons">
+
+                                <a
+                                    href="{{ url_for('admin_member_edit', member_id=member.id) }}"
+                                    class="btn btn-edit"
+                                >
+                                    Edit
+                                </a>
+
+                                <form
+                                    action="{{ url_for('admin_member_delete', member_id=member.id) }}"
+                                    method="POST"
+                                    onsubmit="return confirm('Delete this member?');"
+                                >
+                                    <button type="submit" class="btn btn-delete">
+                                        Delete
+                                    </button>
+                                </form>
+
+                            </div>
+                        </td>
+
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+        </div>
+
+    </div>
+
+    {% else %}
+
+    <div class="empty-members">
+
+        <div class="empty-icon">👥</div>
+
+        <h2>No Members Yet</h2>
+
+        <p>
+            No mosque members have been registered yet.
+        </p>
+
+        <a href="{{ url_for('admin_member_add') }}" class="btn btn-primary">
+            Add First Member
+        </a>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+{% endblock %}

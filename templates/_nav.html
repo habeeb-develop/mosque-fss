@@ -1,0 +1,13 @@
+<a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}">Home</a>
+<a class="{% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">About</a>
+<a class="{% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">Prayer Times</a>
+<a class="{% if request.endpoint == 'services' %}active{% endif %}" href="{{ url_for('services') }}">Services</a>
+<a class="{% if request.endpoint == 'events' or request.endpoint == 'announcements' %}active{% endif %}" href="{{ url_for('events') }}">Events</a>
+<a class="{% if request.endpoint == 'learn' %}active{% endif %}" href="{{ url_for('learn') }}">Learn</a>
+<a class="{% if request.endpoint == 'get_involved' %}active{% endif %}" href="{{ url_for('get_involved') }}">Get Involved</a>
+<a class="{% if request.endpoint == 'contact' %}active{% endif %}" href="{{ url_for('contact') }}">Contact</a>
+{% if session.get('user_id') %}
+    <a class="nav-account" href="{{ url_for('profile') }}">My Account</a>
+{% else %}
+    <a class="nav-account" href="{{ url_for('login') }}">Sign In</a>
+{% endif %}

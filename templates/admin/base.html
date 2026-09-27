@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="FSSSMC Central Mosque Administration"
+    >
+
+    <title>
+        {% block title %}Admin Dashboard{% endblock %}
+        | FSSSMC Central Mosque
+    </title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Main stylesheet -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin.css') }}"
+    >
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="admin-body">
+
+    <!-- =========================================
+         ADMIN LAYOUT
+    ========================================== -->
+    <div class="admin-layout">
+
+        <!-- =====================================
+             SIDEBAR
+        ====================================== -->
+        <aside class="admin-sidebar">
+
+            <!-- Logo -->
+            <div class="admin-brand">
+
+                <a
+                    href="{{ url_for('admin_dashboard') }}"
+                    class="admin-brand-link"
+                >
+
+                    <div class="admin-logo">
+                        <img
+                            src="{{ url_for('static', filename='images/fsssmc.jpeg') }}"
+                            alt="FSSSMC Central Mosque Logo"
+                        >
+                    </div>
+
+                    <div class="admin-brand-text">
+                        <strong>FSSSMC</strong>
+                        <span>Central Mosque</span>
+                    </div>
+
+                </a>
+
+            </div>
+
+
+            <!-- Admin information -->
+            <div class="admin-user">
+
+                <div class="admin-user-avatar">
+                    {{ session.get('admin_email', 'A')[0]|upper }}
+                </div>
+
+                <div class="admin-user-details">
+                    <strong>Administrator</strong>
+
+                    <span>
+                        {{ session.get('admin_email', 'admin') }}
+                    </span>
+                </div>
+
+            </div>
+
+
+            <!-- Navigation -->
+            <nav class="admin-navigation">
+
+                <p class="admin-nav-heading">
+                    MAIN MENU
+                </p>
+
+                <!-- Dashboard -->
+                <a
+                    href="{{ url_for('admin_dashboard') }}"
+                    class="
+                        admin-nav-link
+                        {% if request.endpoint == 'admin_dashboard' %}
+                            active
+                        {% endif %}
+                    "
+                >
+                    <span class="admin-nav-icon">⌂</span>
+                    <span>Dashboard</span>
+                </a>
+
+
+                <!-- Members -->
+                <a
+                    href="{{ url_for('admin_members') }}"
+                    class="
+                        admin-nav-link
+                        {% if request.endpoint in ['admin_members', 'admin_add_member', 'admin_edit_member'] %}
+                            active
+                        {% endif %}
+                    "
+                >
+                    <span class="admin-nav-icon">♙</span>
+                    <span>Members</span>
+                </a>
+
+
+                <!-- Donations -->
+                <a
+                    href="{{ url_for('admin_donations') }}"
+                    class="
+                        admin-nav-link
+                        {% if request.endpoint in ['admin_donations', 'admin_update_donation_status'] %}
+                            active
+                        {% endif %}
+                    "
+                >
+                    <span class="admin-nav-icon">₦</span>
+                    <span>Donations</span>
+                </a>
+
+
+                <!-- Announcements -->
+                <a
+                    href="{{ url_for('admin_announcements') }}"
+                    class="
+                        admin-nav-link
+                        {% if request.endpoint in ['admin_announcements', 'admin_delete_announcement'] %}
+                            active
+                        {% endif %}
+                    "
+                >
+                    <span class="admin-nav-icon">▤</span>
+                    <span>Announcements</span>
+                </a>
+
+
+                <p class="admin-nav-heading admin-nav-heading-spaced">
+                    WEBSITE
+                </p>
+
+
+                <!-- View Website -->
+                <a
+                    href="{{ url_for('home') }}"
+                    class="admin-nav-link"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    <span class="admin-nav-icon">↗</span>
+                    <span>View Website</span>
+                </a>
+
+            </nav>
+
+
+            <!-- Sidebar bottom -->
+            <div class="admin-sidebar-bottom">
+
+                <div class="admin-divider"></div>
+
+                <a
+                    href="{{ url_for('admin_logout') }}"
+                    class="admin-logout"
+                >
+                    <span>⇥</span>
+                    <span>Sign Out</span>
+                </a>
+
+            </div>
+
+        </aside>
+
+
+        <!-- =====================================
+             MAIN AREA
+        ====================================== -->
+        <div class="admin-main">
+
+            <!-- =================================
+                 TOP BAR
+            ================================== -->
+            <header class="admin-topbar">
+
+                <div class="admin-topbar-left">
+
+                    <button
+                        type="button"
+                        class="admin-menu-button"
+                        aria-label="Open navigation"
+                        onclick="document.body.classList.toggle('admin-sidebar-open')"
+                    >
+                        ☰
+                    </button>
+
+                    <div>
+                        <p class="admin-topbar-label">
+                            FSSSMC CENTRAL MOSQUE
+                        </p>
+
+                        <h1>
+                            {% block page_heading %}
+                                Administration
+                            {% endblock %}
+                        </h1>
+                    </div>
+
+                </div>
+
+
+                <div class="admin-topbar-right">
+
+                    <a
+                        href="{{ url_for('home') }}"
+                        target="_blank"
+                        rel="noopener"
+                        class="admin-view-site"
+                    >
+                        View Site
+                    </a>
+
+                    <div class="admin-topbar-profile">
+
+                        <div class="admin-small-avatar">
+                            {{ session.get('admin_email', 'A')[0]|upper }}
+                        </div>
+
+                        <div>
+                            <strong>Administrator</strong>
+                            <span>FSSSMC Admin</span>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </header>
+
+
+            <!-- =================================
+                 PAGE CONTENT
+            ================================== -->
+            <main class="admin-content">
+
+                <!-- Flash messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+
+                    {% if messages %}
+
+                        <div class="admin-flash-container">
+
+                            {% for category, message in messages %}
+
+                                <div
+                                    class="
+                                        admin-alert
+                                        {% if category == 'success' %}
+                                            admin-alert-success
+                                        {% elif category == 'error' %}
+                                            admin-alert-error
+                                        {% else %}
+                                            admin-alert-info
+                                        {% endif %}
+                                    "
+                                >
+
+                                    <span class="admin-alert-icon">
+                                        {% if category == 'success' %}
+                                            ✓
+                                        {% elif category == 'error' %}
+                                            !
+                                        {% else %}
+                                            i
+                                        {% endif %}
+                                    </span>
+
+                                    <span>
+                                        {{ message }}
+                                    </span>
+
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                {% endwith %}
+
+
+                <!-- Individual admin pages insert content here -->
+                {% block content %}{% endblock %}
+
+            </main>
+
+
+            <!-- =================================
+                 FOOTER
+            ================================== -->
+            <footer class="admin-footer">
+
+                <div>
+                    <strong>FSSSMC Central Mosque</strong>
+                    <span>Administration Panel</span>
+                </div>
+
+                <div>
+                    © {{ 2026 }} FSSSMC Central Mosque
+                </div>
+
+            </footer>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================================
+         SMALL SIDEBAR OVERLAY
+    ========================================== -->
+    <div
+        class="admin-sidebar-overlay"
+        onclick="document.body.classList.remove('admin-sidebar-open')"
+    ></div>
+
+
+    {% block extra_js %}{% endblock %}
+
+</body>
+</html>

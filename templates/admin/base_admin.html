@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin | FSSSMC Central Mosque{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<div class="admin-shell">
+    <header class="admin-header">
+        <div class="container admin-header-inner">
+            <a class="admin-brand" href="{{ url_for('admin_dashboard') }}">
+                <img src="{{ url_for('static', filename='images/fsssmc.jpeg') }}" alt="FSSSMC logo">
+                <span>
+                    <strong>FSSSMC ADMIN</strong>
+                    <span>Central Mosque Administration</span>
+                </span>
+            </a>
+            <div class="admin-header-actions">
+                <a href="{{ url_for('home') }}">View Website</a>
+                <a href="{{ url_for('admin_logout') }}">Sign Out</a>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <p>Administration</p>
+            <a class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="{% if request.endpoint in ['admin_members','admin_add_member','admin_edit_member'] %}active{% endif %}" href="{{ url_for('admin_members') }}">Members</a>
+            <a class="{% if request.endpoint in ['admin_donations','admin_update_donation_status'] %}active{% endif %}" href="{{ url_for('admin_donations') }}">Donations</a>
+            <a class="{% if request.endpoint == 'admin_announcements' %}active{% endif %}" href="{{ url_for('admin_announcements') }}">Announcements</a>
+        </aside>
+
+        <main class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+</div>
+</body>
+</html>

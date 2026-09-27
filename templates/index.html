@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Home | FSSSMC Central Mosque{% endblock %}
+{% block content %}
+<section class="hero">
+    <div class="container hero-inner">
+        <div>
+            <p class="eyebrow">FSSSMC Central Mosque</p>
+            <h1>A place of worship, knowledge, peace, unity and community service.</h1>
+            <p>
+                Welcome to the FSSSMC Central Mosque. Explore our worship,
+                learning, community services, leadership and opportunities to get involved.
+            </p>
+            <div class="hero-actions">
+                <a class="btn btn-primary" href="{{ url_for('prayer') }}">View Prayer Times</a>
+                <a class="btn btn-secondary" href="{{ url_for('about') }}">Discover the Mosque</a>
+            </div>
+        </div>
+
+        <aside class="hero-panel" aria-label="Quick access">
+            <p class="eyebrow">Community at a glance</p>
+            <h2>Worship. Learn. Serve.</h2>
+            <p>The mosque brings together worship, Islamic learning and practical community service.</p>
+            <div class="hero-panel-list">
+                <div><span>Prayer</span><strong>Daily Worship</strong></div>
+                <div><span>Learning</span><strong>Islamic Education</strong></div>
+                <div><span>Community</span><strong>Welfare & Service</strong></div>
+                <div><span>Jummah</span><strong>Rotational Khatibs</strong></div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container split">
+        <div>
+            <p class="section-kicker">Serving the Ummah</p>
+            <div class="section-head">
+                <h2>A mosque built around worship and community.</h2>
+            </div>
+            <div class="prose">
+                <p>
+                    FSSSMC Central Mosque is a place where worship, knowledge,
+                    peace, unity and community service come together.
+                </p>
+                <p>
+                    Our work is guided by the Qur’an and Sunnah, with a focus on
+                    creating a welcoming environment for prayer, learning and service.
+                </p>
+            </div>
+            <div class="hero-actions">
+                <a class="btn btn-green" href="{{ url_for('contact') }}">Leadership & Community</a>
+                <a class="btn btn-outline" href="{{ url_for('get_involved') }}">Get Involved</a>
+            </div>
+        </div>
+        <div>
+            <img class="editorial-image"
+                 src="{{ url_for('static', filename='images/fssmc structure 2.jpeg') }}"
+                 alt="FSSSMC Central Mosque building">
+        </div>
+    </div>
+</section>
+
+<section class="section section-soft">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Our Facilities</p>
+            <h2>Spaces that support worship, learning and service.</h2>
+        </div>
+        <div class="info-grid">
+            {% for title, description in facilities %}
+            <article class="info-card">
+                <h3>{{ title }}</h3>
+                <p>{{ description }}</p>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Latest</p>
+            <h2>Announcements from the mosque.</h2>
+        </div>
+        {% if announcements %}
+        <div class="info-grid">
+            {% for item in announcements %}
+            <article class="info-card">
+                <p class="section-kicker">{{ item.created_at }}</p>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.body }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">No public announcements have been published yet.</div>
+        {% endif %}
+    </div>
+</section>
+
+<section class="quote-band">
+    <div class="container quote">
+        <p>“Worship • Knowledge • Peace • Unity • Community Service”</p>
+        <span>FSSSMC Central Mosque</span>
+    </div>
+</section>
+{% endblock %}

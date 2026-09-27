@@ -1,288 +1,2049 @@
-/* ================= RESET ================= */
+
+/* =========================================================
+   FSSSMC CENTRAL MOSQUE
+   CONTACT & LEADERSHIP PAGE
+   ========================================================= */
+
+/* =========================
+   ROOT VARIABLES
+========================= */
+
+:root {
+    --green-dark: #022c22;
+    --green: #064e3b;
+    --green-light: #075e45;
+    --green-bright: #087451;
+
+    --gold: #c9a227;
+    --gold-light: #e2c45b;
+    --gold-soft: #f4e8b4;
+
+    --white: #ffffff;
+    --cream: #faf9f3;
+    --background: #f4f7f6;
+    --surface: #ffffff;
+
+    --text: #17211e;
+    --text-light: #52615b;
+    --muted: #718079;
+
+    --border: #dfe8e3;
+    --border-light: #edf2ef;
+
+    --shadow-sm: 0 6px 20px rgba(2, 44, 34, 0.06);
+    --shadow-md: 0 14px 35px rgba(2, 44, 34, 0.10);
+    --shadow-lg: 0 22px 55px rgba(2, 44, 34, 0.14);
+
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 22px;
+    --radius-xl: 28px;
+
+    --transition: all 0.3s ease;
+}
+
+
+/* =========================
+   RESET
+========================= */
+
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    font-family: 'Amiri', serif;
-    background: #f4f7f6;
-    color: #222;
+    font-family: "Inter", "Segoe UI", sans-serif;
+    background: var(--background);
+    color: var(--text);
     line-height: 1.7;
     overflow-x: hidden;
 }
 
-/* ================= IMAGES ================= */
 img {
     max-width: 100%;
-    height: auto;
     display: block;
 }
 
-/* ================= CONTAINER ================= */
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: auto;
+a {
+    text-decoration: none;
+    color: inherit;
 }
 
-/* ================= HEADER ================= */
-.navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 40px;
-    background: #064e3b;
-    flex-wrap: wrap;
+button,
+input,
+textarea,
+select {
+    font: inherit;
 }
+
+ul {
+    list-style: none;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.top-bar {
+    width: 100%;
+    background: var(--green-dark);
+    color: rgba(255, 255, 255, 0.82);
+
+    min-height: 34px;
+    padding: 8px 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.site-header {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.97);
+
+    border-bottom: 1px solid var(--border);
+
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+
+/* IMPORTANT:
+   Your HTML contains an outer <header> and an inner
+   <header class="site-header">.
+   This keeps the navigation working properly.
+*/
+
+header > .site-header {
+    width: 100%;
+}
+
+
+/* =========================
+   NAVBAR
+========================= */
+
+.navbar {
+    width: min(1280px, calc(100% - 40px));
+    min-height: 82px;
+
+    margin: 0 auto;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 30px;
+}
+
+
+/* =========================
+   LOGO
+========================= */
 
 .logo {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 13px;
+
+    flex-shrink: 0;
 }
 
-.logo img {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-}
+.logo-image {
+    width: 49px;
+    height: 49px;
 
-.logo span {
-    color: white;
-    font-size: 22px;
-    font-weight: bold;
-}
+    border-radius: 13px;
 
-.menu {
-    list-style: none;
+    overflow: hidden;
+
+    background: var(--green);
+    border: 2px solid rgba(201, 162, 39, 0.65);
+
     display: flex;
-    gap: 25px;
+    align-items: center;
+    justify-content: center;
+
+    box-shadow: 0 5px 15px rgba(2, 44, 34, 0.13);
 }
 
-.menu a {
-    color: white;
-    text-decoration: none;
-    font-weight: 500;
-    transition: 0.3s;
+.logo-image img {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
 }
 
-.menu a:hover,
-.menu .active {
-    color: #ffd700;
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
 }
 
-/* ================= SECTIONS ================= */
-.section {
-    padding: 100px 0 60px;
+.logo-text strong {
+    color: var(--green-dark);
+
+    font-size: 18px;
+    font-weight: 800;
+
+    letter-spacing: 0.2px;
 }
 
-.box {
-    background: #fff;
-    padding: 35px;
-    margin-bottom: 40px;
-    border-radius: 12px;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.08);
-}
+.logo-text span {
+    color: var(--muted);
 
-h1 {
-    text-align: center;
-    margin-bottom: 40px;
-    font-size: 30px;
-    color: #0d5c3b;
-    letter-spacing: 1px;
+    margin-top: 5px;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1.7px;
     text-transform: uppercase;
 }
 
-h2, h3 {
-    color: #003c23;
-    margin-bottom: 15px;
+
+/* =========================================================
+   NAVIGATION MENU
+========================================================= */
+
+.menu {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 5px;
 }
 
-.arabic {
-    font-size: 18px;
-    display: block;
-    margin-top: 8px;
-    color: #f4c542;
-}
-
-/* ================= EXECUTIVE DROPDOWN ================= */
-details {
-    background: #fff;
-    border-radius: 12px;
-    margin-bottom: 20px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-summary {
-    padding: 18px 22px;
-    font-weight: 600;
-    font-size: 17px;
-    cursor: pointer;
-    background: linear-gradient(135deg, #0d5c3b, #11875d);
-    color: #fff;
+.menu li {
     position: relative;
-    list-style: none;
-    border-radius: 12px;
 }
 
-/* Hide default arrow */
-summary::-webkit-details-marker {
-    display: none;
+.menu li a {
+    min-height: 42px;
+
+    padding: 9px 11px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    border-radius: 9px;
+
+    color: #33443e;
+
+    font-size: 12px;
+    font-weight: 650;
+
+    transition: var(--transition);
 }
 
-/* Custom + / - icon */
-summary::after {
-    content: "+";
+.menu li a i {
+    font-size: 12px;
+    color: var(--green-light);
+
+    transition: var(--transition);
+}
+
+.menu li a:hover {
+    color: var(--green);
+    background: #edf5f1;
+}
+
+.menu li a:hover i {
+    color: var(--gold);
+}
+
+.menu li a.active {
+    color: var(--white);
+    background: var(--green);
+
+    box-shadow: 0 5px 15px rgba(6, 78, 59, 0.18);
+}
+
+.menu li a.active i {
+    color: var(--gold-light);
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero {
+    position: relative;
+
+    min-height: 475px;
+
+    padding: 100px 25px 105px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    background:
+        radial-gradient(
+            circle at 85% 20%,
+            rgba(201, 162, 39, 0.17),
+            transparent 28%
+        ),
+        radial-gradient(
+            circle at 12% 85%,
+            rgba(8, 116, 81, 0.45),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #011f18 0%,
+            var(--green-dark) 45%,
+            var(--green) 100%
+        );
+
+    color: var(--white);
+}
+
+
+/* Islamic geometric background */
+
+.hero::before {
+    content: "";
+
     position: absolute;
-    right: 25px;
-    font-size: 20px;
-    transition: 0.3s;
+    inset: -100px;
+
+    opacity: 0.075;
+
+    background-image:
+        linear-gradient(30deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff),
+        linear-gradient(150deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff),
+        linear-gradient(30deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff),
+        linear-gradient(150deg, #ffffff 12%, transparent 12.5%, transparent 87%, #ffffff 87.5%, #ffffff);
+
+    background-size: 80px 140px;
+
+    background-position:
+        0 0,
+        0 0,
+        40px 70px,
+        40px 70px;
+
+    transform: rotate(-2deg);
 }
 
-details[open] summary::after {
-    content: "–";
+
+/* Gold decorative glow */
+
+.hero::after {
+    content: "";
+
+    position: absolute;
+
+    width: 420px;
+    height: 420px;
+
+    right: -170px;
+    bottom: -230px;
+
+    border: 1px solid rgba(226, 196, 91, 0.25);
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 0 35px rgba(226, 196, 91, 0.035),
+        0 0 0 70px rgba(226, 196, 91, 0.025);
 }
 
-/* Hover effect on summary */
-summary:hover {
-    background: linear-gradient(135deg, #11875d, #0d5c3b);
+
+/* =========================
+   HERO CONTENT
+========================= */
+
+.hero-content {
+    width: min(900px, 100%);
+
+    position: relative;
+    z-index: 2;
+
+    text-align: center;
+
+    margin: auto;
 }
 
-/* MEMBER LIST GRID */
-.member-list {
-    padding: 22px;
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 8px 17px;
+
+    margin-bottom: 22px;
+
+    border: 1px solid rgba(226, 196, 91, 0.45);
+    border-radius: 100px;
+
+    background: rgba(255, 255, 255, 0.055);
+
+    color: var(--gold-light);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+
+    box-shadow: inset 0 0 20px rgba(255, 255, 255, 0.02);
+}
+
+.hero h1 {
+    margin-bottom: 19px;
+
+    color: var(--white);
+
+    font-family: "Amiri", serif;
+
+    font-size: clamp(45px, 7vw, 76px);
+
+    font-weight: 700;
+
+    line-height: 1.05;
+
+    letter-spacing: -0.5px;
+}
+
+.hero h1 span {
+    color: var(--gold-light);
+}
+
+.hero p {
+    width: min(700px, 100%);
+
+    margin: 0 auto;
+
+    color: #d4e2dd;
+
+    font-size: 15px;
+    font-weight: 400;
+
+    line-height: 1.9;
+}
+
+
+/* =========================================================
+   MAIN
+========================================================= */
+
+main {
+    width: min(1200px, calc(100% - 40px));
+
+    margin: 0 auto;
+
+    padding: 85px 0 100px;
+}
+
+
+/* =========================================================
+   SECTION HEADINGS
+========================================================= */
+
+.section-heading {
+    margin-bottom: 42px;
+
+    text-align: center;
+}
+
+.section-heading .eyebrow {
+    margin-bottom: 9px;
+
+    color: var(--green-bright);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 2.1px;
+
+    text-transform: uppercase;
+}
+
+.section-heading h2 {
+    margin-bottom: 13px;
+
+    color: var(--green-dark);
+
+    font-family: "Amiri", serif;
+
+    font-size: clamp(35px, 5vw, 51px);
+
+    font-weight: 700;
+
+    line-height: 1.12;
+}
+
+.section-heading p {
+    width: min(750px, 100%);
+
+    margin: 0 auto;
+
+    color: var(--text-light);
+
+    font-size: 13px;
+    line-height: 1.9;
+}
+
+
+/* =========================================================
+   EXECUTIVE INTRO
+========================================================= */
+
+.executive-intro {
+    position: relative;
+
+    margin-bottom: 45px;
+
+    padding: 34px 38px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #fbfcfa
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius-lg);
+
+    box-shadow: var(--shadow-sm);
+
+    overflow: hidden;
+}
+
+.executive-intro::before {
+    content: "";
+
+    position: absolute;
+
+    top: 0;
+    left: 0;
+    bottom: 0;
+
+    width: 5px;
+
+    background:
+        linear-gradient(
+            to bottom,
+            var(--gold),
+            var(--gold-light)
+        );
+}
+
+.executive-intro::after {
+    content: "☪";
+
+    position: absolute;
+
+    right: 28px;
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    color: rgba(6, 78, 59, 0.035);
+
+    font-family: "Amiri", serif;
+
+    font-size: 100px;
+
+    pointer-events: none;
+}
+
+.executive-intro h3 {
+    position: relative;
+    z-index: 1;
+
+    margin-bottom: 8px;
+
+    color: var(--green-dark);
+
+    font-family: "Amiri", serif;
+
+    font-size: 28px;
+}
+
+.executive-intro p {
+    position: relative;
+    z-index: 1;
+
+    max-width: 850px;
+
+    color: var(--text-light);
+
+    font-size: 13px;
+
+    line-height: 1.9;
+}
+
+
+/* =========================================================
+   EXECUTIVE MEMBER GRID
+========================================================= */
+
+.executive-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 15px;
-    animation: fadeIn 0.4s ease-in-out;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 19px;
+
+    margin-bottom: 85px;
 }
 
-/* MEMBER BOX */
-.member {
-    background: #f9fbfc;
-    padding: 14px 16px;
-    border-radius: 8px;
-    border-left: 5px solid #0d5c3b;
+
+/* =========================================================
+   MEMBER CARD
+========================================================= */
+
+.member-card {
+    position: relative;
+
+    min-height: 190px;
+
+    padding: 27px 25px;
+
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius-md);
+
+    box-shadow: var(--shadow-sm);
+
+    overflow: hidden;
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.member-card::after {
+    content: "";
+
+    position: absolute;
+
+    right: -35px;
+    bottom: -35px;
+
+    width: 100px;
+    height: 100px;
+
+    border: 1px solid rgba(201, 162, 39, 0.08);
+
+    border-radius: 50%;
+
+    transition: var(--transition);
+}
+
+.member-card:hover {
+    transform: translateY(-6px);
+
+    border-color: rgba(6, 78, 59, 0.22);
+
+    box-shadow: var(--shadow-md);
+}
+
+.member-card:hover::after {
+    transform: scale(1.25);
+}
+
+
+/* Featured members */
+
+.member-card.featured {
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #fbfcf7 100%
+        );
+
+    border-color: rgba(201, 162, 39, 0.4);
+}
+
+.member-card.featured:hover {
+    border-color: var(--gold);
+}
+
+
+/* =========================
+   NUMBER
+========================= */
+
+.member-number {
+    position: absolute;
+
+    top: 17px;
+    right: 19px;
+
+    color: #aebbb6;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+
+/* =========================
+   MEMBER ICON
+========================= */
+
+.member-icon {
+    width: 46px;
+    height: 46px;
+
+    margin-bottom: 17px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 13px;
+
+    background: #edf5f1;
+
+    color: var(--green);
+
+    font-family: "Amiri", serif;
+
+    font-size: 22px;
+
+    transition: var(--transition);
+}
+
+.member-card:hover .member-icon {
+    background: var(--green);
+    color: var(--gold-light);
+
+    transform: rotate(-3deg);
+}
+
+.member-card.featured .member-icon {
+    background: var(--green);
+    color: var(--gold-light);
+
+    box-shadow: 0 7px 17px rgba(6, 78, 59, 0.16);
+}
+
+
+/* =========================
+   NAME
+========================= */
+
+.member-name {
+    position: relative;
+    z-index: 2;
+
+    padding-right: 22px;
+
+    color: var(--green-dark);
+
     font-size: 14px;
-    font-weight: 500;
-    transition: all 0.3s ease;
+    font-weight: 800;
+
+    line-height: 1.5;
 }
 
-.member:hover {
-    background: #e6f4ef;
-    transform: translateY(-4px);
-    box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+
+/* =========================
+   ROLE
+========================= */
+
+.member-role {
+    display: inline-block;
+
+    margin-top: 8px;
+
+    color: var(--gold);
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1.1px;
+
+    text-transform: uppercase;
 }
 
-/* Paragraphs inside dropdown */
-.member-list p {
-    grid-column: 1 / -1;
-    font-size: 14px;
-    margin-bottom: 10px;
-    color: #555;
+
+/* =========================================================
+   PAST EXECUTIVE SECTION
+========================================================= */
+
+.past-section {
+    position: relative;
+
+    margin-bottom: 90px;
+
+    padding: 52px 45px;
+
+    background:
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(201, 162, 39, 0.14),
+            transparent 28%
+        ),
+        linear-gradient(
+            135deg,
+            #011f18,
+            var(--green-dark),
+            #064e3b
+        );
+
+    border-radius: var(--radius-xl);
+
+    overflow: hidden;
+
+    box-shadow: var(--shadow-lg);
 }
 
-/* ===================== ANIMATION ===================== */
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(8px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+.past-section::before {
+    content: "";
+
+    position: absolute;
+
+    width: 280px;
+    height: 280px;
+
+    left: -170px;
+    bottom: -170px;
+
+    border: 1px solid rgba(226, 196, 91, 0.17);
+
+    border-radius: 50%;
+
+    box-shadow:
+        0 0 0 30px rgba(226, 196, 91, 0.025),
+        0 0 0 60px rgba(226, 196, 91, 0.02);
 }
 
-/* ================= FOOTER ================= */
-.footer {
-    background: #002a18;
-    color: #fff;
+.past-section .section-heading {
+    position: relative;
+    z-index: 2;
+
+    margin-bottom: 31px;
 }
 
-.footer-container {
+.past-section .section-heading .eyebrow {
+    color: var(--gold-light);
+}
+
+.past-section .section-heading h2 {
+    color: var(--white);
+}
+
+.past-section .section-heading p {
+    color: #bfd0c9;
+}
+
+
+/* =========================
+   PAST MEMBER GRID
+========================= */
+
+.past-grid {
+    position: relative;
+    z-index: 2;
+
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 40px;
-    padding: 60px 20px;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 18px;
 }
 
-.footer-section h3,
-.footer-section h4 {
-    margin-bottom: 15px;
-    color: #f4c542;
+.past-card {
+    padding: 23px;
+
+    background: rgba(255, 255, 255, 0.045);
+
+    border: 1px solid rgba(255, 255, 255, 0.11);
+
+    border-radius: 15px;
+
+    transition: var(--transition);
 }
 
-.footer-section p,
-.footer-section li {
+.past-card:hover {
+    background: rgba(255, 255, 255, 0.07);
+
+    border-color: rgba(226, 196, 91, 0.3);
+
+    transform: translateY(-3px);
+}
+
+.past-card strong {
+    display: block;
+
+    color: var(--white);
+
     font-size: 14px;
+    font-weight: 700;
+
     line-height: 1.6;
 }
 
-.footer-bottom {
-    text-align: center;
-    padding: 20px;
-    background: #001f12;
-    font-size: 13px;
+.deceased {
+    display: inline-flex;
+
+    margin-top: 8px;
+
+    color: var(--gold-light);
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+
+    text-transform: uppercase;
 }
 
-/* ================= RESPONSIVE ================= */
 
-/* Tablet */
-@media (max-width: 768px) {
+/* =========================================================
+   COMMITTEE GRID
+========================================================= */
+
+.committee-grid {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 24px;
+}
+
+
+/* =========================================================
+   COMMITTEE CARD
+========================================================= */
+
+.committee {
+    background: var(--surface);
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius-lg);
+
+    overflow: hidden;
+
+    box-shadow: var(--shadow-sm);
+
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        border-color 0.3s ease;
+}
+
+.committee:hover {
+    transform: translateY(-5px);
+
+    border-color: rgba(6, 78, 59, 0.2);
+
+    box-shadow: var(--shadow-md);
+}
+
+
+/* =========================
+   COMMITTEE HEADER
+========================= */
+
+.committee-header {
+    position: relative;
+
+    padding: 24px 27px 28px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--green-dark),
+            var(--green)
+        );
+
+    color: var(--white);
+
+    overflow: hidden;
+}
+
+.committee-header::before {
+    content: "";
+
+    position: absolute;
+
+    width: 100px;
+    height: 100px;
+
+    right: -35px;
+    top: -50px;
+
+    border: 1px solid rgba(226, 196, 91, 0.18);
+
+    border-radius: 50%;
+}
+
+.committee-header::after {
+    content: "";
+
+    position: absolute;
+
+    left: 27px;
+    bottom: 0;
+
+    width: 45px;
+    height: 3px;
+
+    background: var(--gold-light);
+}
+
+.committee-header h3 {
+    position: relative;
+    z-index: 2;
+
+    max-width: 90%;
+
+    font-family: "Amiri", serif;
+
+    font-size: 25px;
+    font-weight: 700;
+
+    line-height: 1.25;
+}
+
+.committee-header span {
+    position: relative;
+    z-index: 2;
+
+    display: block;
+
+    margin-top: 5px;
+
+    color: #bcd0c8;
+
+    font-size: 9px;
+    font-weight: 700;
+
+    letter-spacing: 1.3px;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   COMMITTEE BODY
+========================================================= */
+
+.committee-body {
+    padding: 10px 27px 22px;
+}
+
+.committee-member {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 11px;
+
+    padding: 14px 0;
+
+    border-bottom: 1px solid var(--border-light);
+
+    color: #35443f;
+
+    font-size: 12px;
+    font-weight: 650;
+
+    line-height: 1.6;
+}
+
+.committee-member:last-child {
+    border-bottom: none;
+}
+
+.bullet {
+    flex: 0 0 7px;
+
+    width: 7px;
+    height: 7px;
+
+    margin-top: 7px;
+
+    border-radius: 50%;
+
+    background: var(--gold);
+
+    box-shadow: 0 0 0 3px rgba(201, 162, 39, 0.10);
+}
+
+
+/* =========================
+   NOTES
+========================= */
+
+.member-note {
+    display: inline-block;
+
+    margin-left: 3px;
+
+    padding: 2px 7px;
+
+    border-radius: 20px;
+
+    background: #fff7dc;
+
+    color: #977200;
+
+    font-size: 8px;
+    font-weight: 800;
+
+    letter-spacing: 0.5px;
+
+    line-height: 1.5;
+
+    text-transform: uppercase;
+
+    vertical-align: middle;
+}
+
+
+/* =========================================================
+   JUMMAH SECTION
+========================================================= */
+
+.jummah {
+    position: relative;
+
+    margin-top: 85px;
+
+    padding: 58px 45px;
+
+    background:
+        radial-gradient(
+            circle at 90% 5%,
+            rgba(201, 162, 39, 0.14),
+            transparent 27%
+        ),
+        radial-gradient(
+            circle at 5% 95%,
+            rgba(8, 116, 81, 0.25),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #011f18,
+            var(--green-dark)
+        );
+
+    border-radius: var(--radius-xl);
+
+    color: var(--white);
+
+    overflow: hidden;
+
+    box-shadow: var(--shadow-lg);
+}
+
+.jummah::before {
+    content: "ﷲ";
+
+    position: absolute;
+
+    right: 30px;
+    bottom: -40px;
+
+    color: rgba(255, 255, 255, 0.025);
+
+    font-family: "Amiri", serif;
+
+    font-size: 190px;
+
+    pointer-events: none;
+}
+
+.jummah-heading {
+    position: relative;
+    z-index: 2;
+
+    margin-bottom: 35px;
+
+    text-align: center;
+}
+
+.jummah-heading .eyebrow {
+    color: var(--gold-light);
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 2px;
+
+    text-transform: uppercase;
+}
+
+.jummah-heading h2 {
+    margin: 7px 0 10px;
+
+    color: var(--white);
+
+    font-family: "Amiri", serif;
+
+    font-size: clamp(36px, 5vw, 47px);
+
+    line-height: 1.15;
+}
+
+.jummah-heading p {
+    width: min(760px, 100%);
+
+    margin: auto;
+
+    color: #c5d5cf;
+
+    font-size: 13px;
+
+    line-height: 1.9;
+}
+
+
+/* =========================
+   LEAD IMAM
+========================= */
+
+.jummah-lead {
+    position: relative;
+    z-index: 2;
+
+    width: min(720px, 100%);
+
+    margin: 0 auto 24px;
+
+    padding: 22px 25px;
+
+    text-align: center;
+
+    background: rgba(255, 255, 255, 0.045);
+
+    border: 1px solid rgba(226, 196, 91, 0.35);
+
+    border-radius: 16px;
+}
+
+.jummah-lead strong {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: var(--gold-light);
+
+    font-size: 9px;
+    font-weight: 800;
+
+    letter-spacing: 1.5px;
+
+    text-transform: uppercase;
+}
+
+.jummah-lead span {
+    color: var(--white);
+
+    font-family: "Amiri", serif;
+
+    font-size: 24px;
+    font-weight: 700;
+
+    line-height: 1.4;
+}
+
+
+/* =========================
+   JUMMAH PEOPLE
+========================= */
+
+.jummah-list {
+    position: relative;
+    z-index: 2;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 14px;
+}
+
+.jummah-person {
+    min-height: 68px;
+
+    padding: 17px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    text-align: center;
+
+    background: rgba(255, 255, 255, 0.045);
+
+    border: 1px solid rgba(255, 255, 255, 0.09);
+
+    border-radius: 13px;
+
+    color: #e2ece8;
+
+    font-size: 11px;
+    font-weight: 650;
+
+    line-height: 1.55;
+
+    transition: var(--transition);
+}
+
+.jummah-person:hover {
+    background: rgba(255, 255, 255, 0.08);
+
+    border-color: rgba(226, 196, 91, 0.25);
+
+    transform: translateY(-3px);
+}
+
+
+/* =========================================================
+   CONTACT CTA
+========================================================= */
+
+.contact-box {
+    position: relative;
+
+    margin-top: 85px;
+
+    padding: 50px 35px;
+
+    text-align: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #fbfcfa
+        );
+
+    border: 1px solid var(--border);
+
+    border-radius: var(--radius-xl);
+
+    box-shadow: var(--shadow-md);
+
+    overflow: hidden;
+}
+
+.contact-box::before {
+    content: "";
+
+    position: absolute;
+
+    width: 170px;
+    height: 170px;
+
+    left: -90px;
+    top: -90px;
+
+    border: 1px solid rgba(201, 162, 39, 0.18);
+
+    border-radius: 50%;
+}
+
+.contact-box::after {
+    content: "";
+
+    position: absolute;
+
+    width: 130px;
+    height: 130px;
+
+    right: -70px;
+    bottom: -70px;
+
+    border: 1px solid rgba(6, 78, 59, 0.08);
+
+    border-radius: 50%;
+}
+
+.contact-box h2 {
+    position: relative;
+    z-index: 2;
+
+    margin-bottom: 10px;
+
+    color: var(--green-dark);
+
+    font-family: "Amiri", serif;
+
+    font-size: clamp(34px, 5vw, 43px);
+
+    line-height: 1.2;
+}
+
+.contact-box p {
+    position: relative;
+    z-index: 2;
+
+    width: min(650px, 100%);
+
+    margin: 0 auto;
+
+    color: var(--text-light);
+
+    font-size: 13px;
+
+    line-height: 1.9;
+}
+
+
+/* =========================
+   CONTACT BUTTONS
+========================= */
+
+.contact-actions {
+    position: relative;
+    z-index: 2;
+
+    margin-top: 27px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    flex-wrap: wrap;
+
+    gap: 12px;
+}
+
+.contact-btn {
+    min-width: 185px;
+
+    min-height: 45px;
+
+    padding: 11px 20px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 10px;
+
+    background: var(--green);
+
+    color: var(--white);
+
+    font-size: 11px;
+    font-weight: 800;
+
+    transition: var(--transition);
+
+    box-shadow: 0 6px 16px rgba(6, 78, 59, 0.15);
+}
+
+.contact-btn:hover {
+    background: var(--green-dark);
+
+    transform: translateY(-3px);
+
+    box-shadow: 0 10px 22px rgba(2, 44, 34, 0.18);
+}
+
+.contact-btn.secondary {
+    background: #edf4f1;
+
+    color: var(--green-dark);
+
+    border: 1px solid var(--border);
+
+    box-shadow: none;
+}
+
+.contact-btn.secondary:hover {
+    background: #e2eee9;
+
+    border-color: #cbdcd5;
+}
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+footer {
+    background:
+        linear-gradient(
+            135deg,
+            #011f18,
+            #022c22
+        );
+
+    color: #aebfb8;
+
+    border-top: 1px solid rgba(201, 162, 39, 0.18);
+}
+
+.footer-inner {
+    width: min(1200px, calc(100% - 40px));
+
+    min-height: 120px;
+
+    margin: auto;
+
+    padding: 30px 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 30px;
+}
+
+.footer-brand {
+    color: var(--white);
+
+    font-size: 16px;
+    font-weight: 800;
+}
+
+.footer-brand span {
+    display: block;
+
+    margin-top: 5px;
+
+    color: #839a91;
+
+    font-size: 9px;
+    font-weight: 600;
+
+    letter-spacing: 1.4px;
+
+    text-transform: uppercase;
+}
+
+.copyright {
+    color: #839a91;
+
+    font-size: 10px;
+
+    text-align: right;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1100px) {
+
     .navbar {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 15px 20px;
+        width: min(100% - 30px, 1100px);
     }
 
     .menu {
-        flex-direction: column;
-        width: 100%;
-        margin-top: 10px;
-        gap: 12px;
+        gap: 1px;
     }
 
-    .section {
-        padding: 80px 20px;
+    .menu li a {
+        padding: 8px 8px;
+        font-size: 11px;
     }
 
-    .footer-container {
-        grid-template-columns: 1fr;
-        text-align: center;
+    .menu li a i {
+        font-size: 10px;
     }
 
-    .member-list {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
+    main {
+        width: min(100% - 30px, 1100px);
+    }
+
+    .executive-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .jummah-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
-/* Small Phone */
-@media (max-width: 480px) {
+
+/* =========================================================
+   TABLET / SMALL LAPTOP
+========================================================= */
+
+@media (max-width: 900px) {
+
     .navbar {
-        padding: 12px 15px;
+        min-height: 75px;
     }
 
-    .logo span {
+    .logo-text strong {
         font-size: 16px;
     }
 
-    .section {
+    .menu li a {
+        padding: 7px;
+        gap: 5px;
+    }
+
+    .menu li a i {
+        display: none;
+    }
+
+    .hero {
+        min-height: 420px;
+        padding: 85px 25px;
+    }
+
+    main {
+        padding-top: 70px;
+    }
+
+    .committee-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 720px) {
+
+    .top-bar {
+        min-height: 31px;
+        padding: 7px 12px;
+
+        font-size: 8px;
+        letter-spacing: 0.8px;
+    }
+
+    .site-header {
+        position: relative;
+    }
+
+    .navbar {
+        width: calc(100% - 28px);
+
+        min-height: 70px;
+
+        justify-content: center;
+    }
+
+    .logo {
+        margin: auto;
+    }
+
+    .logo-image {
+        width: 44px;
+        height: 44px;
+
+        border-radius: 11px;
+    }
+
+    .logo-text strong {
+        font-size: 15px;
+    }
+
+    .logo-text span {
+        font-size: 8px;
+        letter-spacing: 1.3px;
+    }
+
+    /*
+       Navigation is intentionally hidden on small screens
+       to keep the header clean and prevent the long menu
+       from breaking the layout.
+    */
+
+    .menu {
+        display: none;
+    }
+
+
+    /* HERO */
+
+    .hero {
+        min-height: 390px;
+
+        padding: 70px 18px 75px;
+    }
+
+    .hero-badge {
+        font-size: 8px;
+
+        padding: 7px 13px;
+
+        letter-spacing: 1.2px;
+    }
+
+    .hero h1 {
+        font-size: 46px;
+
+        line-height: 1.08;
+    }
+
+    .hero p {
+        font-size: 12px;
+
+        line-height: 1.8;
+    }
+
+
+    /* MAIN */
+
+    main {
+        width: calc(100% - 28px);
+
+        padding: 60px 0 75px;
+    }
+
+
+    /* HEADINGS */
+
+    .section-heading {
+        margin-bottom: 32px;
+    }
+
+    .section-heading .eyebrow {
+        font-size: 8px;
+
+        letter-spacing: 1.6px;
+    }
+
+    .section-heading h2 {
+        font-size: 35px;
+    }
+
+    .section-heading p {
+        font-size: 12px;
+    }
+
+
+    /* INTRO */
+
+    .executive-intro {
+        padding: 27px 25px;
+
+        margin-bottom: 30px;
+
+        border-radius: 17px;
+    }
+
+    .executive-intro h3 {
+        font-size: 25px;
+    }
+
+    .executive-intro p {
+        font-size: 12px;
+    }
+
+    .executive-intro::after {
+        display: none;
+    }
+
+
+    /* EXECUTIVES */
+
+    .executive-grid {
+        grid-template-columns: 1fr;
+
+        gap: 15px;
+
+        margin-bottom: 65px;
+    }
+
+    .member-card {
+        min-height: auto;
+
+        padding: 23px;
+    }
+
+
+    /* PAST */
+
+    .past-section {
+        padding: 38px 22px;
+
+        margin-bottom: 65px;
+
+        border-radius: 20px;
+    }
+
+    .past-grid {
+        grid-template-columns: 1fr;
+
+        gap: 12px;
+    }
+
+    .past-card {
+        padding: 19px;
+    }
+
+
+    /* COMMITTEES */
+
+    .committee-grid {
+        grid-template-columns: 1fr;
+
+        gap: 17px;
+    }
+
+    .committee-header {
+        padding: 21px 22px 25px;
+    }
+
+    .committee-header h3 {
+        font-size: 23px;
+    }
+
+    .committee-body {
+        padding: 7px 22px 18px;
+    }
+
+    .committee-member {
+        font-size: 11px;
+
+        padding: 12px 0;
+    }
+
+
+    /* JUMMAH */
+
+    .jummah {
+        margin-top: 65px;
+
+        padding: 42px 20px;
+
+        border-radius: 20px;
+    }
+
+    .jummah-heading {
+        margin-bottom: 27px;
+    }
+
+    .jummah-heading h2 {
+        font-size: 37px;
+    }
+
+    .jummah-heading p {
+        font-size: 11px;
+    }
+
+    .jummah-lead {
+        padding: 19px 14px;
+    }
+
+    .jummah-lead span {
+        font-size: 20px;
+    }
+
+    .jummah-list {
+        grid-template-columns: 1fr;
+
+        gap: 10px;
+    }
+
+    .jummah-person {
+        min-height: 57px;
+
+        font-size: 10px;
+    }
+
+
+    /* CONTACT */
+
+    .contact-box {
+        margin-top: 65px;
+
+        padding: 38px 20px;
+
+        border-radius: 20px;
+    }
+
+    .contact-box h2 {
+        font-size: 34px;
+    }
+
+    .contact-box p {
+        font-size: 11px;
+    }
+
+    .contact-actions {
+        flex-direction: column;
+
+        width: 100%;
+    }
+
+    .contact-btn {
+        width: 100%;
+        max-width: 290px;
+    }
+
+
+    /* FOOTER */
+
+    .footer-inner {
+        width: calc(100% - 28px);
+
+        min-height: auto;
+
+        padding: 30px 0;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        text-align: center;
+    }
+
+    .copyright {
+        text-align: center;
+
+        font-size: 9px;
+    }
+}
+
+
+/* =========================================================
+   VERY SMALL PHONES
+========================================================= */
+
+@media (max-width: 390px) {
+
+    .logo-text strong {
+        font-size: 14px;
+    }
+
+    .logo-text span {
+        font-size: 7px;
+    }
+
+    .hero {
+        min-height: 360px;
+
         padding: 60px 15px;
     }
 
-    .box {
-        padding: 20px;
+    .hero h1 {
+        font-size: 40px;
     }
 
-    .member-list {
-        grid-template-columns: 1fr;
-        gap: 10px;
+    .hero p {
+        font-size: 11px;
     }
+
+    .section-heading h2 {
+        font-size: 32px;
+    }
+
+    .member-card {
+        padding: 21px;
+    }
+
+    .member-name {
+        font-size: 13px;
+    }
+
+    .committee-header h3 {
+        font-size: 21px;
+    }
+
+    .jummah-heading h2 {
+        font-size: 34px;
+    }
+
+    .jummah-lead span {
+        font-size: 18px;
+    }
+}
+
+
+/* =========================================================
+   ACCESSIBILITY
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    html {
+        scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+
+/* =========================================================
+   SELECTION
+========================================================= */
+
+::selection {
+    background: var(--gold);
+    color: var(--green-dark);
+}
+
+
+/* =========================================================
+   SCROLLBAR
+========================================================= */
+
+::-webkit-scrollbar {
+    width: 9px;
+}
+
+::-webkit-scrollbar-track {
+    background: #edf2ef;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--green);
+
+    border-radius: 20px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--green-dark);
 }
 

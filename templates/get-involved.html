@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Get Involved | FSSSMC Central Mosque{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="breadcrumb">FSSSMC / Get Involved</p>
+        <h1>Get Involved</h1>
+        <p>There are many ways to participate in the worship, learning and service of the mosque.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Participation</p>
+            <h2>Find a way to serve your community.</h2>
+        </div>
+
+        <div class="info-grid">
+            <article class="info-card">
+                <h3>Become a Member</h3>
+                <p>Submit your membership information through the community registration form.</p>
+                <a class="btn btn-outline" style="margin-top:18px;" href="{{ url_for('contact') }}#membership">Register</a>
+            </article>
+            <article class="info-card">
+                <h3>Support the Mosque</h3>
+                <p>Support mosque activities through a recorded donation.</p>
+                <a class="btn btn-outline" style="margin-top:18px;" href="{{ url_for('donate') }}">Donate</a>
+            </article>
+            <article class="info-card">
+                <h3>Community Service</h3>
+                <p>Learn about the committees responsible for welfare, education, da'awa, maintenance and development.</p>
+                <a class="btn btn-outline" style="margin-top:18px;" href="{{ url_for('contact') }}#committees">View Committees</a>
+            </article>
+        </div>
+    </div>
+</section>
+{% endblock %}

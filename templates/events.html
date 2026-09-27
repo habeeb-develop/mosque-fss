@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Events | FSSSMC Central Mosque{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="breadcrumb">FSSSMC / Events</p>
+        <h1>Events & Announcements</h1>
+        <p>Stay informed about programmes and announcements published by the mosque.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Community Calendar</p>
+            <h2>What is happening at FSSSMC.</h2>
+        </div>
+
+        {% if announcements %}
+        <div class="info-grid">
+            {% for item in announcements %}
+            <article class="info-card">
+                <p class="section-kicker">{{ item.created_at }}</p>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.body }}</p>
+            </article>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">
+            There are currently no published announcements. Check back for updates.
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

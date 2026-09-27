@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block title %}Leadership & Community | FSSSMC Central Mosque{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="breadcrumb">FSSSMC / Leadership & Community</p>
+        <h1>Leadership & Community</h1>
+        <p>The people and committees supporting the administrative, spiritual and community work of the mosque.</p>
+    </div>
+</section>
+
+<section class="section" id="leadership">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Executive Leadership</p>
+            <h2>Executive Members</h2>
+            <p>The executive leadership is the highest organ for administrative and spiritual decision-making and approval.</p>
+        </div>
+
+        <div class="person-list">
+            {% for person in executive_members %}
+            <article class="person">
+                <strong>{{ person.name }}</strong>
+                <span>{{ person.role }}</span>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section section-soft">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Previous Leadership</p>
+            <h2>Past Executive</h2>
+        </div>
+        <div class="person-list">
+            {% for person in past_executive %}
+            <article class="person">
+                <strong>{{ person.name }}</strong>
+                <span>{{ person.status }}</span>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section" id="committees">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Community Structure</p>
+            <h2>Masjid Committees</h2>
+        </div>
+
+        <div class="committee-list">
+            {% for committee_name, people in committees.items() %}
+            <article class="committee">
+                <div class="committee-head">
+                    <h4>{{ committee_name }}</h4>
+                </div>
+                <ol>
+                    {% for person, status in people %}
+                    <li>
+                        {{ person }}
+                        {% if status %}<span class="status-note">({{ status }})</span>{% endif %}
+                    </li>
+                    {% endfor %}
+                </ol>
+            </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section section-soft">
+    <div class="container split">
+        <div>
+            <p class="section-kicker">Jummah Service</p>
+            <div class="section-head">
+                <h2>Rotational Imam / Khatib Service</h2>
+            </div>
+            <div class="prose">
+                <p>
+                    Jummah service operates with a rotational Imam/Khatib arrangement.
+                </p>
+                <p>
+                    The lead listed for the service is <strong>Ustadh Abdul Granny Adebayo Ejalonibu</strong>.
+                </p>
+            </div>
+        </div>
+        <div class="committee">
+            <div class="committee-head"><h4>Jummah Rotation</h4></div>
+            <ol>
+                {% for person in jummah_imams %}
+                <li>{{ person }}</li>
+                {% endfor %}
+            </ol>
+        </div>
+    </div>
+</section>
+
+<section class="section" id="membership">
+    <div class="container split">
+        <div>
+            <p class="section-kicker">Join the Community</p>
+            <div class="section-head">
+                <h2>Register your membership information.</h2>
+            </div>
+            <div class="prose">
+                <p>
+                    Use the form to submit your name, contact information, address and profession.
+                    Required fields are marked with an asterisk.
+                </p>
+                <p>
+                    Your submitted information is stored in the mosque database and can be managed
+                    by authorised administrators.
+                </p>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <h2>Membership Registration</h2>
+            <p>Complete the form below.</p>
+
+            <form class="form-layout" method="post" action="{{ url_for('register_member') }}">
+                <div class="form-group">
+                    <label for="name">First name *</label>
+                    <input id="name" name="name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="surname">Surname *</label>
+                    <input id="surname" name="surname" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">Phone number *</label>
+                    <input id="phone" name="phone" type="tel" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input id="email" name="email" type="email">
+                </div>
+
+                <div class="form-group full">
+                    <label for="address">Address *</label>
+                    <textarea id="address" name="address" required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="post">Profession / Post *</label>
+                    <select id="post" name="post" required>
+                        <option value="">Select one</option>
+                        {% for item in posts %}
+                        <option value="{{ item }}">{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">Additional notes</label>
+                    <input id="notes" name="notes">
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn btn-green" type="submit">Submit Membership</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+
+<section class="section section-soft">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Contact</p>
+            <h2>Connect with FSSSMC Central Mosque.</h2>
+        </div>
+        <div class="info-grid">
+            <article class="info-card">
+                <h3>Location</h3>
+                <p>Lagos, Nigeria</p>
+            </article>
+            <article class="info-card">
+                <h3>Email</h3>
+                <p>info@fsssmc.org</p>
+            </article>
+            <article class="info-card">
+                <h3>Administration</h3>
+                <p>Authorised administrators can manage members, donations and announcements through the admin portal.</p>
+            </article>
+        </div>
+    </div>
+</section>
+
+{% if registered_members %}
+<section class="section">
+    <div class="container">
+        <div class="section-head">
+            <p class="section-kicker">Registered Community</p>
+            <h2>Recently registered members</h2>
+        </div>
+        <div class="table-wrap">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Profession</th>
+                        <th>Registered</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in registered_members %}
+                    <tr>
+                        <td>{{ member.name }} {{ member.surname }}</td>
+                        <td>{{ member.post }}</td>
+                        <td>{{ member.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+{% endif %}
+{% endblock %}

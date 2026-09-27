@@ -1,126 +1,95 @@
-// ======== DOM ELEMENTS ========
-const loadPrayerBtn = document.getElementById("load-prayer-btn");
-const prayerContainer = document.querySelector(".prayer-container");
-const nextPrayerNameEl = document.getElementById("next-prayer-name");
-const nextPrayerCountdownEl = document.getElementById("next-prayer-countdown");
-const adhanAudio = document.getElementById("adhan-audio");
+// ======== ELEMENTS ========
+const loadBtn = document.getElementById("load-prayer-btn");
+const nextName = document.getElementById("next-prayer-name");
+const nextCountdown = document.getElementById("next-prayer-countdown");
+const adhan = document.getElementById("adhan-audio");
 
-// Store prayer times dynamically
 let prayerTimes = {};
-let countdownInterval;
+let interval;
 
-// ======== FETCH PRAYER TIMES FROM API ========
+// ======== FETCH PRAYER TIMES ========
 async function fetchPrayerTimes() {
     try {
-        const response = await fetch(
-            "https://api.aladhan.com/v1/timingsByCity?city=Lagos&country=Nigeria&method=2"
-        );
+        const res = await fetch("https://api.aladhan.com/v1/timingsByCity?city=Lagos&country=Nigeria&method=2");
+        const data = await res.json();
+        const t = data.data.timings;
 
-        const data = await response.json();
-        const timings = data.data.timings;
-
-        // Store only required prayers
+        // Store needed prayers
         prayerTimes = {
-            Fajr: timings.Fajr,
-            Zuhr: timings.Dhuhr,
-            Asr: timings.Asr,
-            Maghrib: timings.Maghrib,
-            Isha: timings.Isha
+            Fajr: t.Fajr,
+            Zuhr: t.Dhuhr,
+            Asr: t.Asr,
+            Maghrib: t.Maghrib,
+            Isha: t.Isha
         };
 
-        updatePrayerCards();
+        displayTimes();
 
-        // Start countdown for next prayer
-        if (countdownInterval) clearInterval(countdownInterval);
+        clearInterval(interval);
         updateCountdown();
-        countdownInterval = setInterval(updateCountdown, 1000);
+        interval = setInterval(updateCountdown, 1000);
 
-    } catch (error) {
-        console.error("Error fetching prayer times:", error);
-        alert("Failed to load prayer times. Try again later.");
+    } catch {
+        alert("Failed to load prayer times");
     }
 }
 
-// ======== UPDATE PRAYER CARDS ========
-function updatePrayerCards() {
-    for (let prayer in prayerTimes) {
-        const pEl = document.getElementById(prayer.toLowerCase());
-        if (pEl) {
-            pEl.textContent = prayerTimes[prayer];
-        }
+// ======== DISPLAY TIMES ========
+function displayTimes() {
+    for (let p in prayerTimes) {
+        const el = document.getElementById(p.toLowerCase());
+        if (el) el.textContent = prayerTimes[p];
     }
 }
 
 // ======== GET NEXT PRAYER ========
 function getNextPrayer() {
     const now = new Date();
-    let nextPrayer = null;
-    let nextPrayerTime = null;
 
-    for (let prayer in prayerTimes) {
-        let [hour, minute] = prayerTimes[prayer].split(":");
-        let prayerDate = new Date();
-        prayerDate.setHours(parseInt(hour));
-        prayerDate.setMinutes(parseInt(minute));
-        prayerDate.setSeconds(0);
+    for (let p in prayerTimes) {
+        const [h, m] = prayerTimes[p].split(":");
+        const time = new Date();
+        time.setHours(h, m, 0);
 
-        if (prayerDate > now) {
-            nextPrayer = prayer;
-            nextPrayerTime = prayerDate;
-            break;
-        }
+        if (time > now) return { name: p, time };
     }
 
-    // If all prayers passed, next is tomorrow's Fajr
-    if (!nextPrayer) {
-        let [hour, minute] = prayerTimes["Fajr"].split(":");
-        nextPrayer = "Fajr";
-        nextPrayerTime = new Date();
-        nextPrayerTime.setDate(nextPrayerTime.getDate() + 1);
-        nextPrayerTime.setHours(parseInt(hour));
-        nextPrayerTime.setMinutes(parseInt(minute));
-        nextPrayerTime.setSeconds(0);
-    }
+    // Tomorrow Fajr
+    const [h, m] = prayerTimes.Fajr.split(":");
+    const time = new Date();
+    time.setDate(time.getDate() + 1);
+    time.setHours(h, m, 0);
 
-    return { name: nextPrayer, time: nextPrayerTime };
-}
-
-// ======== HIGHLIGHT NEXT PRAYER ========
-function highlightNextPrayer() {
-    const cards = document.querySelectorAll(".prayer-card");
-    cards.forEach(card => card.classList.remove("active"));
-
-    const next = getNextPrayer();
-    const nextCard = Array.from(cards).find(
-        card => card.querySelector("h3").textContent === next.name
-    );
-
-    if (nextCard) nextCard.classList.add("active");
-
-    return next;
+    return { name: "Fajr", time };
 }
 
 // ======== UPDATE COUNTDOWN ========
 function updateCountdown() {
-    const next = highlightNextPrayer();
-    const now = new Date();
-    const diff = next.time - now;
+    const next = getNextPrayer();
+    const diff = next.time - new Date();
 
-    if (diff <= 0) {
-        adhanAudio.play();
-        return;
-    }
+    if (diff <= 0) return adhan.play();
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
 
-    nextPrayerNameEl.textContent = next.name;
-    nextPrayerCountdownEl.textContent = `${hours}h ${minutes}m ${seconds}s`;
+    nextName.textContent = next.name;
+    nextCountdown.textContent = `${h}h ${m}m ${s}s`;
+
+    highlight(next.name);
 }
 
-// ======== BUTTON EVENT ========
-loadPrayerBtn.addEventListener("click", fetchPrayerTimes);
+// ======== HIGHLIGHT ========
+function highlight(name) {
+    document.querySelectorAll(".prayer-card").forEach(card => {
+        card.classList.toggle(
+            "active",
+            card.querySelector("h3").textContent === name
+        );
+    });
+}
 
-// ======== AUTO LOAD ON PAGE OPEN ========
+// ======== EVENTS ========
+loadBtn.addEventListener("click", fetchPrayerTimes);
 window.addEventListener("DOMContentLoaded", fetchPrayerTimes);

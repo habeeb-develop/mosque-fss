@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}My Account | FSSSMC Central Mosque{% endblock %}
+{% block content %}
+<section class="page-hero">
+    <div class="container">
+        <p class="breadcrumb">FSSSMC / Account</p>
+        <h1>My Account</h1>
+        <p>Your FSSSMC community account information.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="container">
+        <div class="form-card">
+            <div class="section-head">
+                <p class="section-kicker">Account</p>
+                <h2>{{ user.name }} {{ user.surname }}</h2>
+            </div>
+            <div class="info-grid">
+                <article class="info-card">
+                    <h3>Name</h3>
+                    <p>{{ user.name }} {{ user.surname }}</p>
+                </article>
+                <article class="info-card">
+                    <h3>Email</h3>
+                    <p>{{ user.email }}</p>
+                </article>
+                <article class="info-card">
+                    <h3>Member since</h3>
+                    <p>{{ user.created_at }}</p>
+                </article>
+            </div>
+            <div class="hero-actions">
+                <a class="btn btn-outline" href="{{ url_for('contact') }}">Community</a>
+                <a class="btn btn-green" href="{{ url_for('logout') }}">Sign Out</a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
