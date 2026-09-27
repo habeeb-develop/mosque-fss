@@ -50,7 +50,7 @@ app = Flask(__name__)
 # IMPORTANT:
 # On Render, create a SECRET_KEY environment variable.
 # Keep the same value permanently.
-SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+SECRET_KEY = os.environ.get("SECRET_KEY", "FsssmcCentralMosque_2026!Secure").strip()
 
 if not SECRET_KEY:
     # A random fallback keeps local development usable.
@@ -104,12 +104,12 @@ print("DATABASE LOCATION:", DATABASE)
 
 PAYSTACK_SECRET_KEY = os.environ.get(
     "PAYSTACK_SECRET_KEY",
-    ""
+    "sk_test_0d971bb72ebed6d23d0471924df87bd5941db555"
 ).strip()
 
 PAYSTACK_PUBLIC_KEY = os.environ.get(
     "PAYSTACK_PUBLIC_KEY",
-    ""
+    "pk_test_3a23b0594bd9ee4878b78d7d090f4d4a12a62721"
 ).strip()
 
 PAYSTACK_BASE_URL = os.environ.get(
@@ -126,7 +126,7 @@ PAYSTACK_CURRENCY = "NGN"
 
 MAILBOXLAYER_ACCESS_KEY = os.environ.get(
     "MAILBOXLAYER_ACCESS_KEY",
-    ""
+    "edb349802dd334a9479417e4b16e060a"
 ).strip()
 
 MAILBOXLAYER_URL = (
@@ -152,17 +152,17 @@ SMTP_PORT = int(
 
 SMTP_USERNAME = os.environ.get(
     "SMTP_USERNAME",
-    ""
+    "ojugbelehabeeb06@gmail.com"
 ).strip()
 
 SMTP_PASSWORD = os.environ.get(
     "SMTP_PASSWORD",
-    ""
+    "clwyraarljdpvgvj"
 ).strip()
 
 SMTP_FROM = os.environ.get(
     "SMTP_FROM",
-    ""
+    "ojugbelehabeeb06@gmail.com"
 ).strip() or SMTP_USERNAME
 
 OTP_EXPIRY_MINUTES = 10
