@@ -3362,11 +3362,11 @@ def admin_donations():
 
 
 @app.route(
-    "/admin/donations/<int:donation_id>/update",
+    "/admin/donations/<int:donation_id>/status",
     methods=["POST"]
 )
 @admin_required
-def admin_update_donation(
+def admin_update_donation_status(
     donation_id
 ):
 
@@ -3378,7 +3378,8 @@ def admin_update_donation(
     if status not in {
         "pending",
         "paid",
-        "failed"
+        "failed",
+        "cancelled"
     }:
 
         flash(
