@@ -1,27 +1,31 @@
 {% extends "base.html" %}
 {% block title %}Leadership & Community | FSSSMC Central Mosque{% endblock %}
 {% block content %}
-<section class="page-hero">
+<section class="page-hero page-hero-premium">
     <div class="container">
         <p class="breadcrumb">FSSSMC / Leadership & Community</p>
+        <div class="hero-rule"></div>
         <h1>Leadership & Community</h1>
         <p>The people and committees supporting the administrative, spiritual and community work of the mosque.</p>
     </div>
 </section>
 
-<section class="section" id="leadership">
+<section class="section leadership-section" id="leadership">
     <div class="container">
-        <div class="section-head">
+        <div class="section-head centered-head">
             <p class="section-kicker">Executive Leadership</p>
             <h2>Executive Members</h2>
-            <p>The executive leadership is the highest organ for administrative and spiritual decision-making and approval.</p>
+            <p>The executive leadership serves as the highest organ for administrative and spiritual decision-making and approval.</p>
         </div>
 
-        <div class="person-list">
+        <div class="leadership-grid">
             {% for person in executive_members %}
-            <article class="person">
-                <strong>{{ person.name }}</strong>
-                <span>{{ person.role }}</span>
+            <article class="leader-card">
+                <div class="leader-index">{{ '%02d'|format(loop.index) }}</div>
+                <div>
+                    <h3>{{ person.name }}</h3>
+                    <p>{{ person.role }}</p>
+                </div>
             </article>
             {% endfor %}
         </div>
@@ -34,194 +38,79 @@
             <p class="section-kicker">Previous Leadership</p>
             <h2>Past Executive</h2>
         </div>
-        <div class="person-list">
+        <div class="past-list">
             {% for person in past_executive %}
-            <article class="person">
-                <strong>{{ person.name }}</strong>
-                <span>{{ person.status }}</span>
-            </article>
+            <div class="past-item">
+                <span>{{ person.name }}</span>
+                <strong>{{ person.role }}</strong>
+            </div>
             {% endfor %}
         </div>
     </div>
 </section>
 
-<section class="section" id="committees">
+<section class="section committees-section" id="committees">
     <div class="container">
-        <div class="section-head">
+        <div class="section-head centered-head">
             <p class="section-kicker">Community Structure</p>
             <h2>Masjid Committees</h2>
+            <p>Committees support the mosque's educational, welfare, financial, maintenance and youth programmes.</p>
         </div>
 
-        <div class="committee-list">
-            {% for committee_name, people in committees.items() %}
-            <article class="committee">
-                <div class="committee-head">
-                    <h4>{{ committee_name }}</h4>
-                </div>
-                <ol>
-                    {% for person, status in people %}
-                    <li>
-                        {{ person }}
-                        {% if status %}<span class="status-note">({{ status }})</span>{% endif %}
-                    </li>
-                    {% endfor %}
-                </ol>
+        <div class="committee-grid-premium">
+            {% for committee in committees %}
+            <article class="committee-card-premium">
+                <span class="committee-number">{{ '%02d'|format(loop.index) }}</span>
+                <h3>{{ committee.name }}</h3>
+                <p>{{ committee.description }}</p>
             </article>
             {% endfor %}
         </div>
     </div>
 </section>
 
-<section class="section section-soft">
-    <div class="container split">
+<section class="section section-soft jummah-section">
+    <div class="container split jummah-grid">
         <div>
             <p class="section-kicker">Jummah Service</p>
             <div class="section-head">
                 <h2>Rotational Imam / Khatib Service</h2>
             </div>
-            <div class="prose">
-                <p>
-                    Jummah service operates with a rotational Imam/Khatib arrangement.
-                </p>
-                <p>
-                    The lead listed for the service is <strong>Ustadh Abdul Granny Adebayo Ejalonibu</strong>.
-                </p>
+            <div class="prose prose-large">
+                <p>Jummah service operates with a rotational Imam/Khatib arrangement to support the Friday congregational service.</p>
+                <p>The current listed lead for the service is <strong>Ustadh Abdul Granny Adebayo Ejalonibu</strong>.</p>
             </div>
         </div>
-        <div class="committee">
-            <div class="committee-head"><h4>Jummah Rotation</h4></div>
-            <ol>
-                {% for person in jummah_imams %}
-                <li>{{ person }}</li>
-                {% endfor %}
-            </ol>
+        <div class="jummah-card">
+            <div class="jummah-card-head">Jummah Rotation</div>
+            {% for person in jummah_imams %}
+            <div class="jummah-person">
+                <span>{{ person.name }}</span>
+                <strong>{{ person.role }}</strong>
+            </div>
+            {% endfor %}
         </div>
     </div>
 </section>
 
-<section class="section" id="membership">
-    <div class="container split">
-        <div>
-            <p class="section-kicker">Join the Community</p>
-            <div class="section-head">
-                <h2>Register your membership information.</h2>
-            </div>
-            <div class="prose">
-                <p>
-                    Use the form to submit your name, contact information, address and profession.
-                    Required fields are marked with an asterisk.
-                </p>
-                <p>
-                    Your submitted information is stored in the mosque database and can be managed
-                    by authorised administrators.
-                </p>
-            </div>
-        </div>
-
-        <div class="form-card">
-            <h2>Membership Registration</h2>
-            <p>Complete the form below.</p>
-
-            <form class="form-layout" method="post" action="{{ url_for('register_member') }}">
-                <div class="form-group">
-                    <label for="name">First name *</label>
-                    <input id="name" name="name" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="surname">Surname *</label>
-                    <input id="surname" name="surname" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="phone">Phone number *</label>
-                    <input id="phone" name="phone" type="tel" required>
-                </div>
-
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input id="email" name="email" type="email">
-                </div>
-
-                <div class="form-group full">
-                    <label for="address">Address *</label>
-                    <textarea id="address" name="address" required></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="post">Profession / Post *</label>
-                    <select id="post" name="post" required>
-                        <option value="">Select one</option>
-                        {% for item in posts %}
-                        <option value="{{ item }}">{{ item }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label for="notes">Additional notes</label>
-                    <input id="notes" name="notes">
-                </div>
-
-                <div class="form-actions">
-                    <button class="btn btn-green" type="submit">Submit Membership</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</section>
-
-<section class="section section-soft">
+<section class="section contact-cta-section">
     <div class="container">
-        <div class="section-head">
-            <p class="section-kicker">Contact</p>
-            <h2>Connect with FSSSMC Central Mosque.</h2>
-        </div>
-        <div class="info-grid">
-            <article class="info-card">
-                <h3>Location</h3>
-                <p>Lagos, Nigeria</p>
-            </article>
-            <article class="info-card">
-                <h3>Email</h3>
-                <p>info@fsssmc.org</p>
-            </article>
-            <article class="info-card">
-                <h3>Administration</h3>
-                <p>Authorised administrators can manage members, donations and announcements through the admin portal.</p>
-            </article>
+        <div class="contact-cta">
+            <div>
+                <p class="section-kicker">Community Connection</p>
+                <h2>Be part of the FSSSMC community.</h2>
+                <p>For membership, mosque enquiries or community matters, use the appropriate channel below.</p>
+            </div>
+            <div class="cta-actions">
+                {% if logged_in %}
+                <a class="btn btn-gold" href="{{ url_for('member_register') }}">Register as a Member</a>
+                <a class="btn btn-light-outline" href="mailto:info@fsssmc.org">Email the Mosque</a>
+                {% else %}
+                <a class="btn btn-gold" href="{{ url_for('login', next='/members/register') }}">Sign In to Register</a>
+                <a class="btn btn-light-outline" href="mailto:info@fsssmc.org">Email the Mosque</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 </section>
-
-{% if registered_members %}
-<section class="section">
-    <div class="container">
-        <div class="section-head">
-            <p class="section-kicker">Registered Community</p>
-            <h2>Recently registered members</h2>
-        </div>
-        <div class="table-wrap">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Profession</th>
-                        <th>Registered</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for member in registered_members %}
-                    <tr>
-                        <td>{{ member.name }} {{ member.surname }}</td>
-                        <td>{{ member.post }}</td>
-                        <td>{{ member.created_at }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</section>
-{% endif %}
 {% endblock %}

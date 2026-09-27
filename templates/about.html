@@ -1,33 +1,27 @@
 {% extends "base.html" %}
-{% block title %}About | FSSSMC Central Mosque{% endblock %}
+{% block title %}About the Mosque | FSSSMC Central Mosque{% endblock %}
 {% block content %}
-<section class="page-hero">
+<section class="page-hero page-hero-premium">
     <div class="container">
         <p class="breadcrumb">FSSSMC / About</p>
+        <div class="hero-rule"></div>
         <h1>About the Mosque</h1>
         <p>A place of worship, knowledge, peace, unity and community service.</p>
     </div>
 </section>
 
-<section class="section">
-    <div class="container split">
+<section class="section about-intro">
+    <div class="container split about-split">
         <div>
             <p class="section-kicker">Our Purpose</p>
             <div class="section-head">
                 <h2>Serving the Ummah through worship, knowledge and service.</h2>
             </div>
-            <div class="prose">
-                <p>
-                    FSSSMC Central Mosque exists as a place for congregational worship,
-                    Islamic learning, community engagement and service to the Ummah.
-                </p>
-                <p>
-                    The mosque’s work is rooted in the Qur’an and Sunnah and is supported
-                    by a leadership structure responsible for administrative and spiritual
-                    decision-making and approval.
-                </p>
+            <div class="prose prose-large">
+                <p>FSSSMC Central Mosque exists as a place for congregational worship, Islamic learning, community engagement and service to the Ummah.</p>
+                <p>The mosque's work is rooted in the Qur'an and Sunnah and supported by a leadership structure responsible for administrative and spiritual decision-making and approval.</p>
             </div>
-            <ul class="feature-list">
+            <ul class="feature-list feature-list-premium">
                 <li>Congregational prayer and Jummah service</li>
                 <li>Islamic education and learning</li>
                 <li>Community welfare and service</li>
@@ -35,27 +29,53 @@
                 <li>Masjid maintenance and development</li>
             </ul>
         </div>
-        <div>
-            <img class="editorial-image"
-                 src="{{ url_for('static', filename='images/fssmc structure 2.jpeg') }}"
-                 alt="FSSSMC Central Mosque structure">
+
+        <div class="about-image-frame">
+            <div class="image-accent"></div>
+            <img class="editorial-image" src="{{ url_for('static', filename='images/fssmc structure 2.jpeg') }}" alt="FSSSMC Central Mosque structure">
+            <div class="image-caption">
+                <span>FSSSMC</span>
+                <strong>Worship • Knowledge • Service</strong>
+            </div>
         </div>
     </div>
 </section>
 
-<section class="section section-soft">
+<section class="section section-soft facilities-section">
     <div class="container">
-        <div class="section-head">
-            <p class="section-kicker">Facilities</p>
-            <h2>Supporting the daily life of the mosque.</h2>
+        <div class="section-head centered-head">
+            <p class="section-kicker">Our Facilities</p>
+            <h2>Spaces that support the life of the mosque.</h2>
+            <p>Facilities are provided to support worship, learning, community activities and the daily needs of worshippers.</p>
         </div>
-        <div class="info-grid">
-            {% for title, description in facilities %}
-            <article class="info-card">
-                <h3>{{ title }}</h3>
-                <p>{{ description }}</p>
+
+        <div class="facility-grid">
+            {% for facility in facilities %}
+            <article class="facility-card">
+                <div class="facility-number">{{ '%02d'|format(loop.index) }}</div>
+                <div>
+                    <h3>{{ facility }}</h3>
+                    <p>Dedicated space serving the worship, learning and community needs of FSSSMC.</p>
+                </div>
             </article>
             {% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="section about-values">
+    <div class="container">
+        <div class="values-panel">
+            <div>
+                <p class="section-kicker">What We Stand For</p>
+                <h2>A mosque built around faith and community.</h2>
+            </div>
+            <div class="values-grid">
+                <div><strong>Worship</strong><span>Congregational prayer and devotion.</span></div>
+                <div><strong>Knowledge</strong><span>Learning rooted in the Qur'an and Sunnah.</span></div>
+                <div><strong>Unity</strong><span>Building bonds across the community.</span></div>
+                <div><strong>Service</strong><span>Supporting people and community welfare.</span></div>
+            </div>
         </div>
     </div>
 </section>
