@@ -15,11 +15,8 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
-import secrets
-import smtplib
-from email.message import EmailMessage
 
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
@@ -36,7 +33,7 @@ app = Flask(__name__)
 
 app.secret_key = os.environ.get(
     "SECRET_KEY",
-    "FsssmcCentralMosque_2026!Secure"
+    "dev-only-change-this-secret-key"
 ).strip()
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -57,7 +54,7 @@ print("DATABASE LOCATION:", DATABASE)
 # Paystack
 PAYSTACK_SECRET_KEY = os.environ.get(
     "PAYSTACK_SECRET_KEY",
-    "sk_test_0d971bb72ebed6d23d0471924df87bd5941db555"
+    ""
 ).strip()
 
 PAYSTACK_BASE_URL = "https://api.paystack.co"
@@ -66,21 +63,11 @@ PAYSTACK_BASE_URL = "https://api.paystack.co"
 # Mailboxlayer
 MAILBOXLAYER_ACCESS_KEY = os.environ.get(
     "MAILBOXLAYER_ACCESS_KEY",
-    "edb349802dd334a9479417e4b16e060a"
+    ""
 ).strip()
 
 MAILBOXLAYER_URL = "https://apilayer.net/api/check"
 
-
-# SMTP / OTP email configuration
-SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com").strip()
-SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
-SMTP_USERNAME = os.environ.get("SMTP_USERNAME", "").strip()
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").strip()
-SMTP_FROM = os.environ.get("SMTP_FROM", "").strip() or SMTP_USERNAME
-OTP_EXPIRY_MINUTES = 10
-OTP_LENGTH = 6
-OTP_RESEND_SECONDS = 60
 
 
 # ================================================================
@@ -1484,101 +1471,9 @@ def register_member():
 
 
 # ================================================================
-# EMAIL OTP HELPERS
 # ================================================================
-
-def generate_otp():
-    return f"{secrets.randbelow(1000000):06d}"
-
-
-def hash_otp(otp):
-    return hmac.new(
-        app.secret_key.encode("utf-8"),
-        otp.encode("utf-8"),
-        hashlib.sha256
-    ).hexdigest()
-
-
-def send_otp_email(email, otp, purpose):
-    if not SMTP_USERNAME or not SMTP_PASSWORD:
-        print("OTP email is not configured. Set SMTP_USERNAME and SMTP_PASSWORD.")
-        return False
-
-    subject = (
-        "Verify your FSSSMC Central Mosque account"
-        if purpose == "register"
-        else "FSSSMC Central Mosque login verification"
-    )
-
-    message = EmailMessage()
-    message["Subject"] = subject
-    message["From"] = SMTP_FROM or SMTP_USERNAME
-    message["To"] = email
-    message.set_content(
-        f"""Assalamu Alaikum,
-
-Your FSSSMC Central Mosque verification code is:
-
-{otp}
-
-This code expires in {OTP_EXPIRY_MINUTES} minutes.
-
-If you did not request this code, you can safely ignore this email.
-
-FSSSMC Central Mosque
-"""
-    )
-
-    try:
-        if SMTP_PORT == 465:
-            with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT, timeout=20) as server:
-                server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(message)
-        else:
-            with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                server.login(SMTP_USERNAME, SMTP_PASSWORD)
-                server.send_message(message)
-
-        print(f"OTP email sent successfully to {email}")
-        return True
-
-    except (OSError, smtplib.SMTPException) as error:
-        print("OTP email sending error:", error)
-        return False
-
-
-def clear_otp_session():
-    for key in (
-        "otp_hash",
-        "otp_email",
-        "otp_purpose",
-        "otp_expires_at",
-        "otp_sent_at",
-    ):
-        session.pop(key, None)
-
-
-def create_and_send_otp(email, purpose):
-    email = (email or "").strip().lower()
-    otp = generate_otp()
-
-    session["otp_hash"] = hash_otp(otp)
-    session["otp_email"] = email
-    session["otp_purpose"] = purpose
-    session["otp_expires_at"] = (
-        datetime.now() + timedelta(minutes=OTP_EXPIRY_MINUTES)
-    ).timestamp()
-    session["otp_sent_at"] = datetime.now().timestamp()
-
-    if not send_otp_email(email, otp, purpose):
-        clear_otp_session()
-        return False
-
-    return True
-
+# ACCOUNT AUTHENTICATION
+# ================================================================
 
 def account_authenticated():
     return bool(
@@ -1594,9 +1489,7 @@ def account_authenticated():
 @app.before_request
 def require_login_for_website():
 
-    # These pages are public. Visitors can browse the mosque website,
-    # donate, register as members, create an account, and contact the
-    # mosque without signing in first.
+    # Public website pages and authentication pages.
     public_endpoints = {
         "home",
         "about",
@@ -1609,8 +1502,6 @@ def require_login_for_website():
         "announcements",
         "login",
         "register",
-        "verify_otp",
-        "resend_otp",
         "logout",
         "admin_login",
         "admin_logout",
@@ -1624,7 +1515,7 @@ def require_login_for_website():
     if request.endpoint in public_endpoints:
         return None
 
-    # The user profile is private.
+    # Profile requires a normal user account.
     if request.endpoint == "profile":
         if session.get("user_id"):
             return None
@@ -1634,13 +1525,23 @@ def require_login_for_website():
             "error"
         )
 
-        return redirect(
-            url_for("login")
-        )
+        return redirect(url_for("login"))
 
     # Admin routes are protected by @admin_required.
-    # Do not redirect them here; let the decorator handle them.
-    return None
+    # Other non-public website actions, including donations and
+    # membership registration, require a logged-in user.
+    if request.endpoint and request.endpoint.startswith("admin_"):
+        return None
+
+    if session.get("user_id") or session.get("admin_id"):
+        return None
+
+    flash(
+        "Please sign in to continue.",
+        "error"
+    )
+
+    return redirect(url_for("login"))
 
 
 # ================================================================
@@ -1680,6 +1581,7 @@ def register():
             return redirect(url_for("register"))
 
         db = get_db()
+
         existing = db.execute(
             "SELECT id FROM users WHERE email = ?",
             (email,)
@@ -1692,30 +1594,59 @@ def register():
             )
             return redirect(url_for("login"))
 
-        # Do not create the account or log the user in until
-        # the email OTP has been entered correctly.
-        session.clear()
-        session["pending_registration"] = {
-            "name": name,
-            "surname": surname,
-            "email": email,
-            "password_hash": generate_password_hash(password),
-        }
+        try:
+            cursor = db.execute(
+                """
+                INSERT INTO users
+                (
+                    name,
+                    surname,
+                    email,
+                    password_hash,
+                    email_verified
+                )
+                VALUES (?, ?, ?, ?, 1)
+                """,
+                (
+                    name,
+                    surname,
+                    email,
+                    generate_password_hash(password),
+                )
+            )
+            db.commit()
 
-        if not create_and_send_otp(email, "register"):
-            session.clear()
+        except sqlite3.IntegrityError:
+            db.rollback()
             flash(
-                "We could not send the verification code. "
-                "Please check the SMTP email configuration and try again.",
+                "An account with that email already exists. Please log in instead.",
+                "error"
+            )
+            return redirect(url_for("login"))
+
+        except sqlite3.Error as error:
+            db.rollback()
+            print("Registration database error:", error)
+            flash(
+                "Unable to create your account right now. Please try again.",
                 "error"
             )
             return redirect(url_for("register"))
 
+        # Registration is complete immediately. No email verification
+        # or SMTP message is required.
+        session.clear()
+        session["user_id"] = cursor.lastrowid
+        session["user_name"] = name
+        session["user_surname"] = surname
+        session["user_email"] = email
+
         flash(
-            f"A 6-digit verification code was sent to {email}.",
+            f"Account created successfully. Welcome, {name}.",
             "success"
         )
-        return redirect(url_for("verify_otp"))
+
+        return redirect(url_for("profile"))
 
     return render_template("register.html")
 
@@ -1747,25 +1678,21 @@ def login():
 
         db = get_db()
 
-        # ========================================================
+        # --------------------------------------------------------
         # ADMIN LOGIN
-        # ========================================================
-        # Admin uses email + password only. No OTP is required.
-        # ========================================================
-
+        # --------------------------------------------------------
+        # Admin logs in directly. No OTP is required.
         admin = db.execute(
             "SELECT * FROM admins WHERE email = ?",
             (email,)
         ).fetchone()
 
         if admin:
-
             if check_password_hash(
                 admin["password_hash"],
                 password
             ):
                 session.clear()
-
                 session["admin_id"] = admin["id"]
                 session["admin_email"] = admin["email"]
 
@@ -1774,39 +1701,29 @@ def login():
                     "success"
                 )
 
-                return redirect(
-                    url_for("admin_dashboard")
-                )
+                return redirect(url_for("admin_dashboard"))
 
             flash(
                 "Invalid email or password.",
                 "error"
             )
-            return redirect(
-                url_for("login")
-            )
+            return redirect(url_for("login"))
 
-        # ========================================================
+        # --------------------------------------------------------
         # NORMAL USER LOGIN
-        # ========================================================
-
+        # --------------------------------------------------------
         user = db.execute(
             "SELECT * FROM users WHERE email = ?",
             (email,)
         ).fetchone()
 
-        # Wrong/non-existent email: stop here.
-        # IMPORTANT: do not send an OTP.
         if user is None:
             flash(
                 "Invalid email or password.",
                 "error"
             )
-            return redirect(
-                url_for("login")
-            )
+            return redirect(url_for("login"))
 
-        # Wrong password: stop here.
         if not check_password_hash(
             user["password_hash"],
             password
@@ -1815,338 +1732,35 @@ def login():
                 "Invalid email or password.",
                 "error"
             )
-            return redirect(
-                url_for("login")
-            )
-
-        # ========================================================
-        # CORRECT USER EMAIL + PASSWORD
-        # SEND 6-DIGIT OTP
-        # ========================================================
+            return redirect(url_for("login"))
 
         next_url = request.form.get("next", "").strip()
         if not next_url:
             next_url = request.args.get("next", "").strip()
 
-        session.clear()
-        session["pending_login"] = {
-            "account_type": "user",
-            "account_id": user["id"],
-            "email": user["email"],
-            "next": next_url,
-        }
-
-        if not create_and_send_otp(
-            user["email"],
-            "login"
+        if (
+            not next_url
+            or not next_url.startswith("/")
+            or next_url.startswith("//")
         ):
-            session.clear()
-            flash(
-                "We could not send the verification code. Please try again.",
-                "error"
-            )
-            return redirect(
-                url_for("login")
-            )
+            next_url = url_for("profile")
+
+        session.clear()
+        session["user_id"] = user["id"]
+        session["user_name"] = user["name"]
+        session["user_surname"] = user["surname"]
+        session["user_email"] = user["email"]
 
         flash(
-            f"A 6-digit verification code was sent to {user['email']}.",
+            f"Welcome back, {user['name']}.",
             "success"
         )
 
-        return redirect(
-            url_for("verify_otp")
-        )
+        return redirect(next_url)
 
     return render_template("login.html")
 
 
-# ================================================================
-# VERIFY OTP
-# ================================================================
-
-@app.route("/verify", methods=["GET", "POST"])
-@app.route("/verify-otp", methods=["GET", "POST"])
-def verify_otp():
-
-    otp_hash = session.get("otp_hash")
-    otp_email = session.get("otp_email")
-    otp_purpose = session.get("otp_purpose")
-    expires_at = session.get("otp_expires_at")
-
-    if not otp_hash or not otp_email or not otp_purpose:
-        flash(
-            "There is no active verification request. Please log in or register again.",
-            "error"
-        )
-        return redirect(url_for("login"))
-
-    if not expires_at or datetime.now().timestamp() > float(expires_at):
-        clear_otp_session()
-        session.pop("pending_login", None)
-        session.pop("pending_registration", None)
-
-        flash(
-            "Your verification code has expired. Please start again.",
-            "error"
-        )
-        return redirect(url_for("login"))
-
-    if request.method == "POST":
-
-        entered_otp = request.form.get("otp", "").strip()
-
-        if len(entered_otp) != OTP_LENGTH or not entered_otp.isdigit():
-            flash("Please enter the 6-digit verification code.", "error")
-            return redirect(url_for("verify_otp"))
-
-        if not hmac.compare_digest(
-            hash_otp(entered_otp),
-            otp_hash
-        ):
-            flash("Incorrect verification code.", "error")
-            return redirect(url_for("verify_otp"))
-
-        db = get_db()
-
-        # Registration: create account only after successful OTP.
-        pending_registration = session.get("pending_registration")
-
-        if otp_purpose == "register" and pending_registration:
-
-            if pending_registration["email"].lower() != otp_email.lower():
-                session.clear()
-                flash(
-                    "Verification session is invalid. Please register again.",
-                    "error"
-                )
-                return redirect(url_for("register"))
-
-            try:
-                cursor = db.execute(
-                    """
-                    INSERT INTO users
-                    (
-                        name,
-                        surname,
-                        email,
-                        password_hash,
-                        email_verified
-                    )
-                    VALUES (?, ?, ?, ?, 1)
-                    """,
-                    (
-                        pending_registration["name"],
-                        pending_registration["surname"],
-                        pending_registration["email"],
-                        pending_registration["password_hash"],
-                    )
-                )
-                db.commit()
-
-            except sqlite3.IntegrityError:
-                db.rollback()
-                session.clear()
-                flash(
-                    "An account with that email already exists. Please log in.",
-                    "error"
-                )
-                return redirect(url_for("login"))
-
-            except sqlite3.Error as error:
-                db.rollback()
-                print("Registration database error:", error)
-                session.clear()
-                flash(
-                    "Unable to create your account right now. Please try again.",
-                    "error"
-                )
-                return redirect(url_for("register"))
-
-            data = pending_registration
-            user_id = cursor.lastrowid
-
-            session.clear()
-            session["user_id"] = user_id
-            session["user_name"] = data["name"]
-            session["user_surname"] = data["surname"]
-            session["user_email"] = data["email"]
-
-            flash(
-                f"Email verified successfully. Welcome, {data['name']}.",
-                "success"
-            )
-            return redirect(url_for("profile"))
-
-        # Normal user login.
-        pending_login = session.get("pending_login")
-
-        if (
-            otp_purpose == "login"
-            and pending_login
-            and pending_login.get("account_type") == "user"
-        ):
-            user = db.execute(
-                """
-                SELECT *
-                FROM users
-                WHERE id = ?
-                AND email = ?
-                """,
-                (
-                    pending_login.get("account_id"),
-                    otp_email
-                )
-            ).fetchone()
-
-            if user is None:
-                session.clear()
-                flash(
-                    "Your login session is no longer valid. Please log in again.",
-                    "error"
-                )
-                return redirect(url_for("login"))
-
-            try:
-                db.execute(
-                    """
-                    UPDATE users
-                    SET email_verified = 1
-                    WHERE id = ?
-                    """,
-                    (user["id"],)
-                )
-                db.commit()
-
-            except sqlite3.Error as error:
-                db.rollback()
-                print("Email verification database error:", error)
-                session.clear()
-                flash(
-                    "Unable to complete email verification. Please try again.",
-                    "error"
-                )
-                return redirect(url_for("login"))
-
-            session.clear()
-            session["user_id"] = user["id"]
-            session["user_name"] = user["name"]
-            session["user_surname"] = user["surname"]
-            session["user_email"] = user["email"]
-
-            next_url = pending_login.get("next", "")
-            if not next_url or not next_url.startswith("/") or next_url.startswith("//"):
-                next_url = url_for("profile")
-
-            flash(
-                f"Email verified. Welcome back, {user['name']}.",
-                "success"
-            )
-            return redirect(next_url)
-
-        # Admin login.
-        if (
-            otp_purpose == "login"
-            and pending_login
-            and pending_login.get("account_type") == "admin"
-        ):
-            admin = db.execute(
-                """
-                SELECT *
-                FROM admins
-                WHERE id = ?
-                AND email = ?
-                """,
-                (
-                    pending_login.get("account_id"),
-                    otp_email
-                )
-            ).fetchone()
-
-            if admin is None:
-                session.clear()
-                flash(
-                    "Your admin login session is no longer valid. Please log in again.",
-                    "error"
-                )
-                return redirect(url_for("login"))
-
-            session.clear()
-            session["admin_id"] = admin["id"]
-            session["admin_email"] = admin["email"]
-
-            flash(
-                "Email verified. Welcome to the FSSSMC admin dashboard.",
-                "success"
-            )
-            return redirect(url_for("admin_dashboard"))
-
-        session.clear()
-        flash(
-            "Verification session is invalid. Please start again.",
-            "error"
-        )
-        return redirect(url_for("login"))
-
-    return render_template(
-        "verify.html",
-        email=otp_email,
-        purpose=otp_purpose,
-        expires_minutes=OTP_EXPIRY_MINUTES
-    )
-
-
-# ================================================================
-# RESEND OTP
-# ================================================================
-
-@app.route("/resend-otp", methods=["POST"])
-def resend_otp():
-
-    otp_email = session.get("otp_email")
-    otp_purpose = session.get("otp_purpose")
-
-    if not otp_email or not otp_purpose:
-        flash(
-            "There is no active verification request.",
-            "error"
-        )
-        return redirect(url_for("login"))
-
-    sent_at = session.get("otp_sent_at")
-
-    if sent_at:
-        elapsed = datetime.now().timestamp() - float(sent_at)
-
-        if elapsed < OTP_RESEND_SECONDS:
-            remaining = max(
-                1,
-                OTP_RESEND_SECONDS - int(elapsed)
-            )
-            flash(
-                f"Please wait {remaining} seconds before requesting another code.",
-                "error"
-            )
-            return redirect(url_for("verify_otp"))
-
-    if not create_and_send_otp(
-        otp_email,
-        otp_purpose
-    ):
-        flash(
-            "We could not send a new verification code. Please try again.",
-            "error"
-        )
-        return redirect(url_for("verify_otp"))
-
-    flash(
-        f"A new 6-digit code was sent to {otp_email}.",
-        "success"
-    )
-    return redirect(url_for("verify_otp"))
-
-
-# ================================================================
 # USER LOGOUT
 # ================================================================
 
