@@ -48,7 +48,7 @@ app = Flask(__name__)
 # IMPORTANT:
 # On Render, create a SECRET_KEY environment variable.
 # Keep the same value permanently.
-SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
+SECRET_KEY = os.environ.get("SECRET_KEY", "FsssmcCentralMosque_2026!Secure").strip()
 
 if not SECRET_KEY:
     # A random fallback keeps local development usable.
@@ -103,12 +103,12 @@ print("DATABASE LOCATION:", DATABASE)
 
 PAYSTACK_SECRET_KEY = os.environ.get(
     "PAYSTACK_SECRET_KEY",
-    ""
+    "sk_test_0d971bb72ebed6d23d0471924df87bd5941db555"
 ).strip()
 
 PAYSTACK_PUBLIC_KEY = os.environ.get(
     "PAYSTACK_PUBLIC_KEY",
-    ""
+    "pk_test_3a23b0594bd9ee4878b78d7d090f4d4a12a62721"
 ).strip()
 
 PAYSTACK_BASE_URL = os.environ.get(
@@ -512,7 +512,7 @@ def init_db():
 
     admin_password = os.environ.get(
         "ADMIN_PASSWORD",
-        ""
+        "ChangeThisPassword123!"
     )
 
     if not admin_password:
