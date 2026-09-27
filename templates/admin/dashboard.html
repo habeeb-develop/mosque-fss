@@ -1,314 +1,198 @@
 {% extends "admin/base_admin.html" %}
 
 {% block title %}
-Dashboard | FSSSMC Administration
-{% endblock %}
-
-{% block page_name %}
-Dashboard
+Dashboard | FSSSMC Admin
 {% endblock %}
 
 
 {% block content %}
 
-<div class="page-heading">
+<div class="admin-title">
 
-    <div class="page-heading-copy">
-
-        <div class="page-eyebrow">
-            Administration
-        </div>
-
-        <h1>
-            Dashboard
-        </h1>
+    <div>
+        <h1>Dashboard</h1>
 
         <p>
-            A clear overview of FSSSMC Central Mosque activities.
+            Overview of mosque administration activity.
         </p>
-
     </div>
 
+    <div class="admin-title-actions">
 
-    <a
-        href="{{ url_for('admin_add_member') }}"
-        class="btn btn-green"
-    >
-        + Add Member
-    </a>
+        <a
+            href="{{ url_for('admin_add_member') }}"
+            class="admin-btn admin-btn-primary"
+        >
+            Add Member
+        </a>
+
+    </div>
 
 </div>
 
 
-<section class="dashboard-welcome">
-
-    <div class="dashboard-welcome-copy">
-
-        <div class="eyebrow">
-            FSSSMC CENTRAL MOSQUE
-        </div>
-
-        <h2>
-            Assalamu Alaikum, Administrator.
-        </h2>
-
-        <p>
-            Manage members, donations and mosque announcements
-            from one central administration workspace.
-        </p>
-
-    </div>
-
-
-    <div class="dashboard-decoration">
-        ۞
-    </div>
-
-</section>
-
+<!-- STATISTICS -->
 
 <div class="stat-grid">
 
     <div class="stat-card">
 
-        <div class="stat-top">
-
-            <span class="stat-label">
-                Members
-            </span>
-
-            <div class="stat-icon">
-                ♙
-            </div>
-
+        <div class="stat-card-label">
+            Total Members
         </div>
 
-        <strong class="stat-value">
+        <div class="stat-card-value">
             {{ member_count }}
-        </strong>
+        </div>
 
-        <span class="stat-note">
+        <div class="stat-card-description">
             Registered mosque members
-        </span>
+        </div>
 
     </div>
 
 
     <div class="stat-card">
 
-        <div class="stat-top">
-
-            <span class="stat-label">
-                Paid Donations
-            </span>
-
-            <div class="stat-icon">
-                ₦
-            </div>
-
+        <div class="stat-card-label">
+            Paid Donations
         </div>
 
-        <strong class="stat-value">
+        <div class="stat-card-value">
             ₦{{ "{:,.2f}".format(paid_donations or 0) }}
-        </strong>
+        </div>
 
-        <span class="stat-note">
-            Confirmed donation value
-        </span>
+        <div class="stat-card-description">
+            Successfully completed donations
+        </div>
 
     </div>
 
 
     <div class="stat-card">
 
-        <div class="stat-top">
-
-            <span class="stat-label">
-                Pending
-            </span>
-
-            <div class="stat-icon">
-                ◷
-            </div>
-
+        <div class="stat-card-label">
+            Pending Donations
         </div>
 
-        <strong class="stat-value">
+        <div class="stat-card-value">
             {{ pending_donations }}
-        </strong>
+        </div>
 
-        <span class="stat-note">
-            Donations awaiting action
-        </span>
+        <div class="stat-card-description">
+            Donations awaiting confirmation
+        </div>
 
     </div>
 
 
     <div class="stat-card">
 
-        <div class="stat-top">
-
-            <span class="stat-label">
-                Announcements
-            </span>
-
-            <div class="stat-icon">
-                ◉
-            </div>
-
+        <div class="stat-card-label">
+            Announcements
         </div>
 
-        <strong class="stat-value">
+        <div class="stat-card-value">
             {{ announcement_count }}
-        </strong>
+        </div>
 
-        <span class="stat-note">
-            Published and stored notices
-        </span>
+        <div class="stat-card-description">
+            Published mosque announcements
+        </div>
 
     </div>
 
 </div>
 
 
-<div class="content-grid">
+<!-- DASHBOARD PANELS -->
+
+<div class="admin-panels">
 
 
     <!-- RECENT MEMBERS -->
 
-    <section class="panel">
+    <section class="admin-panel">
 
-        <div class="panel-header">
+        <div class="admin-panel-head">
 
-            <div class="panel-title">
+            <div>
+                <h2>
+                    Recent Members
+                </h2>
 
-                <div class="panel-title-icon">
-                    ♙
-                </div>
-
-                <div>
-
-                    <h3>
-                        Recent Members
-                    </h3>
-
-                    <p>
-                        Latest registered members
-                    </p>
-
-                </div>
-
+                <p>
+                    Latest registered members
+                </p>
             </div>
-
 
             <a
                 href="{{ url_for('admin_members') }}"
-                class="panel-link"
+                class="admin-btn admin-btn-secondary"
             >
-                View all →
+                View All
             </a>
 
         </div>
 
 
-        <div class="panel-body">
+        <div class="admin-panel-body">
 
             {% if recent_members %}
 
-            <div class="table-wrap">
+                <div class="admin-table-wrap">
 
-                <table class="admin-table">
+                    <table class="admin-table">
 
-                    <thead>
+                        <thead>
 
-                        <tr>
-                            <th>Member</th>
-                            <th>Phone</th>
-                            <th>Post</th>
-                            <th>Registered</th>
-                        </tr>
+                            <tr>
+                                <th>Name</th>
+                                <th>Post</th>
+                            </tr>
 
-                    </thead>
+                        </thead>
 
+                        <tbody>
 
-                    <tbody>
+                            {% for member in recent_members %}
 
-                    {% for member in recent_members %}
+                                <tr>
 
-                        <tr>
-
-                            <td>
-
-                                <div class="person-cell">
-
-                                    <div class="person-avatar">
-
-                                        {{ member["name"][0]|upper
-                                        }}{{ member["surname"][0]|upper }}
-
-                                    </div>
-
-                                    <div class="person-info">
-
+                                    <td>
                                         <strong>
-                                            {{ member["name"] }}
-                                            {{ member["surname"] }}
+                                            {{ member.name }}
+                                            {{ member.surname }}
                                         </strong>
+                                    </td>
 
-                                        <span>
-                                            {{ member["email"] or "No email" }}
-                                        </span>
+                                    <td>
+                                        {{ member.post }}
+                                    </td>
 
-                                    </div>
+                                </tr>
 
-                                </div>
+                            {% endfor %}
 
-                            </td>
+                        </tbody>
 
+                    </table>
 
-                            <td>
-                                {{ member["phone"] }}
-                            </td>
-
-
-                            <td>
-                                <span class="badge badge-neutral">
-                                    {{ member["post"] }}
-                                </span>
-                            </td>
-
-
-                            <td>
-                                {{ member["created_at"] or "—" }}
-                            </td>
-
-                        </tr>
-
-                    {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
+                </div>
 
             {% else %}
 
-            <div class="empty-state">
+                <div class="admin-empty">
 
-                <div class="empty-icon">
-                    ♙
+                    <h3>
+                        No Members Yet
+                    </h3>
+
+                    <p>
+                        No members have registered yet.
+                    </p>
+
                 </div>
-
-                <h3>
-                    No members yet
-                </h3>
-
-                <p>
-                    Registered members will appear here.
-                </p>
-
-            </div>
 
             {% endif %}
 
@@ -317,153 +201,114 @@ Dashboard
     </section>
 
 
+
     <!-- RECENT DONATIONS -->
 
-    <section class="panel">
+    <section class="admin-panel">
 
-        <div class="panel-header">
+        <div class="admin-panel-head">
 
-            <div class="panel-title">
+            <div>
+                <h2>
+                    Recent Donations
+                </h2>
 
-                <div class="panel-title-icon">
-                    ₦
-                </div>
-
-                <div>
-
-                    <h3>
-                        Recent Donations
-                    </h3>
-
-                    <p>
-                        Latest financial activity
-                    </p>
-
-                </div>
-
+                <p>
+                    Latest donation activity
+                </p>
             </div>
-
 
             <a
                 href="{{ url_for('admin_donations') }}"
-                class="panel-link"
+                class="admin-btn admin-btn-secondary"
             >
-                View all →
+                View All
             </a>
 
         </div>
 
 
-        <div class="panel-body">
+        <div class="admin-panel-body">
 
             {% if recent_donations %}
 
-            <div class="table-wrap">
+                <div class="admin-table-wrap">
 
-                <table class="admin-table">
+                    <table class="admin-table">
 
-                    <thead>
+                        <thead>
 
-                        <tr>
-                            <th>Donor</th>
-                            <th>Amount</th>
-                            <th>Status</th>
-                        </tr>
+                            <tr>
+                                <th>Donor</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
 
-                    </thead>
+                        </thead>
 
+                        <tbody>
 
-                    <tbody>
+                            {% for donation in recent_donations %}
 
-                    {% for donation in recent_donations %}
+                                <tr>
 
-                        <tr>
-
-                            <td>
-
-                                <div class="person-cell">
-
-                                    <div class="person-avatar">
-                                        ₦
-                                    </div>
-
-                                    <div class="person-info">
-
+                                    <td>
                                         <strong>
-                                            {{ donation["donor_name"] }}
+                                            {{ donation.donor_name }}
                                         </strong>
+                                    </td>
 
-                                        <span>
-                                            {{ donation["purpose"] }}
-                                        </span>
+                                    <td>
+                                        ₦{{ "{:,.2f}".format(donation.amount or 0) }}
+                                    </td>
 
-                                    </div>
+                                    <td>
 
-                                </div>
+                                        {% if donation.payment_status == "paid" %}
 
-                            </td>
+                                            <span class="status status-paid">
+                                                Paid
+                                            </span>
 
+                                        {% elif donation.payment_status == "pending" %}
 
-                            <td>
+                                            <span class="status status-pending">
+                                                Pending
+                                            </span>
 
-                                <span class="amount">
-                                    ₦{{ "{:,.2f}".format(
-                                        donation["amount"] or 0
-                                    ) }}
-                                </span>
+                                        {% else %}
 
-                            </td>
+                                            <span class="status status-failed">
+                                                {{ donation.payment_status }}
+                                            </span>
 
+                                        {% endif %}
 
-                            <td>
+                                    </td>
 
-                                {% set status =
-                                    donation["payment_status"]|lower
-                                    if donation["payment_status"]
-                                    else "pending"
-                                %}
+                                </tr>
 
-                                <span class="badge
-                                    {% if status == 'paid' %}
-                                        badge-paid
-                                    {% elif status == 'pending' %}
-                                        badge-pending
-                                    {% else %}
-                                        badge-cancelled
-                                    {% endif %}
-                                ">
-                                    {{ donation["payment_status"] or "Pending" }}
-                                </span>
+                            {% endfor %}
 
-                            </td>
+                        </tbody>
 
-                        </tr>
+                    </table>
 
-                    {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
+                </div>
 
             {% else %}
 
-            <div class="empty-state">
+                <div class="admin-empty">
 
-                <div class="empty-icon">
-                    ₦
+                    <h3>
+                        No Donations Yet
+                    </h3>
+
+                    <p>
+                        No donations have been recorded.
+                    </p>
+
                 </div>
-
-                <h3>
-                    No donations yet
-                </h3>
-
-                <p>
-                    Donation activity will appear here.
-                </p>
-
-            </div>
 
             {% endif %}
 

@@ -1,116 +1,396 @@
 {% extends "base.html" %}
-{% block title %}Leadership & Community | FSSSMC Central Mosque{% endblock %}
+
+{% block title %}
+Leadership & Community | FSSSMC Central Mosque
+{% endblock %}
+
+
 {% block content %}
-<section class="page-hero page-hero-premium">
+
+<!-- PAGE HERO -->
+
+<section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / Leadership & Community</p>
-        <div class="hero-rule"></div>
-        <h1>Leadership & Community</h1>
-        <p>The people and committees supporting the administrative, spiritual and community work of the mosque.</p>
+
+        <p class="breadcrumb">
+            FSSSMC / Leadership & Community
+        </p>
+
+        <h1>
+            Leadership & Community
+        </h1>
+
+        <p>
+            Serving the mosque through leadership, worship,
+            knowledge and community service.
+        </p>
+
     </div>
+
 </section>
 
-<section class="section leadership-section" id="leadership">
+
+
+<!-- EXECUTIVE MEMBERS -->
+
+<section class="section">
+
     <div class="container">
-        <div class="section-head centered-head">
-            <p class="section-kicker">Executive Leadership</p>
-            <h2>Executive Members</h2>
-            <p>The executive leadership serves as the highest organ for administrative and spiritual decision-making and approval.</p>
+
+        <div class="section-head">
+
+            <p class="section-kicker">
+                Leadership
+            </p>
+
+            <h2>
+                Executive Members
+            </h2>
+
+            <p>
+                The mosque's leadership provides administrative
+                and spiritual direction and supports the activities
+                of the community.
+            </p>
+
         </div>
 
-        <div class="leadership-grid">
-            {% for person in executive_members %}
-            <article class="leader-card">
-                <div class="leader-index">{{ '%02d'|format(loop.index) }}</div>
-                <div>
-                    <h3>{{ person.name }}</h3>
-                    <p>{{ person.role }}</p>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
+
+        {% if executive_members %}
+
+            <div class="info-grid">
+
+                {% for member in executive_members %}
+
+                    <article class="info-card">
+
+                        <h3>
+                            {{ member.name }}
+                        </h3>
+
+                        {% if member.role %}
+
+                            <p class="card-label">
+                                {{ member.role }}
+                            </p>
+
+                        {% endif %}
+
+                        {% if member.description %}
+
+                            <p>
+                                {{ member.description }}
+                            </p>
+
+                        {% endif %}
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty">
+                Leadership information will be published here.
+            </div>
+
+        {% endif %}
+
     </div>
+
 </section>
+
+
+
+<!-- PAST EXECUTIVE -->
 
 <section class="section section-soft">
+
     <div class="container">
+
         <div class="section-head">
-            <p class="section-kicker">Previous Leadership</p>
-            <h2>Past Executive</h2>
+
+            <p class="section-kicker">
+                Service & History
+            </p>
+
+            <h2>
+                Past Executive
+            </h2>
+
+            <p>
+                We recognise those who have contributed to the
+                development and service of the mosque community.
+            </p>
+
         </div>
-        <div class="past-list">
-            {% for person in past_executive %}
-            <div class="past-item">
-                <span>{{ person.name }}</span>
-                <strong>{{ person.role }}</strong>
+
+
+        {% if past_executive %}
+
+            <div class="directory">
+
+                {% for member in past_executive %}
+
+                    <div class="directory-item">
+
+                        {% if member.name is defined %}
+
+                            <strong>
+                                {{ member.name }}
+                            </strong>
+
+                        {% else %}
+
+                            <strong>
+                                {{ member }}
+                            </strong>
+
+                        {% endif %}
+
+
+                        {% if member.role is defined and member.role %}
+
+                            <span>
+                                {{ member.role }}
+                            </span>
+
+                        {% endif %}
+
+                    </div>
+
+                {% endfor %}
+
             </div>
-            {% endfor %}
-        </div>
+
+        {% else %}
+
+            <div class="empty">
+                Past executive information will be published here.
+            </div>
+
+        {% endif %}
+
     </div>
+
 </section>
 
-<section class="section committees-section" id="committees">
+
+
+<!-- MASJID COMMITTEES -->
+
+<section class="section">
+
     <div class="container">
-        <div class="section-head centered-head">
-            <p class="section-kicker">Community Structure</p>
-            <h2>Masjid Committees</h2>
-            <p>Committees support the mosque's educational, welfare, financial, maintenance and youth programmes.</p>
+
+        <div class="section-head">
+
+            <p class="section-kicker">
+                Community Organisation
+            </p>
+
+            <h2>
+                Masjid Committees
+            </h2>
+
+            <p>
+                Committees support the smooth running of mosque
+                activities and community programmes.
+            </p>
+
         </div>
 
-        <div class="committee-grid-premium">
-            {% for committee in committees %}
-            <article class="committee-card-premium">
-                <span class="committee-number">{{ '%02d'|format(loop.index) }}</span>
-                <h3>{{ committee.name }}</h3>
-                <p>{{ committee.description }}</p>
-            </article>
-            {% endfor %}
-        </div>
+
+        {% if committees %}
+
+            <div class="committee-list">
+
+                {% for committee in committees %}
+
+                    <article class="committee-card">
+
+                        {% if committee.name is defined %}
+
+                            <h3>
+                                {{ committee.name }}
+                            </h3>
+
+                            {% if committee.description %}
+
+                                <p>
+                                    {{ committee.description }}
+                                </p>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            <h3>
+                                {{ committee }}
+                            </h3>
+
+                        {% endif %}
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty">
+                Committee information will be published here.
+            </div>
+
+        {% endif %}
+
     </div>
+
 </section>
 
-<section class="section section-soft jummah-section">
-    <div class="container split jummah-grid">
-        <div>
-            <p class="section-kicker">Jummah Service</p>
-            <div class="section-head">
-                <h2>Rotational Imam / Khatib Service</h2>
-            </div>
-            <div class="prose prose-large">
-                <p>Jummah service operates with a rotational Imam/Khatib arrangement to support the Friday congregational service.</p>
-                <p>The current listed lead for the service is <strong>Ustadh Abdul Granny Adebayo Ejalonibu</strong>.</p>
-            </div>
-        </div>
-        <div class="jummah-card">
-            <div class="jummah-card-head">Jummah Rotation</div>
-            {% for person in jummah_imams %}
-            <div class="jummah-person">
-                <span>{{ person.name }}</span>
-                <strong>{{ person.role }}</strong>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
 
-<section class="section contact-cta-section">
+
+<!-- JUMMAH -->
+
+<section class="section section-dark">
+
     <div class="container">
-        <div class="contact-cta">
+
+        <div class="section-head section-head-light">
+
+            <p class="section-kicker">
+                Jummah Service
+            </p>
+
+            <h2>
+                Jummah Imam & Khatib
+            </h2>
+
+            <p>
+                Jummah services are supported by a rotational
+                Imam and Khatib arrangement.
+            </p>
+
+        </div>
+
+
+        {% if jummah_imams %}
+
+            <div class="info-grid">
+
+                {% for imam in jummah_imams %}
+
+                    <article class="info-card info-card-dark">
+
+                        {% if imam.name is defined %}
+
+                            <h3>
+                                {{ imam.name }}
+                            </h3>
+
+                            {% if imam.role %}
+
+                                <p>
+                                    {{ imam.role }}
+                                </p>
+
+                            {% endif %}
+
+                        {% else %}
+
+                            <h3>
+                                {{ imam }}
+                            </h3>
+
+                        {% endif %}
+
+                    </article>
+
+                {% endfor %}
+
+            </div>
+
+        {% else %}
+
+            <div class="empty empty-dark">
+                Jummah Imam information will be published here.
+            </div>
+
+        {% endif %}
+
+    </div>
+
+</section>
+
+
+
+<!-- CONTACT ACTIONS -->
+
+<section class="section">
+
+    <div class="container">
+
+        <div class="contact-actions">
+
             <div>
-                <p class="section-kicker">Community Connection</p>
-                <h2>Be part of the FSSSMC community.</h2>
-                <p>For membership, mosque enquiries or community matters, use the appropriate channel below.</p>
+
+                <p class="section-kicker">
+                    Get Involved
+                </p>
+
+                <h2>
+                    Be part of the FSSSMC community.
+                </h2>
+
+                <p>
+                    Members of the community can register with the
+                    mosque and participate in its programmes and
+                    activities.
+                </p>
+
             </div>
-            <div class="cta-actions">
-                {% if logged_in %}
-                <a class="btn btn-gold" href="{{ url_for('member_register') }}">Register as a Member</a>
-                <a class="btn btn-light-outline" href="mailto:info@fsssmc.org">Email the Mosque</a>
+
+
+            <div class="button-row">
+
+                {% if session.get("user_id") %}
+
+                    <a
+                        href="{{ url_for('member_register') }}"
+                        class="btn btn-gold"
+                    >
+                        Register as a Member
+                    </a>
+
                 {% else %}
-                <a class="btn btn-gold" href="{{ url_for('login', next='/members/register') }}">Sign In to Register</a>
-                <a class="btn btn-light-outline" href="mailto:info@fsssmc.org">Email the Mosque</a>
+
+                    <a
+                        href="{{ url_for('login', next='/members/register') }}"
+                        class="btn btn-gold"
+                    >
+                        Sign In to Register
+                    </a>
+
                 {% endif %}
+
+
+                <a
+                    href="mailto:info@fsssmc.org"
+                    class="btn btn-light-outline"
+                >
+                    Email the Mosque
+                </a>
+
             </div>
+
         </div>
+
     </div>
+
 </section>
+
 {% endblock %}

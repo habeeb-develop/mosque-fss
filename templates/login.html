@@ -1,100 +1,151 @@
 {% extends "base.html" %}
 
-{% block title %}Sign In | FSSSMC Central Mosque{% endblock %}
+{% block title %}
+Sign In | FSSSMC Central Mosque
+{% endblock %}
+
 
 {% block content %}
 
-<div class="auth-wrap">
+<section class="auth-section">
 
-<div class="auth-card">
+    <div class="container">
 
-    <div class="brand-mini">
+        <div class="auth-wrap">
 
-        <img
-            src="{{ url_for('static', filename='images/fsssmc.jpeg') }}"
-            alt="FSSSMC logo"
-        >
+            <div class="auth-card">
 
-        <div>
-            <strong>FSSSMC</strong>
-            <small>Central Mosque</small>
+                <div class="auth-header">
+
+                    <p class="section-kicker">
+                        FSSSMC ACCOUNT
+                    </p>
+
+                    <h1>
+                        Sign In
+                    </h1>
+
+                    <p>
+                        Sign in to access your FSSSMC account.
+                    </p>
+
+                </div>
+
+
+                <!-- FLASH MESSAGES -->
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+
+                    {% if messages %}
+
+                        <div class="auth-messages">
+
+                            {% for category, message in messages %}
+
+                                <div
+                                    class="
+                                        flash
+                                        {% if category %}
+                                            {{ category }}
+                                        {% endif %}
+                                    "
+                                >
+                                    {{ message }}
+                                </div>
+
+                            {% endfor %}
+
+                        </div>
+
+                    {% endif %}
+
+                {% endwith %}
+
+
+                <!-- LOGIN FORM -->
+
+                <form
+                    method="POST"
+                    action="{{ url_for('login') }}"
+                    class="auth-form"
+                >
+
+                    <input
+                        type="hidden"
+                        name="next"
+                        value="{{ request.args.get('next', '') }}"
+                    >
+
+
+                    <div class="form-group">
+
+                        <label for="email">
+                            Email Address
+                        </label>
+
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            placeholder="Enter your email"
+                            autocomplete="email"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="password">
+                            Password
+                        </label>
+
+                        <input
+                            id="password"
+                            type="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                    </div>
+
+
+                    <button
+                        type="submit"
+                        class="btn btn-green auth-submit"
+                    >
+                        Sign In
+                    </button>
+
+                </form>
+
+
+                <!-- CREATE ACCOUNT -->
+
+                <div class="auth-footer">
+
+                    <p>
+                        Don't have an account?
+                    </p>
+
+                    <a
+                        href="{{ url_for('register') }}"
+                        class="auth-link"
+                    >
+                        Create an Account
+                    </a>
+
+                </div>
+
+            </div>
+
         </div>
 
     </div>
 
-    <h1>Sign in</h1>
-
-    <p class="auth-note">
-        Access your mosque community account.
-    </p>
-
-
-    <form
-        class="form-layout"
-        method="post"
-    >
-
-        <div class="form-group full">
-
-            <label for="email">
-                Email address
-            </label>
-
-            <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                autocomplete="email"
-            >
-
-        </div>
-
-
-        <div class="form-group full">
-
-            <label for="password">
-                Password
-            </label>
-
-            <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autocomplete="current-password"
-            >
-
-        </div>
-
-
-        <div class="form-actions">
-
-            <button
-                class="btn btn-green"
-                type="submit"
-            >
-                Sign In
-            </button>
-
-        </div>
-
-    </form>
-
-
-    <p class="auth-note">
-
-        Don't have an account?
-
-        <a href="{{ url_for('register') }}">
-            Create an account
-        </a>
-
-    </p>
-
-</div>
-
-
-</div>
+</section>
 
 {% endblock %}
