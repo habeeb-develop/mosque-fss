@@ -1,0 +1,166 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Donations | FSSSMC Admin{% endblock %}
+
+{% block content %}
+
+<div class="admin-title">
+    <div>
+        <h1>Donations</h1>
+        <p>Review and manage recorded donations.</p>
+    </div>
+</div>
+
+{% if donations %}
+
+<div class="table-wrap">
+    <table class="data-table">
+
+        <thead>
+            <tr>
+                <th>Donor</th>
+                <th>Amount</th>
+                <th>Purpose</th>
+                <th>Method</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+        {% for donation in donations %}
+
+        <tr>
+
+            <td>
+                <strong>{{ donation.donor_name }}</strong>
+            </td>
+
+            <td>
+                <strong>₦{{ "{:,.2f}".format(donation.amount) }}</strong>
+            </td>
+
+            <td>
+                {{ donation.purpose }}
+            </td>
+
+            <td>
+                {{ donation.payment_method }}
+            </td>
+
+            <td>
+
+                {% if donation.payment_status == "Paid" %}
+
+                    <span class="status-badge status-paid">
+                        Paid
+                    </span>
+
+                {% elif donation.payment_status == "Pending" %}
+
+                    <span class="status-badge status-pending">
+                        Pending
+                    </span>
+
+                {% elif donation.payment_status == "Cancelled" %}
+
+                    <span class="status-badge status-cancelled">
+                        Cancelled
+                    </span>
+
+                {% else %}
+
+                    <span class="status-badge">
+                        {{ donation.payment_status }}
+                    </span>
+
+                {% endif %}
+
+            </td>
+
+            <td>
+                {{ donation.created_at }}
+            </td>
+
+            <td>
+
+                <div class="action-group">
+
+                    <form
+                        class="inline-form"
+                        method="post"
+                        action="{{ url_for('admin_update_donation_status', donation_id=donation.id) }}"
+                    >
+
+                        <select
+                            class="status-select"
+                            name="status"
+                        >
+
+                            {% for status in ["Pending", "Paid", "Cancelled"] %}
+
+                            <option
+                                value="{{ status }}"
+                                {% if donation.payment_status == status %}
+                                selected
+                                {% endif %}
+                            >
+                                {{ status }}
+                            </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                        <button
+                            class="btn btn-green btn-small"
+                            type="submit"
+                        >
+                            Update
+                        </button>
+
+                    </form>
+
+
+                    <form
+                        class="inline-form"
+                        method="post"
+                        action="{{ url_for('admin_delete_donation', donation_id=donation.id) }}"
+                        onsubmit="return confirm('Delete this donation record?');"
+                    >
+
+                        <button
+                            class="btn btn-small danger"
+                            type="submit"
+                        >
+                            Delete
+                        </button>
+
+                    </form>
+
+                </div>
+
+            </td>
+
+        </tr>
+
+        {% endfor %}
+
+        </tbody>
+
+    </table>
+</div>
+
+{% else %}
+
+<div class="empty">
+    <div class="empty-icon">₦</div>
+    <h3>No Donations Yet</h3>
+    <p>No donations have been recorded.</p>
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Admin Login | FSSSMC Central Mosque</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin-login.css') }}"
+    >
+
+</head>
+
+
+<body>
+
+    <main class="login-wrapper">
+
+        <section class="login-card">
+
+            <!-- LOGO -->
+
+            <div class="login-logo">
+
+                <img
+                    src="{{ url_for('static', filename='images/fsssmc.jpeg') }}"
+                    alt="FSSSMC Central Mosque"
+                >
+
+            </div>
+
+
+            <!-- TITLE -->
+
+            <div class="login-title">
+
+                <p>FSSSMC CENTRAL MOSQUE</p>
+
+                <h1>Admin Sign In</h1>
+
+                <span>
+                    Sign in to access the administration dashboard.
+                </span>
+
+            </div>
+
+
+            <!-- FLASH MESSAGES -->
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+
+                {% if messages %}
+
+                    <div class="flash-container">
+
+                        {% for category, message in messages %}
+
+                            <div class="flash {{ category }}">
+                                {{ message }}
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                {% endif %}
+
+            {% endwith %}
+
+
+            <!-- LOGIN FORM -->
+
+            <form
+                method="POST"
+                action="{{ url_for('admin_login') }}"
+                class="login-form"
+            >
+
+                <!-- EMAIL -->
+
+                <div class="input-group">
+
+                    <label for="email">
+                        Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="Enter admin email"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PASSWORD -->
+
+                <div class="input-group">
+
+                    <label for="password">
+                        Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="Enter admin password"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- BUTTON -->
+
+                <button
+                    type="submit"
+                    class="login-btn"
+                >
+                    Sign In
+                </button>
+
+            </form>
+
+
+            <!-- BACK -->
+
+            <a
+                href="{{ url_for('home') }}"
+                class="back-home"
+            >
+                ← Back to Website
+            </a>
+
+        </section>
+
+    </main>
+
+</body>
+
+</html>
