@@ -2,170 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
-    <title>
-        {% block title %}FSSSMC Admin{% endblock %}
-    </title>
-
-    <link
-        rel="preconnect"
-        href="https://fonts.googleapis.com"
-    >
-
-    <link
-        rel="preconnect"
-        href="https://fonts.gstatic.com"
-        crossorigin
-    >
-
-    <link
-        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet"
-    >
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/style.css') }}"
-    >
-
-    <link
-        rel="stylesheet"
-        href="{{ url_for('static', filename='css/admin.css') }}"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin | FSSSMC Central Mosque{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
 </head>
-
-<body>
-
-<div class="admin-layout">
-
-    <!-- SIDEBAR -->
-    <aside class="admin-sidebar">
-
-        <div class="admin-brand">
-            <h1>FSSSMC</h1>
-            <p>Central Mosque Administration</p>
-        </div>
-
-        <nav class="admin-nav">
-
-            <div class="admin-nav-title">
-                Administration
+<body class="admin-body">
+<div class="admin-shell">
+    <header class="admin-header">
+        <div class="admin-header-inner">
+            <a class="admin-brand" href="{{ url_for('admin_dashboard') }}">
+                <img src="{{ url_for('static', filename='images/fsssmc.jpeg') }}" alt="FSSSMC logo">
+                <span>
+                    <strong>FSSSMC ADMIN</strong>
+                    <span>Central Mosque Administration</span>
+                </span>
+            </a>
+            <div class="admin-header-actions">
+                <a href="{{ url_for('home') }}">View Website</a>
+                <a href="{{ url_for('admin_logout') }}">Sign Out</a>
             </div>
-
-            <a
-                href="{{ url_for('admin_dashboard') }}"
-                class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
-            >
-                Dashboard
-            </a>
-
-            <a
-                href="{{ url_for('admin_members') }}"
-                class="{% if request.endpoint in ['admin_members', 'admin_add_member', 'admin_edit_member'] %}active{% endif %}"
-            >
-                Members
-            </a>
-
-            <a
-                href="{{ url_for('admin_donations') }}"
-                class="{% if request.endpoint in ['admin_donations', 'admin_update_donation_status'] %}active{% endif %}"
-            >
-                Donations
-            </a>
-
-            <a
-                href="{{ url_for('admin_announcements') }}"
-                class="{% if request.endpoint == 'admin_announcements' %}active{% endif %}"
-            >
-                Announcements
-            </a>
-
-        </nav>
-
-        <div class="admin-sidebar-footer">
-
-            <a href="{{ url_for('home') }}">
-                View Website
-            </a>
-
-            <a
-                href="{{ url_for('admin_logout') }}"
-                class="logout"
-            >
-                Sign Out
-            </a>
-
         </div>
+    </header>
 
-    </aside>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <p>Administration</p>
+            <a class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a class="{% if request.endpoint in ['admin_members','admin_add_member','admin_edit_member','admin_delete_member'] %}active{% endif %}" href="{{ url_for('admin_members') }}">Members</a>
+            <a class="{% if request.endpoint in ['admin_donations','admin_update_donation_status','admin_delete_donation'] %}active{% endif %}" href="{{ url_for('admin_donations') }}">Donations</a>
+            <a class="{% if request.endpoint in ['admin_announcements','admin_delete_announcement'] %}active{% endif %}" href="{{ url_for('admin_announcements') }}">Announcements</a>
+        </aside>
 
+        <main class="admin-content">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
 
-    <!-- MAIN CONTENT -->
-    <main class="admin-main">
-
-        <div class="admin-topbar">
-
-            <div class="admin-topbar-left">
-                <h1>FSSSMC Admin</h1>
-                <p>
-                    Central Mosque Administration
-                </p>
-            </div>
-
-            <div class="admin-topbar-right">
-                <a
-                    href="{{ url_for('home') }}"
-                    class="admin-btn admin-btn-secondary"
-                >
-                    View Website
-                </a>
-            </div>
-
-        </div>
-
-
-        <!-- FLASH MESSAGES -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-
-            {% if messages %}
-
-                {% for category, message in messages %}
-
-                    <div
-                        class="
-                            admin-alert
-                            {% if category == 'success' %}
-                                admin-alert-success
-                            {% elif category == 'error' %}
-                                admin-alert-error
-                            {% elif category == 'warning' %}
-                                admin-alert-warning
-                            {% else %}
-                                admin-alert-info
-                            {% endif %}
-                        "
-                    >
-                        {{ message }}
-                    </div>
-
-                {% endfor %}
-
-            {% endif %}
-
-        {% endwith %}
-
-
-        {% block content %}
-        {% endblock %}
-
-    </main>
-
+            {% block content %}{% endblock %}
+        </main>
+    </div>
 </div>
-
 </body>
 </html>

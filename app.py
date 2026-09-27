@@ -1,6 +1,13 @@
 from flask import (
-    Flask, render_template, request, redirect,
-    url_for, session, flash, g
+    Flask,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    flash,
+    g,
+    render_template_string
 )
 
 import sqlite3
@@ -8,7 +15,7 @@ import os
 import json
 import hashlib
 import hmac
-import uuid
+import secrets
 
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
@@ -18,98 +25,122 @@ from functools import wraps
 from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
-from werkzeug.security import generate_password_hash, check_password_hash
-from dotenv import load_dotenv
+from werkzeug.security import (
+    generate_password_hash,
+    check_password_hash
+)
 
-
-load_dotenv()
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    # python-dotenv is optional in production; Render environment variables
+    # are available through os.environ even when dotenv is not installed.
+    pass
 
 
 # ================================================================
-# APP CONFIGURATION
+# APPLICATION CONFIGURATION
 # ================================================================
 
 app = Flask(__name__)
 
-app.secret_key = os.environ.get(
-    "SECRET_KEY",
-    "dev-only-change-this-secret-key"
-).strip()
+# IMPORTANT:
+# On Render, create a SECRET_KEY environment variable.
+# Keep the same value permanently.
+SECRET_KEY = os.environ.get("SECRET_KEY", "").strip()
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if not SECRET_KEY:
+    # A random fallback keeps local development usable.
+    # On Render, ALWAYS set SECRET_KEY in Environment Variables.
+    SECRET_KEY = secrets.token_hex(32)
 
-DATABASE = os.path.join(
-    BASE_DIR,
-    "database",
-    "fss.db"
+app.secret_key = SECRET_KEY
+
+# Session configuration
+app.config["SESSION_COOKIE_HTTPONLY"] = True
+app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+
+# Render uses HTTPS.
+# Local development remains HTTP.
+app.config["SESSION_COOKIE_SECURE"] = (
+    os.environ.get("RENDER", "").lower() == "true"
 )
+
+app.config["SESSION_COOKIE_NAME"] = "fsssmc_session"
+app.config["SESSION_COOKIE_PATH"] = "/"
+app.config["SESSION_COOKIE_DOMAIN"] = None
+
+# Flask may sit behind Render's HTTPS reverse proxy.
+app.config["PREFERRED_URL_SCHEME"] = "https"
+
+BASE_DIR = os.path.dirname(
+    os.path.abspath(__file__)
+)
+
+DATABASE_DIR = os.path.join(
+    BASE_DIR,
+    "database"
+)
+
+DATABASE = os.environ.get("DATABASE_PATH", "").strip()
+if not DATABASE:
+    DATABASE = os.path.join(DATABASE_DIR, "fss.db")
+
+# Allow Render Persistent Disk (or another mounted volume) to supply the
+# database location without changing the application code.
+DATABASE = os.path.abspath(DATABASE)
+DATABASE_PARENT = os.path.dirname(DATABASE)
+if DATABASE_PARENT:
+    os.makedirs(DATABASE_PARENT, exist_ok=True)
 
 print("DATABASE LOCATION:", DATABASE)
 
 
 # ================================================================
-# PAYMENT / EMAIL API CONFIGURATION
+# PAYSTACK
 # ================================================================
 
-# Paystack
 PAYSTACK_SECRET_KEY = os.environ.get(
     "PAYSTACK_SECRET_KEY",
     ""
 ).strip()
 
-PAYSTACK_BASE_URL = "https://api.paystack.co"
-
-
-# Mailboxlayer
-MAILBOXLAYER_ACCESS_KEY = os.environ.get(
-    "MAILBOXLAYER_ACCESS_KEY",
+PAYSTACK_PUBLIC_KEY = os.environ.get(
+    "PAYSTACK_PUBLIC_KEY",
     ""
 ).strip()
 
-MAILBOXLAYER_URL = "https://apilayer.net/api/check"
+PAYSTACK_BASE_URL = os.environ.get(
+    "PAYSTACK_BASE_URL",
+    "https://api.paystack.co"
+).strip()
 
+PAYSTACK_CURRENCY = "NGN"
 
 
 # ================================================================
 # SITE DATA
 # ================================================================
 
-POSTS = [
-    "Imam",
-    "Doctor",
-    "Engineer",
-    "Teacher",
-    "Student",
-    "Business Owner",
-    "Accountant",
-    "Lawyer",
-    "Civil Servant",
-    "Trader",
-    "Artisan",
-    "Retired",
-    "Other"
-]
-
-
 DONATION_PURPOSES = [
-    "General Mosque Fund",
+    "General Mosque Support",
+    "Building & Maintenance",
+    "Education",
+    "Community Service",
     "Zakat",
     "Sadaqah",
-    "Building / Maintenance",
-    "Education",
-    "Food / Welfare",
-    "Ramadan",
     "Other"
 ]
 
 
 EXECUTIVE_MEMBERS = [
     {
-        "name": "Muritala Adekunle Balogun",
+        "name": "Amir Muritala Adekunle Balogun",
         "role": "Amir"
     },
     {
-        "name": "Mustapha Motilola Alli",
+        "name": "Imam Mustapha Motilola Alli",
         "role": "Imam"
     },
     {
@@ -147,163 +178,94 @@ EXECUTIVE_MEMBERS = [
     {
         "name": "Monsuru Oladehide",
         "role": "Executive Member"
-    },
+    }
 ]
 
 
 PAST_EXECUTIVE = [
     {
-        "name": "Late Alhaji Musliu Arinola",
-        "role": "Past Executive",
-        "status": "Deceased"
-    },
-    {
-        "name": "Late Alhaji Ayoade Musibau Adetunji",
-        "role": "Past Executive",
-        "status": "Deceased"
-    },
+        "name": "Previous Executive",
+        "role": "Past Executive Member"
+    }
 ]
 
 
-COMMITTEES = {
-    "Financial Committee": [
-        ("Abdul Ganiyu Olayinka Dabiri", ""),
-        ("Lukman Badiru", ""),
-        ("Abdul Gafar Wale Ajala", ""),
-        ("Muhammed Bello", ""),
-        ("Abdul Fatai Bakare", "Change of location"),
-        ("Monsuru Oyinlola", ""),
-        ("Sikiru Bankole", ""),
-        ("Ibikunle Rasaq Adekunmi Abu Zaid", ""),
-    ],
-
-    "Infrastructure / Project Committee": [
-        ("Balogun Muritala Adekunle", ""),
-        ("Dabiri Ganiyu Olayinka", ""),
-        ("Arinola Musliu", "Deceased"),
-        ("Ayoade Musibau Adetunji", "Deceased"),
-        ("Engr. Sanni Ismail", ""),
-    ],
-
-    "Da'awa Committee": [
-        ("Imam Alli Mustapha", ""),
-        ("Abimbola Ishaq Aderemi", ""),
-        ("Badiru Lukman", ""),
-        ("Abdul Lateef", ""),
-        ("Ustadh Abdul Ganny Ejalonibu", ""),
-        ("Ustadh Abu Abdul Rahman Opeyemi", ""),
-        ("Ibikunle Rasaq Adekunmi Abu Zaid", ""),
-        ("Ustadh Abdul Rasheed Adebayo", "Relocation"),
-    ],
-
-    "Welfare Committee": [
-        ("Abdul Lateef Usman", ""),
-        ("Hassan Muhammad Bello", ""),
-        ("Muhammed Bello", ""),
-        ("Demola Adeduntan", ""),
-    ],
-
-    "Education Committee": [
-        ("Abimbola Ishaq Aderemi", ""),
-        ("Prof. Aderolu Zaid", ""),
-        ("Ustadh Abdul Ganny Ejalonibu", ""),
-        ("Balogun Muritala Adekunle", ""),
-    ],
-
-    "Ramadan Planning Committee": [
-        ("Hassan Muhammad Bello", ""),
-        ("Abdul Lateef Usman", ""),
-        ("Lukman Badiru", ""),
-        ("Monsuru Oyinlola", ""),
-        ("Muhammed Bello", ""),
-    ],
-
-    "Masjid Maintenance Committee": [
-        ("Ajao Ibrahim", ""),
-        ("Ibikunle Rasaq Adekunmi", ""),
-        ("Qozeem Adebisi", ""),
-    ],
-}
+COMMITTEES = [
+    {
+        "name": "Education Committee",
+        "description": (
+            "Coordinates Islamic learning, lectures, "
+            "classes and educational programmes."
+        )
+    },
+    {
+        "name": "Welfare Committee",
+        "description": (
+            "Supports members and community welfare initiatives."
+        )
+    },
+    {
+        "name": "Finance Committee",
+        "description": (
+            "Supports responsible financial administration "
+            "and accountability."
+        )
+    },
+    {
+        "name": "Maintenance Committee",
+        "description": (
+            "Coordinates mosque facilities and maintenance."
+        )
+    },
+    {
+        "name": "Youth Committee",
+        "description": (
+            "Coordinates activities and programmes for young members."
+        )
+    }
+]
 
 
 JUMMAH_IMAMS = [
-    "Ustadh Abdul Granny Adebayo Ejalonibu",
-    "Opeyemi Abu Abdul Rahman",
-    "Ustadh Abdul Rasheed Adebayo Abu Qoonitah",
-    "Ustadh Abdul Azeez Abu Nasir",
-    "Ustadh Abu Abdullah",
-    "Ustadh Abu Abidah",
+    {
+        "name": "Ustadh Abdul Granny Adebayo Ejalonibu",
+        "role": "Jummah Imam / Khatib"
+    }
 ]
 
 
 FACILITIES = [
-    (
-        "Main Prayer Hall",
-        "A dedicated space for congregational worship and daily prayers."
-    ),
-    (
-        "Women’s Prayer Area",
-        "A dedicated prayer area for sisters and women in the community."
-    ),
-    (
-        "Islamic Library",
-        "A space for Qur’anic, Islamic and educational materials."
-    ),
-    (
-        "Ablution Facilities",
-        "Facilities provided to support worshippers before prayer."
-    ),
-    (
-        "Classrooms",
-        "Learning spaces for Islamic education and community programmes."
-    ),
-    (
-        "Meeting Halls",
-        "Spaces for meetings, planning and community activities."
-    ),
+    "Main Prayer Hall",
+    "Women's Prayer Area",
+    "Islamic Library",
+    "Ablution Facilities",
+    "Classrooms",
+    "Meeting Halls"
 ]
 
 
 # ================================================================
-# DATABASE
+# DATABASE HELPERS
 # ================================================================
 
 def get_db():
 
     if "db" not in g:
 
-        os.makedirs(
-            os.path.dirname(DATABASE),
-            exist_ok=True
-        )
-
         g.db = sqlite3.connect(
             DATABASE,
-            timeout=30,
-            check_same_thread=False
+            timeout=30
         )
 
         g.db.row_factory = sqlite3.Row
 
-        # Foreign keys
         g.db.execute(
             "PRAGMA foreign_keys = ON"
         )
 
-        # Wait up to 30 seconds if another connection
-        # is temporarily writing to the database.
         g.db.execute(
             "PRAGMA busy_timeout = 30000"
         )
-
-        # WAL allows readers and writers to work together
-        # more smoothly than the default journal mode.
-        try:
-            g.db.execute(
-                "PRAGMA journal_mode = WAL"
-            )
-        except sqlite3.OperationalError:
-            pass
 
     return g.db
 
@@ -311,186 +273,358 @@ def get_db():
 @app.teardown_appcontext
 def close_db(exception=None):
 
-    db = g.pop("db", None)
+    db = g.pop(
+        "db",
+        None
+    )
 
     if db is not None:
+        db.close()
 
-        try:
-            if exception is not None:
-                db.rollback()
-        except sqlite3.Error:
-            pass
 
-        try:
-            db.close()
-        except sqlite3.Error:
-            pass
+def column_exists(
+    table_name,
+    column_name
+):
+
+    db = get_db()
+
+    columns = db.execute(
+        f"PRAGMA table_info({table_name})"
+    ).fetchall()
+
+    return any(
+        column["name"] == column_name
+        for column in columns
+    )
+
+
+def add_column_if_missing(
+    table_name,
+    column_name,
+    definition
+):
+
+    db = get_db()
+
+    if not column_exists(
+        table_name,
+        column_name
+    ):
+
+        db.execute(
+            f"""
+            ALTER TABLE {table_name}
+            ADD COLUMN {column_name} {definition}
+            """
+        )
+
+        db.commit()
 
 
 def init_db():
 
     db = get_db()
 
-    try:
+    # ------------------------------------------------------------
+    # ADMINS
+    # ------------------------------------------------------------
 
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS admins (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+
+    # ------------------------------------------------------------
+    # USERS
+    # ------------------------------------------------------------
+
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            surname TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """
+    )
+
+    add_column_if_missing(
+        "users",
+        "email_verified",
+        "INTEGER DEFAULT 0"
+    )
+
+    # ------------------------------------------------------------
+    # MEMBERS
+    # ------------------------------------------------------------
+
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS members (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            surname TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            email TEXT NOT NULL,
+            address TEXT NOT NULL,
+            post TEXT NOT NULL,
+            notes TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+
+    # ------------------------------------------------------------
+    # DONATIONS
+    # ------------------------------------------------------------
+
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS donations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            donor_name TEXT NOT NULL,
+            phone TEXT,
+            email TEXT NOT NULL,
+            amount REAL NOT NULL,
+            purpose TEXT NOT NULL,
+            payment_reference TEXT UNIQUE NOT NULL,
+            payment_method TEXT DEFAULT 'paystack',
+            payment_status TEXT DEFAULT 'pending',
+            notes TEXT,
+            created_at TEXT NOT NULL,
+            paid_at TEXT
+        )
+        """
+    )
+
+    # ------------------------------------------------------------
+    # ANNOUNCEMENTS
+    # ------------------------------------------------------------
+
+    db.execute(
+        """
+        CREATE TABLE IF NOT EXISTS announcements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            body TEXT NOT NULL,
+            published INTEGER DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
+    )
+
+    # ------------------------------------------------------------
+    # SAFE MIGRATIONS FOR OLDER DATABASES
+    # ------------------------------------------------------------
+
+    # Older copies of the project may have created these tables before
+    # some fields were added. SQLite lets us add nullable columns without
+    # destroying existing records.
+    migrations = [
+        ("members", "email", "TEXT"),
+        ("members", "notes", "TEXT"),
+        ("members", "created_at", "TEXT"),
+        ("members", "updated_at", "TEXT"),
+
+        ("donations", "phone", "TEXT"),
+        ("donations", "email", "TEXT"),
+        ("donations", "amount", "REAL"),
+        ("donations", "purpose", "TEXT"),
+        ("donations", "payment_reference", "TEXT"),
+        ("donations", "payment_method", "TEXT DEFAULT 'paystack'"),
+        ("donations", "payment_status", "TEXT DEFAULT 'pending'"),
+        ("donations", "notes", "TEXT"),
+        ("donations", "created_at", "TEXT"),
+        ("donations", "paid_at", "TEXT"),
+
+        ("announcements", "published", "INTEGER DEFAULT 1"),
+        ("announcements", "created_at", "TEXT"),
+        ("announcements", "updated_at", "TEXT"),
+    ]
+
+    for table_name, column_name, definition in migrations:
         try:
-            db.execute(
-                "PRAGMA journal_mode = WAL"
+            add_column_if_missing(
+                table_name,
+                column_name,
+                definition
             )
-        except sqlite3.OperationalError:
-            pass
-
-        db.execute(
-            "PRAGMA foreign_keys = ON"
-        )
-
-        db.execute(
-            "PRAGMA busy_timeout = 30000"
-        )
-
-        # --------------------------------------------------------
-        # CREATE TABLES
-        # --------------------------------------------------------
-
-        db.executescript("""
-
-            CREATE TABLE IF NOT EXISTS admins (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                surname TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS members (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                surname TEXT NOT NULL,
-                phone TEXT NOT NULL,
-                email TEXT,
-                address TEXT NOT NULL,
-                post TEXT NOT NULL,
-                notes TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE TABLE IF NOT EXISTS donations (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                donor_name TEXT NOT NULL,
-                phone TEXT,
-                email TEXT,
-                amount REAL NOT NULL CHECK(amount > 0),
-                purpose TEXT NOT NULL,
-                payment_reference TEXT,
-                payment_method TEXT DEFAULT 'Manual',
-                payment_status TEXT DEFAULT 'Pending',
-                notes TEXT,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                paid_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS announcements (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                body TEXT NOT NULL,
-                published INTEGER DEFAULT 1,
-                created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_members_phone
-            ON members(phone);
-
-            CREATE INDEX IF NOT EXISTS idx_members_post
-            ON members(post);
-
-            CREATE INDEX IF NOT EXISTS idx_donations_status
-            ON donations(payment_status);
-
-            CREATE INDEX IF NOT EXISTS idx_donations_created
-            ON donations(created_at);
-
-            CREATE UNIQUE INDEX IF NOT EXISTS
-            idx_donations_reference
-            ON donations(payment_reference)
-            WHERE payment_reference IS NOT NULL;
-
-        """)
-
-        # --------------------------------------------------------
-        # USER EMAIL VERIFICATION COLUMN
-        user_columns = db.execute(
-            "PRAGMA table_info(users)"
-        ).fetchall()
-
-        column_names = {
-            column["name"]
-            for column in user_columns
-        }
-
-        if "email_verified" not in column_names:
-            db.execute(
-                """
-                ALTER TABLE users
-                ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0
-                """
+        except sqlite3.OperationalError as error:
+            app.logger.warning(
+                "Could not migrate %s.%s: %s",
+                table_name,
+                column_name,
+                error
             )
 
-        # CREATE DEFAULT ADMIN
-        # --------------------------------------------------------
+    # ------------------------------------------------------------
+    # INDEXES
+    # ------------------------------------------------------------
 
-        admin_email = os.environ.get(
-            "ADMIN_EMAIL",
-            "admin@fsssmc.org"
-        ).strip().lower()
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_members_phone
+        ON members(phone)
+        """
+    )
 
-        admin_password = os.environ.get(
-            "ADMIN_PASSWORD",
-            "ChangeThisPassword123!"
-        )
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_members_post
+        ON members(post)
+        """
+    )
 
-        admin = db.execute(
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_donations_status
+        ON donations(payment_status)
+        """
+    )
+
+    db.execute(
+        """
+        CREATE INDEX IF NOT EXISTS idx_donations_created
+        ON donations(created_at)
+        """
+    )
+
+    # ------------------------------------------------------------
+    # DEFAULT ADMIN
+    # ------------------------------------------------------------
+
+    admin_email = os.environ.get(
+        "ADMIN_EMAIL",
+        "admin@fsssmc.org"
+    ).strip().lower()
+
+    admin_password = os.environ.get(
+        "ADMIN_PASSWORD",
+        ""
+    )
+
+    if not admin_password:
+        # Keep local development usable, but never silently use a weak
+        # production password. Render should always have ADMIN_PASSWORD.
+        if os.environ.get("RENDER", "").lower() == "true":
+            raise RuntimeError(
+                "ADMIN_PASSWORD is required in Render Environment Variables."
+            )
+        admin_password = "ChangeThisPassword123!"
+
+    existing_admin = db.execute(
+        """
+        SELECT id
+        FROM admins
+        WHERE email = ?
+        """,
+        (admin_email,)
+    ).fetchone()
+
+    if not existing_admin:
+
+        db.execute(
             """
-            SELECT id
+            INSERT INTO admins (
+                email,
+                password_hash,
+                created_at
+            )
+            VALUES (?, ?, ?)
+            """,
+            (
+                admin_email,
+                generate_password_hash(
+                    admin_password
+                ),
+                datetime.utcnow().isoformat()
+            )
+        )
+
+    else:
+        # Keep the administrator password synchronized with the Render
+        # ADMIN_PASSWORD environment variable. This also fixes the common
+        # case where the database was created with an older default password.
+        existing_admin_row = db.execute(
+            """
+            SELECT password_hash
             FROM admins
             WHERE email = ?
             """,
             (admin_email,)
         ).fetchone()
 
-        if admin is None:
+        try:
+            password_matches = check_password_hash(
+                existing_admin_row["password_hash"],
+                admin_password
+            )
+        except Exception:
+            password_matches = False
 
+        if not password_matches:
             db.execute(
                 """
-                INSERT INTO admins
-                (email, password_hash)
-                VALUES (?, ?)
+                UPDATE admins
+                SET password_hash = ?
+                WHERE email = ?
                 """,
                 (
-                    admin_email,
-                    generate_password_hash(admin_password)
+                    generate_password_hash(admin_password),
+                    admin_email
                 )
             )
 
-        db.commit()
+    db.commit()
 
-    except sqlite3.Error:
 
-        try:
-            db.rollback()
-        except sqlite3.Error:
-            pass
+# ================================================================
+# AUTHENTICATION HELPERS
+# ================================================================
 
-        raise
+def account_authenticated():
+
+    return bool(
+        session.get("user_id")
+    )
+
+
+def admin_authenticated():
+
+    return bool(
+        session.get("admin_id")
+    )
+
+
+def admin_required(function):
+
+    @wraps(function)
+    def decorated(*args, **kwargs):
+
+        if not admin_authenticated():
+
+            return redirect(
+                url_for("admin_login")
+            )
+
+        return function(
+            *args,
+            **kwargs
+        )
+
+    return decorated
 
 
 # ================================================================
@@ -502,816 +636,602 @@ def inject_globals():
 
     return {
         "site_name": "FSSSMC Central Mosque",
+        "paystack_public_key": PAYSTACK_PUBLIC_KEY,
         "current_year": datetime.now().year,
-        "executive_members": EXECUTIVE_MEMBERS,
-        "past_executive": PAST_EXECUTIVE,
-        "committees": COMMITTEES,
-        "jummah_imams": JUMMAH_IMAMS,
-        "facilities": FACILITIES,
-        "logged_in": account_authenticated() if "account_authenticated" in globals() else False,
-        "admin_logged_in": bool(session.get("admin_id")),
-        "user_logged_in": bool(session.get("user_id")),
+        "logged_in": account_authenticated(),
+        "current_user_name": session.get(
+            "user_name"
+        ),
+        "current_user_surname": session.get(
+            "user_surname"
+        ),
+        "current_user_email": session.get(
+            "user_email"
+        )
     }
 
 
 # ================================================================
-# MAILBOXLAYER EMAIL VALIDATION
+# SAFE TEMPLATE RENDERING
 # ================================================================
 
-def validate_email_with_mailboxlayer(email):
-
-    email = (email or "").strip().lower()
-
-    if not email:
-        return False
-
-    # Always perform a basic syntax check first.
-    if (
-        "@" not in email
-        or email.startswith("@")
-        or email.endswith("@")
-        or "." not in email.split("@")[-1]
-    ):
-        return False
-
-    # If no API key has been configured, allow the
-    # basic syntax check to work during local development.
-    if not MAILBOXLAYER_ACCESS_KEY:
-        print(
-            "MAILBOXLAYER_ACCESS_KEY is not configured. "
-            "Using basic email validation."
-        )
-        return True
-
-    params = urlencode({
-        "access_key": MAILBOXLAYER_ACCESS_KEY,
-        "email": email,
-    })
-
-    api_url = f"{MAILBOXLAYER_URL}?{params}"
-
+def safe_render(template_name, **context):
+    """
+    Render a normal template. If a deployment accidentally missed a
+    template, return a useful HTML response instead of causing a second
+    TemplateNotFound exception inside the 500 handler.
+    """
     try:
-
-        req = Request(
-            api_url,
-            headers={
-                "User-Agent": "FSSSMC-Central-Mosque/1.0"
-            }
-        )
-
-        with urlopen(
-            req,
-            timeout=8
-        ) as response:
-
-            payload = json.loads(
-                response.read().decode("utf-8")
-            )
-
-        # Mailboxlayer can return an error object.
-        if payload.get("success") is False:
-
-            print(
-                "Mailboxlayer returned an API error:",
-                payload.get("error")
-            )
-
-            # Fail open, like the previous FSSSMC setup.
-            return True
-
-        format_valid = payload.get(
-            "format_valid",
-            True
-        )
-
-        if not format_valid:
-            return False
-
-        # Reject disposable addresses when the API
-        # explicitly identifies them.
-        disposable = payload.get(
-            "disposable",
-            False
-        )
-
-        if disposable is True:
-            return False
-
-        return True
-
-    except (
-        URLError,
-        HTTPError,
-        TimeoutError,
-        ValueError,
-        json.JSONDecodeError
-    ) as error:
-
-        print(
-            "Mailboxlayer validation error:",
-            error
-        )
-
-        # Fail open so a temporary Mailboxlayer outage
-        # does not prevent legitimate users from registering.
-        return True
-
+        return render_template(template_name, **context)
     except Exception as error:
+        from jinja2 import TemplateNotFound
 
-        print(
-            "Unexpected Mailboxlayer error:",
-            error
-        )
-
-        return True
+        if isinstance(error, TemplateNotFound):
+            app.logger.error(
+                "MISSING TEMPLATE: %s. "
+                "Make sure the templates folder is committed and pushed.",
+                template_name
+            )
+            return (
+                f"""<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FSSSMC Central Mosque</title>
+<style>
+body{{font-family:Arial,sans-serif;background:#f7f8f7;margin:0;padding:40px;color:#17352d}}
+.box{{max-width:720px;margin:40px auto;background:white;padding:32px;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08)}}
+h1{{color:#006b57}}code{{background:#eef3f1;padding:3px 7px;border-radius:5px}}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>FSSSMC Central Mosque</h1>
+<p>This page could not be loaded because the template
+<code>{template_name}</code> is missing from the deployed project.</p>
+<p>Commit and push your complete <code>templates</code> folder to GitHub,
+then let Render deploy the new commit.</p>
+</div>
+</body>
+</html>""",
+                500
+            )
+        raise
 
 
 # ================================================================
-# PAYSTACK HELPERS
+# LOGIN GATE
 # ================================================================
 
-def generate_payment_reference():
+@app.before_request
+def require_login():
 
-    return (
-        "FSSMC-"
-        + datetime.now().strftime("%Y%m%d%H%M%S")
-        + "-"
-        + uuid.uuid4().hex[:8].upper()
-    )
-
-
-def naira_to_kobo(amount):
-
-    try:
-
-        decimal_amount = Decimal(
-            str(amount)
-        ).quantize(
-            Decimal("0.01")
-        )
-
-    except (
-        InvalidOperation,
-        ValueError,
-        TypeError
-    ):
-
-        raise ValueError(
-            "Invalid amount."
-        )
-
-    if decimal_amount <= 0:
-        raise ValueError(
-            "Amount must be greater than zero."
-        )
-
-    return int(
-        decimal_amount * Decimal("100")
-    )
-
-
-def paystack_request(
-    method,
-    endpoint,
-    data=None
-):
-
-    if not PAYSTACK_SECRET_KEY:
-
-        raise RuntimeError(
-            "PAYSTACK_SECRET_KEY is not configured."
-        )
-
-    url = (
-        PAYSTACK_BASE_URL
-        + endpoint
-    )
-
-    headers = {
-        "Authorization":
-            f"Bearer {PAYSTACK_SECRET_KEY}",
-        "Content-Type":
-            "application/json",
-        "User-Agent":
-            "FSSSMC-Central-Mosque/1.0"
-    }
-
-    body = None
-
-    if data is not None:
-
-        body = json.dumps(
-            data
-        ).encode("utf-8")
-
-    req = Request(
-        url,
-        data=body,
-        headers=headers,
-        method=method
-    )
-
-    with urlopen(
-        req,
-        timeout=15
-    ) as response:
-
-        response_body = response.read().decode(
-            "utf-8"
-        )
-
-        return json.loads(
-            response_body
-        )
-
-
-def initialize_paystack_transaction(
-    email,
-    amount_kobo,
-    reference,
-    donor_name,
-    purpose
-):
-
-    callback_url = url_for(
+    # These pages are public. Visitors can browse the mosque website
+    # without an account. Login is required only for account actions
+    # such as donations, membership registration and profile access.
+    public_endpoints = {
+        "home",
+        "about",
+        "prayer",
+        "services",
+        "events",
+        "learn",
+        "get_involved",
+        "contact",
+        "announcements",
+        "login",
+        "open_registration",
+        "register",
+        "logout",
+        "static",
+        "paystack_webhook",
         "paystack_callback",
-        _external=True
-    )
-
-    first_name = donor_name
-    last_name = ""
-
-    parts = donor_name.split()
-
-    if len(parts) > 1:
-
-        first_name = parts[0]
-        last_name = " ".join(
-            parts[1:]
-        )
-
-    payload = {
-        "email": email,
-        "amount": str(amount_kobo),
-        "currency": "NGN",
-        "reference": reference,
-        "callback_url": callback_url,
-        "metadata": {
-            "donor_name": donor_name,
-            "purpose": purpose,
-            "cancel_action": url_for(
-                "donate",
-                _external=True
-            ),
-            "custom_fields": [
-                {
-                    "display_name": "Donor Name",
-                    "variable_name": "donor_name",
-                    "value": donor_name
-                },
-                {
-                    "display_name": "Donation Purpose",
-                    "variable_name": "purpose",
-                    "value": purpose
-                }
-            ]
-        }
+        "admin_login",
+        "page_not_found",
+        "internal_error",
+        "health"
     }
 
-    response = paystack_request(
-        "POST",
-        "/transaction/initialize",
-        payload
-    )
+    endpoint = request.endpoint
 
-    if not response.get("status"):
-
-        raise RuntimeError(
-            response.get(
-                "message",
-                "Paystack could not initialize the payment."
-            )
-        )
-
-    data = response.get(
-        "data",
-        {}
-    )
-
-    authorization_url = data.get(
-        "authorization_url"
-    )
-
-    returned_reference = data.get(
-        "reference"
-    )
-
-    if not authorization_url:
-
-        raise RuntimeError(
-            "Paystack did not return a payment URL."
-        )
-
-    return {
-        "authorization_url":
-            authorization_url,
-        "reference":
-            returned_reference or reference
-    }
-
-
-def verify_paystack_transaction(reference):
-
-    if not reference:
-
+    if endpoint in public_endpoints:
         return None
 
-    response = paystack_request(
-        "GET",
-        "/transaction/verify/"
-        + reference
-    )
-
-    if not response.get("status"):
-
+    if endpoint is None:
         return None
 
-    return response.get(
-        "data"
+    # Admin routes have their own protection.
+    if endpoint.startswith("admin_"):
+        return None
+
+    # Everything else requires a normal user account.
+    if account_authenticated():
+        return None
+
+    return redirect(
+        url_for(
+            "login",
+            next=request.path
+        )
     )
-
-
-def mark_donation_as_paid(
-    reference,
-    paystack_data
-):
-
-    db = get_db()
-
-    donation = db.execute(
-        """
-        SELECT *
-        FROM donations
-        WHERE payment_reference = ?
-        """,
-        (reference,)
-    ).fetchone()
-
-    if donation is None:
-        return False
-
-    if donation["payment_status"] == "Paid":
-        return True
-
-    try:
-
-        paid_amount_kobo = int(
-            paystack_data.get(
-                "amount",
-                0
-            )
-        )
-
-        expected_amount_kobo = naira_to_kobo(
-            donation["amount"]
-        )
-
-        if (
-            paid_amount_kobo
-            != expected_amount_kobo
-        ):
-
-            print(
-                "Paystack amount mismatch:",
-                reference
-            )
-
-            return False
-
-        currency = paystack_data.get(
-            "currency",
-            ""
-        )
-
-        if currency != "NGN":
-
-            print(
-                "Unexpected Paystack currency:",
-                currency
-            )
-
-            return False
-
-        status = paystack_data.get(
-            "status"
-        )
-
-        if status != "success":
-            return False
-
-        db.execute(
-            """
-            UPDATE donations
-            SET
-                payment_status = 'Paid',
-                payment_method = 'Paystack',
-                paid_at = CURRENT_TIMESTAMP
-            WHERE payment_reference = ?
-            """,
-            (reference,)
-        )
-
-        db.commit()
-
-        return True
-
-    except (
-        ValueError,
-        TypeError,
-        sqlite3.Error
-    ) as error:
-
-        print(
-            "Unable to mark donation as paid:",
-            error
-        )
-
-        try:
-            db.rollback()
-        except sqlite3.Error:
-            pass
-
-        return False
 
 
 # ================================================================
-# PAYSTACK WEBHOOK
+# EMAIL VALIDATION
+# ================================================================
+
+def basic_email_valid(email):
+    email = (email or "").strip().lower()
+    if not email or email.count("@") != 1:
+        return False
+    local, domain = email.split("@")
+    if not local or not domain or "." not in domain:
+        return False
+    if domain.startswith(".") or domain.endswith("."):
+        return False
+    return True
+
+
+# ================================================================
+# LOGIN
 # ================================================================
 
 @app.route(
-    "/paystack/webhook",
-    methods=["POST"]
+    "/login",
+    methods=["GET", "POST"]
 )
-def paystack_webhook():
+def login():
 
-    if not PAYSTACK_SECRET_KEY:
+    if account_authenticated():
+        return redirect(url_for("profile"))
 
-        return (
-            "Paystack not configured.",
-            503
-        )
+    if admin_authenticated():
+        return redirect(url_for("admin_dashboard"))
 
-    signature = request.headers.get(
-        "x-paystack-signature",
-        ""
-    )
+    if request.method == "GET":
+        return safe_render("login.html")
 
-    raw_body = request.get_data()
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
 
-    expected_signature = hmac.new(
-        PAYSTACK_SECRET_KEY.encode("utf-8"),
-        raw_body,
-        hashlib.sha512
-    ).hexdigest()
+    if not email or not password:
+        flash("Please enter your email and password.", "error")
+        return safe_render("login.html")
 
-    if not signature:
+    db = get_db()
 
-        return (
-            "Missing signature.",
-            400
-        )
+    # Admin login from the normal login page is supported too.
+    admin = db.execute(
+        "SELECT * FROM admins WHERE email = ?",
+        (email,)
+    ).fetchone()
 
-    if not hmac.compare_digest(
-        signature,
-        expected_signature
-    ):
+    if admin:
+        try:
+            password_ok = check_password_hash(
+                admin["password_hash"],
+                password
+            )
+        except Exception:
+            password_ok = False
 
-        return (
-            "Invalid signature.",
-            400
-        )
+        if password_ok:
+            session.clear()
+            session["admin_id"] = int(admin["id"])
+            session["admin_email"] = str(admin["email"])
+            session.modified = True
+            flash("Admin login successful.", "success")
+            return redirect(url_for("admin_dashboard"))
+
+        flash("Invalid email or password.", "error")
+        return safe_render("login.html")
+
+    user = db.execute(
+        "SELECT * FROM users WHERE email = ?",
+        (email,)
+    ).fetchone()
+
+    if not user:
+        flash("Invalid email or password.", "error")
+        return safe_render("login.html")
 
     try:
-
-        payload = request.get_json(
-            silent=True
+        password_ok = check_password_hash(
+            user["password_hash"],
+            password
         )
+    except Exception:
+        password_ok = False
 
-        if not payload:
+    if not password_ok:
+        flash("Invalid email or password.", "error")
+        return safe_render("login.html")
 
-            return (
-                "Invalid JSON.",
-                400
-            )
-
-        event = payload.get(
-            "event"
+    # Email verification has been removed. A correct password logs the
+    # user in immediately. Keep the column set for compatibility with
+    # older databases, but it is no longer used as a login gate.
+    if column_exists("users", "email_verified"):
+        db.execute(
+            "UPDATE users SET email_verified = 1 WHERE id = ?",
+            (user["id"],)
         )
+        db.commit()
 
-        if event == "charge.success":
+    session.clear()
+    session["user_id"] = int(user["id"])
+    session["user_name"] = str(user["name"])
+    session["user_surname"] = str(user["surname"])
+    session["user_email"] = str(user["email"])
+    session.modified = True
 
-            data = payload.get(
-                "data",
-                {}
-            )
+    flash(
+        f"Login successful. Welcome back, {user['name']}.",
+        "success"
+    )
 
-            reference = data.get(
-                "reference"
-            )
+    next_url = request.args.get("next", "").strip()
+    if next_url.startswith("/") and not next_url.startswith("//"):
+        return redirect(next_url)
 
-            if reference:
-
-                mark_donation_as_paid(
-                    reference,
-                    data
-                )
-
-        return (
-            "OK",
-            200
-        )
-
-    except Exception as error:
-
-        print(
-            "Paystack webhook error:",
-            error
-        )
-
-        return (
-            "Webhook error.",
-            500
-        )
+    return redirect(url_for("profile"))
 
 
 # ================================================================
-# ADMIN AUTHENTICATION
+# CREATE ACCOUNT ENTRY POINT
 # ================================================================
 
-def admin_required(view):
+@app.route(
+    "/create-account"
+)
+def open_registration():
 
-    @wraps(view)
-    def wrapped_view(*args, **kwargs):
+    # This route is linked from login.html.
+    # It allows registration to be opened without
+    # opening /register directly to everybody.
 
-        if not session.get("admin_id"):
+    session["allow_registration"] = True
 
-            flash(
-                "Please log in as administrator.",
-                "error"
-            )
-
-            return redirect(
-                url_for("admin_login")
-            )
-
-        return view(*args, **kwargs)
-
-    return wrapped_view
+    return redirect(
+        url_for("register")
+    )
 
 
 # ================================================================
-# PUBLIC PAGES
+# REGISTER
+# ================================================================
+
+@app.route(
+    "/register",
+    methods=["GET", "POST"]
+)
+def register():
+
+    if account_authenticated():
+        return redirect(url_for("profile"))
+
+    if request.method == "GET":
+        if not session.get("allow_registration"):
+            return redirect(url_for("login"))
+
+        session.pop("allow_registration", None)
+        return safe_render("register.html")
+
+    name = request.form.get("name", "").strip()
+    surname = request.form.get("surname", "").strip()
+    email = request.form.get("email", "").strip().lower()
+    password = request.form.get("password", "")
+    confirm_password = request.form.get("confirm_password", "")
+
+    if not all([name, surname, email, password, confirm_password]):
+        flash("Please fill in all fields.", "error")
+        return safe_render("register.html")
+
+    if not basic_email_valid(email):
+        flash("Please enter a valid email address.", "error")
+        return safe_render("register.html")
+
+    if password != confirm_password:
+        flash("Passwords do not match.", "error")
+        return safe_render("register.html")
+
+    if len(password) < 6:
+        flash("Password must be at least 6 characters.", "error")
+        return safe_render("register.html")
+
+    # Mailboxlayer is no longer part of account creation. Basic email
+    # format validation is enough because verification emails are gone.
+    db = get_db()
+
+    existing_user = db.execute(
+        "SELECT id FROM users WHERE email = ?",
+        (email,)
+    ).fetchone()
+
+    if existing_user:
+        flash(
+            "An account with this email already exists. Please log in instead.",
+            "error"
+        )
+        return redirect(url_for("login"))
+
+    now = datetime.utcnow().isoformat()
+
+    try:
+        cursor = db.execute(
+            """
+            INSERT INTO users (
+                name, surname, email, password_hash, created_at, email_verified
+            )
+            VALUES (?, ?, ?, ?, ?, 1)
+            """,
+            (
+                name,
+                surname,
+                email,
+                generate_password_hash(password),
+                now
+            )
+        )
+        db.commit()
+    except sqlite3.IntegrityError:
+        db.rollback()
+        flash(
+            "An account with this email already exists. Please log in instead.",
+            "error"
+        )
+        return redirect(url_for("login"))
+
+    user_id = cursor.lastrowid
+
+    # Registration immediately creates an authenticated session.
+    session.clear()
+    session["user_id"] = int(user_id)
+    session["user_name"] = name
+    session["user_surname"] = surname
+    session["user_email"] = email
+    session.modified = True
+
+    flash(
+        f"Account created successfully. Welcome, {name}.",
+        "success"
+    )
+
+    return redirect(url_for("profile"))
+
+
+# ================================================================
+# LOGOUT
+# ================================================================
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    flash(
+        "You have been logged out.",
+        "success"
+    )
+
+    return redirect(
+        url_for("login")
+    )
+
+
+# ================================================================
+# PROFILE
+# ================================================================
+
+@app.route("/profile")
+def profile():
+
+    if not account_authenticated():
+
+        return redirect(
+            url_for("login")
+        )
+
+    db = get_db()
+
+    user = db.execute(
+        """
+        SELECT *
+        FROM users
+        WHERE id = ?
+        """,
+        (
+            session["user_id"],
+        )
+    ).fetchone()
+
+    if not user:
+
+        session.clear()
+
+        flash(
+            "Your account could not be found.",
+            "error"
+        )
+
+        return redirect(
+            url_for("login")
+        )
+
+    return safe_render(
+        "profile.html",
+        user=user
+    )
+
+
+# ================================================================
+# HOME
 # ================================================================
 
 @app.route("/")
 def home():
 
-    db = get_db()
-
-    announcements = db.execute("""
-        SELECT *
-        FROM announcements
-        WHERE published = 1
-        ORDER BY created_at DESC
-        LIMIT 3
-    """).fetchall()
-
-    return render_template(
-        "index.html",
-        announcements=announcements
+    return safe_render(
+        "index.html"
     )
 
+
+# ================================================================
+# ABOUT
+# ================================================================
 
 @app.route("/about")
 def about():
 
-    return render_template(
-        "about.html"
+    return safe_render(
+        "about.html",
+        executive_members=EXECUTIVE_MEMBERS,
+        facilities=FACILITIES
     )
 
 
 # ================================================================
-# PRAYER TIMES
+# PRAYER
 # ================================================================
-
-def get_prayer_times():
-
-    today = datetime.now().strftime(
-        "%d-%m-%Y"
-    )
-
-    params = urlencode({
-        "city": "Lagos",
-        "country": "Nigeria",
-        "method": 2,
-    })
-
-    api_url = (
-        f"https://api.aladhan.com/v1/"
-        f"timingsByCity/{today}?{params}"
-    )
-
-    try:
-
-        req = Request(
-            api_url,
-            headers={
-                "User-Agent":
-                    "FSSSMC-Central-Mosque/1.0"
-            }
-        )
-
-        with urlopen(
-            req,
-            timeout=8
-        ) as response:
-
-            payload = json.loads(
-                response.read().decode(
-                    "utf-8"
-                )
-            )
-
-        data = payload.get(
-            "data",
-            {}
-        )
-
-        timings = data.get(
-            "timings",
-            {}
-        )
-
-        date_info = data.get(
-            "date",
-            {}
-        )
-
-        wanted = [
-            "Fajr",
-            "Sunrise",
-            "Dhuhr",
-            "Asr",
-            "Maghrib",
-            "Isha"
-        ]
-
-        prayer_times = {
-            key: timings.get(
-                key,
-                "--:--"
-            )
-            for key in wanted
-        }
-
-        return {
-            "times": prayer_times,
-            "date": date_info.get(
-                "readable",
-                today
-            ),
-            "hijri": date_info.get(
-                "hijri",
-                {}
-            ).get(
-                "date",
-                ""
-            ),
-            "location":
-                "Lagos, Nigeria",
-            "method":
-                "AlAdhan calculation method 2",
-            "error": None,
-        }
-
-    except (
-        URLError,
-        HTTPError,
-        TimeoutError,
-        ValueError,
-        KeyError
-    ):
-
-        return {
-            "times": {},
-            "date": today,
-            "hijri": "",
-            "location":
-                "Lagos, Nigeria",
-            "method":
-                "AlAdhan calculation method 2",
-            "error":
-                "Prayer times are temporarily unavailable. "
-                "Please try again shortly.",
-        }
-
 
 @app.route("/prayer")
 def prayer():
 
-    prayer_data = get_prayer_times()
+    prayer_times = {
+        "Fajr": "04:58",
+        "Sunrise": "06:20",
+        "Dhuhr": "12:13",
+        "Asr": "15:49",
+        "Maghrib": "17:52",
+        "Isha": "19:11"
+    }
 
-    return render_template(
+    return safe_render(
         "prayer.html",
-        prayer_times=
-            prayer_data["times"],
-        prayer_date=
-            prayer_data["date"],
-        hijri_date=
-            prayer_data["hijri"],
-        location=
-            prayer_data["location"],
-        prayer_method=
-            prayer_data["method"],
-        prayer_error=
-            prayer_data["error"],
+        prayer_times=prayer_times
     )
 
+
+# ================================================================
+# SERVICES
+# ================================================================
 
 @app.route("/services")
 def services():
 
-    return render_template(
-        "services.html"
+    return safe_render(
+        "services.html",
+        facilities=FACILITIES
     )
 
+
+# ================================================================
+# EVENTS
+# ================================================================
 
 @app.route("/events")
 def events():
 
-    db = get_db()
-
-    announcements = db.execute("""
-        SELECT *
-        FROM announcements
-        WHERE published = 1
-        ORDER BY created_at DESC
-    """).fetchall()
-
-    return render_template(
-        "events.html",
-        announcements=announcements
+    return safe_render(
+        "events.html"
     )
 
+
+# ================================================================
+# LEARN
+# ================================================================
 
 @app.route("/learn")
 def learn():
 
-    return render_template(
+    return safe_render(
         "learn.html"
     )
 
 
+# ================================================================
+# GET INVOLVED
+# ================================================================
+
 @app.route("/get-involved")
 def get_involved():
 
-    return render_template(
+    return safe_render(
         "get-involved.html"
     )
 
 
+# ================================================================
+# CONTACT
+# ================================================================
+
 @app.route("/contact")
 def contact():
 
-    db = get_db()
+    # The contact page is intentionally self-contained so older/newer
+    # versions of contact.html remain compatible with the application.
+    # This also prevents the common .items() / endpoint mismatch that was
+    # causing the Contact page to return HTTP 500.
+    committee_data = {
+        committee["name"]: [
+            (committee["description"], "")
+        ]
+        for committee in COMMITTEES
+    }
 
-    registered_members = db.execute("""
-        SELECT *
+    jummah_data = [
+        imam["name"]
+        for imam in JUMMAH_IMAMS
+    ]
+
+    past_data = [
+        {
+            "name": person.get("name", ""),
+            "status": person.get("status", person.get("role", ""))
+        }
+        for person in PAST_EXECUTIVE
+    ]
+
+    db = get_db()
+    registered_members = db.execute(
+        """
+        SELECT id, name, surname, post, created_at
         FROM members
         ORDER BY created_at DESC
-    """).fetchall()
+        LIMIT 20
+        """
+    ).fetchall()
 
-    return render_template(
+    return safe_render(
         "contact.html",
+        executive_members=EXECUTIVE_MEMBERS,
+        past_executive=past_data,
+        committees=committee_data,
+        jummah_imams=jummah_data,
         posts=POSTS,
-        registered_members=
-            registered_members,
+        registered_members=registered_members
     )
 
+
+# ================================================================
+# ANNOUNCEMENTS
+# ================================================================
 
 @app.route("/announcements")
 def announcements():
 
     db = get_db()
 
-    rows = db.execute("""
+    rows = db.execute(
+        """
         SELECT *
         FROM announcements
         WHERE published = 1
         ORDER BY created_at DESC
-    """).fetchall()
+        """
+    ).fetchall()
 
-    return render_template(
+    return safe_render(
         "announcements.html",
         announcements=rows
     )
@@ -1325,14 +1245,25 @@ def announcements():
     "/members/register",
     methods=["GET", "POST"]
 )
-def register_member():
+def member_register():
 
     if request.method == "GET":
-        flash(
-            "Please complete the membership form on the Contact page.",
-            "info"
-        )
-        return redirect(url_for("contact") + "#membership")
+        try:
+            return render_template("member_register.html")
+        except Exception as error:
+            from jinja2 import TemplateNotFound
+            if not isinstance(error, TemplateNotFound):
+                raise
+            # Keep the feature working even if an older deployment forgot
+            # to commit member_register.html.
+            return render_template_string(
+                """<!doctype html>
+<html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>
+<title>Member Registration</title>
+<style>body{font-family:Arial,sans-serif;background:#f5f7f5;margin:0;padding:30px;color:#17352d}.box{max-width:680px;margin:auto;background:#fff;padding:28px;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,.08)}h1{color:#006b57}label{display:block;margin-top:14px;font-weight:600}input,textarea{width:100%;box-sizing:border-box;padding:11px;margin-top:6px;border:1px solid #ccd7d2;border-radius:8px}button{margin-top:20px;padding:12px 18px;border:0;border-radius:8px;background:#006b57;color:white;font-weight:700;cursor:pointer}</style></head>
+<body><div class='box'><h1>Member Registration</h1><form method='post'>
+<label>First Name<input name='name' required></label><label>Surname<input name='surname' required></label><label>Phone Number<input name='phone' required></label><label>Email<input type='email' name='email' required></label><label>Address<textarea name='address' required></textarea></label><label>Post / Occupation<input name='post' required></label><label>Notes<textarea name='notes'></textarea></label><button type='submit'>Register as Member</button></form></div></body></html>"""
+            )
 
     name = request.form.get(
         "name",
@@ -1352,7 +1283,7 @@ def register_member():
     email = request.form.get(
         "email",
         ""
-    ).strip()
+    ).strip().lower()
 
     address = request.form.get(
         "address",
@@ -1369,58 +1300,64 @@ def register_member():
         ""
     ).strip()
 
-    if (
-        not name
-        or not surname
-        or not phone
-        or not address
-        or not post
-    ):
+    if not all([
+        name,
+        surname,
+        phone,
+        email,
+        address,
+        post
+    ]):
 
         flash(
-            "Please fill in all required member fields.",
+            "Please fill in all required fields.",
             "error"
         )
 
         return redirect(
-            url_for("contact")
-            + "#membership"
+            url_for("member_register")
         )
-
-    if post not in POSTS:
-
-        flash(
-            "Invalid profession selected.",
-            "error"
-        )
-
-        return redirect(
-            url_for("contact")
-            + "#membership"
-        )
-
-    if email:
-
-        if not validate_email_with_mailboxlayer(
-            email
-        ):
-
-            flash(
-                "Please provide a valid email address.",
-                "error"
-            )
-
-            return redirect(
-                url_for("contact")
-                + "#membership"
-            )
 
     db = get_db()
 
-    try:
+    existing = db.execute(
+        """
+        SELECT id
+        FROM members
+        WHERE email = ?
+        """,
+        (email,)
+    ).fetchone()
 
-        db.execute("""
-            INSERT INTO members
+    if existing:
+
+        flash(
+            "A member with this email already exists.",
+            "error"
+        )
+
+        return redirect(
+            url_for("member_register")
+        )
+
+    now = datetime.utcnow().isoformat()
+
+    try:
+        db.execute(
+            """
+            INSERT INTO members (
+                name,
+                surname,
+                phone,
+                email,
+                address,
+                post,
+                notes,
+                created_at,
+                updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
             (
                 name,
                 surname,
@@ -1428,407 +1365,355 @@ def register_member():
                 email,
                 address,
                 post,
-                notes
+                notes,
+                now,
+                now
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (
-            name,
-            surname,
-            phone,
-            email,
-            address,
-            post,
-            notes
-        ))
-
+        )
         db.commit()
 
-    except sqlite3.Error:
-
+    except sqlite3.IntegrityError as error:
         db.rollback()
-
+        app.logger.exception(
+            "MEMBER REGISTRATION DATABASE ERROR: %s",
+            error
+        )
         flash(
-            "Unable to save the membership information. "
-            "Please try again.",
+            "This member could not be registered because the database "
+            "rejected the information. Check the server log for details.",
             "error"
         )
-
-        return redirect(
-            url_for("contact")
-            + "#membership"
-        )
+        return redirect(url_for("member_register"))
 
     flash(
-        "Your membership information has been submitted successfully.",
+        "Membership registration submitted successfully.",
         "success"
     )
 
-    return redirect(
-        url_for("contact")
-        + "#membership"
+    return redirect(url_for("profile"))
+
+
+# Backward-compatible endpoint name used by older contact templates.
+# Both names point to the same member registration page.
+app.add_url_rule(
+    "/members/register",
+    endpoint="register_member",
+    view_func=member_register,
+    methods=["GET", "POST"]
+)
+
+
+# ================================================================
+# PAYSTACK HELPERS
+# ================================================================
+
+def generate_payment_reference():
+
+    return (
+        "FSSSMC-"
+        + datetime.utcnow().strftime(
+            "%Y%m%d%H%M%S"
+        )
+        + "-"
+        + secrets.token_hex(
+            5
+        ).upper()
     )
 
 
+def naira_to_kobo(amount):
 
-# ================================================================
-# ================================================================
-# ACCOUNT AUTHENTICATION
-# ================================================================
+    try:
 
-def account_authenticated():
-    return bool(
-        session.get("user_id")
-        or session.get("admin_id")
-    )
+        value = Decimal(
+            str(amount)
+        )
 
-
-# ================================================================
-# LOGIN GATE
-# ================================================================
-
-@app.before_request
-def require_login_for_website():
-
-    # Public website pages and authentication pages.
-    public_endpoints = {
-        "home",
-        "about",
-        "prayer",
-        "services",
-        "events",
-        "learn",
-        "get_involved",
-        "contact",
-        "announcements",
-        "login",
-        "register",
-        "logout",
-        "admin_login",
-        "admin_logout",
-        "paystack_webhook",
-        "paystack_callback",
-        "static",
-        "page_not_found",
-        "internal_error",
-    }
-
-    if request.endpoint in public_endpoints:
-        return None
-
-    # Profile requires a normal user account.
-    if request.endpoint == "profile":
-        if session.get("user_id"):
+        if value <= 0:
             return None
 
-        flash(
-            "Please sign in to view your profile.",
-            "error"
+        return int(
+            value * Decimal("100")
         )
 
-        return redirect(url_for("login"))
+    except (
+        InvalidOperation,
+        ValueError,
+        TypeError
+    ):
 
-    # Admin routes are protected by @admin_required.
-    # Other non-public website actions, including donations and
-    # membership registration, require a logged-in user.
-    if request.endpoint and request.endpoint.startswith("admin_"):
         return None
 
-    if session.get("user_id") or session.get("admin_id"):
-        return None
 
-    flash(
-        "Please sign in to continue.",
-        "error"
+def paystack_request(
+    endpoint,
+    method="GET",
+    payload=None
+):
+
+    if not PAYSTACK_SECRET_KEY:
+
+        return (
+            None,
+            "Paystack is not configured. Add PAYSTACK_SECRET_KEY "
+            "to the Render Environment Variables."
+        )
+
+    url = (
+        PAYSTACK_BASE_URL.rstrip("/")
+        + "/"
+        + endpoint.lstrip("/")
     )
 
-    return redirect(url_for("login"))
+    headers = {
+        "Authorization":
+            "Bearer " + PAYSTACK_SECRET_KEY,
+        "Content-Type":
+            "application/json",
+        "Cache-Control":
+            "no-cache"
+    }
 
+    data = None
 
-# ================================================================
-# USER REGISTRATION
-# ================================================================
+    if payload is not None:
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
+        data = json.dumps(
+            payload
+        ).encode("utf-8")
 
-    if account_authenticated():
-        if session.get("admin_id"):
-            return redirect(url_for("admin_dashboard"))
-        return redirect(url_for("profile"))
+    req = Request(
+        url,
+        data=data,
+        headers=headers,
+        method=method
+    )
 
-    if request.method == "POST":
+    try:
 
-        name = request.form.get("name", "").strip()
-        surname = request.form.get("surname", "").strip()
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-        confirm = request.form.get("confirm_password", "")
+        with urlopen(
+            req,
+            timeout=30
+        ) as response:
 
-        if not name or not surname or not email or not password:
-            flash("Please complete all required fields.", "error")
-            return redirect(url_for("register"))
-
-        if not validate_email_with_mailboxlayer(email):
-            flash("Please enter a valid email address.", "error")
-            return redirect(url_for("register"))
-
-        if len(password) < 8:
-            flash("Password must contain at least 8 characters.", "error")
-            return redirect(url_for("register"))
-
-        if password != confirm:
-            flash("Passwords do not match.", "error")
-            return redirect(url_for("register"))
-
-        db = get_db()
-
-        existing = db.execute(
-            "SELECT id FROM users WHERE email = ?",
-            (email,)
-        ).fetchone()
-
-        if existing:
-            flash(
-                "An account with that email already exists. Please log in instead.",
-                "error"
+            body = response.read().decode(
+                "utf-8",
+                errors="ignore"
             )
-            return redirect(url_for("login"))
+
+            parsed = json.loads(body)
+
+            if not parsed.get("status", False):
+                return (
+                    None,
+                    parsed.get(
+                        "message",
+                        "Paystack rejected the request."
+                    )
+                )
+
+            return parsed, None
+
+    except HTTPError as error:
 
         try:
-            cursor = db.execute(
-                """
-                INSERT INTO users
-                (
-                    name,
-                    surname,
-                    email,
-                    password_hash,
-                    email_verified
-                )
-                VALUES (?, ?, ?, ?, 1)
-                """,
-                (
-                    name,
-                    surname,
-                    email,
-                    generate_password_hash(password),
+
+            body = error.read().decode(
+                "utf-8",
+                errors="ignore"
+            )
+
+            parsed = json.loads(
+                body
+            )
+
+            return (
+                None,
+                parsed.get(
+                    "message",
+                    "Paystack request failed."
                 )
             )
-            db.commit()
 
-        except sqlite3.IntegrityError:
-            db.rollback()
-            flash(
-                "An account with that email already exists. Please log in instead.",
-                "error"
+        except Exception:
+
+            return (
+                None,
+                f"Paystack HTTP error {error.code}."
             )
-            return redirect(url_for("login"))
 
-        except sqlite3.Error as error:
-            db.rollback()
-            print("Registration database error:", error)
-            flash(
-                "Unable to create your account right now. Please try again.",
-                "error"
-            )
-            return redirect(url_for("register"))
+    except URLError as error:
 
-        # Registration is complete immediately. No email verification
-        # or SMTP message is required.
-        session.clear()
-        session["user_id"] = cursor.lastrowid
-        session["user_name"] = name
-        session["user_surname"] = surname
-        session["user_email"] = email
-
-        flash(
-            f"Account created successfully. Welcome, {name}.",
-            "success"
+        return (
+            None,
+            "Could not connect to Paystack."
         )
 
-        return redirect(url_for("profile"))
+    except Exception as error:
 
-    return render_template("register.html")
-
-
-# ================================================================
-# LOGIN
-# ================================================================
-
-@app.route("/login", methods=["GET", "POST"])
-def login():
-
-    if session.get("user_id"):
-        return redirect(url_for("profile"))
-
-    if session.get("admin_id"):
-        return redirect(url_for("admin_dashboard"))
-
-    if request.method == "POST":
-
-        email = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
-
-        if not email or not password:
-            flash(
-                "Please enter your email and password.",
-                "error"
-            )
-            return redirect(url_for("login"))
-
-        db = get_db()
-
-        # --------------------------------------------------------
-        # ADMIN LOGIN
-        # --------------------------------------------------------
-        # Admin logs in directly. No OTP is required.
-        admin = db.execute(
-            "SELECT * FROM admins WHERE email = ?",
-            (email,)
-        ).fetchone()
-
-        if admin:
-            if check_password_hash(
-                admin["password_hash"],
-                password
-            ):
-                session.clear()
-                session["admin_id"] = admin["id"]
-                session["admin_email"] = admin["email"]
-
-                flash(
-                    "Welcome to the FSSSMC admin dashboard.",
-                    "success"
-                )
-
-                return redirect(url_for("admin_dashboard"))
-
-            flash(
-                "Invalid email or password.",
-                "error"
-            )
-            return redirect(url_for("login"))
-
-        # --------------------------------------------------------
-        # NORMAL USER LOGIN
-        # --------------------------------------------------------
-        user = db.execute(
-            "SELECT * FROM users WHERE email = ?",
-            (email,)
-        ).fetchone()
-
-        if user is None:
-            flash(
-                "Invalid email or password.",
-                "error"
-            )
-            return redirect(url_for("login"))
-
-        if not check_password_hash(
-            user["password_hash"],
-            password
-        ):
-            flash(
-                "Invalid email or password.",
-                "error"
-            )
-            return redirect(url_for("login"))
-
-        next_url = request.form.get("next", "").strip()
-        if not next_url:
-            next_url = request.args.get("next", "").strip()
-
-        if (
-            not next_url
-            or not next_url.startswith("/")
-            or next_url.startswith("//")
-        ):
-            next_url = url_for("profile")
-
-        session.clear()
-        session["user_id"] = user["id"]
-        session["user_name"] = user["name"]
-        session["user_surname"] = user["surname"]
-        session["user_email"] = user["email"]
-
-        flash(
-            f"Welcome back, {user['name']}.",
-            "success"
+        return (
+            None,
+            str(error)
         )
 
-        return redirect(next_url)
 
-    return render_template("login.html")
+def initialize_paystack_transaction(
+    email,
+    amount_kobo,
+    reference,
+    callback_url,
+    metadata=None
+):
 
+    payload = {
+        "email": email,
+        "amount": str(amount_kobo),
+        "currency": "NGN",
+        "reference": reference,
+        "callback_url": callback_url
+    }
 
-# USER LOGOUT
-# ================================================================
+    if metadata:
+        payload["metadata"] = metadata
 
-@app.route("/logout")
-def logout():
-
-    session.clear()
-
-    flash(
-        "You have been logged out.",
-        "success"
-    )
-
-    return redirect(
-        url_for("home")
+    return paystack_request(
+        "/transaction/initialize",
+        "POST",
+        payload
     )
 
 
-# ================================================================
-# USER PROFILE
-# ================================================================
+def verify_paystack_transaction(
+    reference
+):
 
-@app.route("/profile")
-def profile():
+    return paystack_request(
+        f"/transaction/verify/{reference}",
+        "GET"
+    )
 
-    if not session.get("user_id"):
 
-        flash(
-            "Please sign in to view your profile.",
-            "error"
-        )
-
-        return redirect(
-            url_for("login")
-        )
-
+def mark_donation_as_paid(reference, transaction=None):
     db = get_db()
 
-    user = db.execute(
-        """
-        SELECT
-            id,
-            name,
-            surname,
-            email,
-            created_at
-        FROM users
-        WHERE id = ?
-        """,
-        (session["user_id"],)
+    donation = db.execute(
+        "SELECT * FROM donations WHERE payment_reference = ?",
+        (reference,)
     ).fetchone()
 
-    if user is None:
+    if not donation:
+        return False
 
-        session.clear()
+    if donation["payment_status"] == "paid":
+        return True
 
-        return redirect(
-            url_for("login")
-        )
+    if transaction is not None:
+        try:
+            expected_kobo = naira_to_kobo(donation["amount"])
+            received_kobo = int(transaction.get("amount", 0))
+            currency = str(transaction.get("currency", "")).upper()
+            tx_reference = str(transaction.get("reference", "")).strip()
+        except (TypeError, ValueError, InvalidOperation):
+            return False
 
-    return render_template(
-        "profile.html",
-        user=user
+        if expected_kobo is None or received_kobo != expected_kobo:
+            app.logger.error(
+                "Paystack amount mismatch for %s: expected=%s received=%s",
+                reference, expected_kobo, received_kobo
+            )
+            return False
+
+        if currency != PAYSTACK_CURRENCY or tx_reference != reference:
+            app.logger.error(
+                "Paystack transaction validation failed for %s",
+                reference
+            )
+            return False
+
+    db.execute(
+        """
+        UPDATE donations
+        SET payment_status = 'paid',
+            paid_at = ?
+        WHERE payment_reference = ?
+        """,
+        (datetime.utcnow().isoformat(), reference)
     )
+    db.commit()
+    return True
 
 
 # ================================================================
-# PUBLIC DONATIONS + PAYSTACK
+# PAYSTACK WEBHOOK
+# ================================================================
+
+@app.route(
+    "/paystack/webhook",
+    methods=["POST"]
+)
+def paystack_webhook():
+
+    if not PAYSTACK_SECRET_KEY:
+        return "", 200
+
+    signature = request.headers.get(
+        "X-Paystack-Signature",
+        ""
+    )
+
+    payload = request.get_data()
+
+    expected = hmac.new(
+        PAYSTACK_SECRET_KEY.encode(
+            "utf-8"
+        ),
+        payload,
+        hashlib.sha512
+    ).hexdigest()
+
+    if not signature:
+        return "", 401
+
+    if not hmac.compare_digest(
+        signature,
+        expected
+    ):
+        return "", 401
+
+    try:
+
+        data = request.get_json(
+            silent=True
+        ) or {}
+
+        if data.get(
+            "event"
+        ) == "charge.success":
+
+            transaction = data.get(
+                "data",
+                {}
+            )
+
+            reference = transaction.get(
+                "reference"
+            )
+
+            if reference and transaction.get("status") == "success":
+                mark_donation_as_paid(
+                    reference,
+                    transaction
+                )
+
+        return "", 200
+
+    except Exception:
+
+        return "", 200
+
+
+# ================================================================
+# DONATE
 # ================================================================
 
 @app.route(
@@ -1837,286 +1722,245 @@ def profile():
 )
 def donate():
 
-    if request.method == "POST":
+    user_email = session.get(
+        "user_email",
+        ""
+    )
 
-        donor_name = request.form.get(
-            "donor_name",
-            ""
+    user_name = session.get(
+        "user_name",
+        ""
+    )
+
+    user_surname = session.get(
+        "user_surname",
+        ""
+    )
+
+    if request.method == "GET":
+
+        return safe_render(
+            "donate.html",
+            donation_purposes=DONATION_PURPOSES,
+            user_email=user_email,
+            user_name=user_name,
+            user_surname=user_surname
+        )
+
+    donor_name = request.form.get(
+        "donor_name",
+        ""
+    ).strip()
+
+    phone = request.form.get(
+        "phone",
+        ""
+    ).strip()
+
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    amount = request.form.get(
+        "amount",
+        ""
+    ).strip()
+
+    purpose = request.form.get(
+        "purpose",
+        ""
+    ).strip()
+
+    notes = request.form.get(
+        "notes",
+        ""
+    ).strip()
+
+    if not donor_name:
+
+        donor_name = (
+            f"{user_name} {user_surname}"
         ).strip()
 
-        phone = request.form.get(
-            "phone",
-            ""
-        ).strip()
+    if not email:
+        email = user_email
 
-        email = request.form.get(
-            "email",
-            ""
-        ).strip().lower()
+    if not donor_name or not email:
 
-        amount_text = request.form.get(
-            "amount",
-            ""
-        ).strip()
+        flash(
+            "Please provide your name and email.",
+            "error"
+        )
 
-        purpose = request.form.get(
-            "purpose",
-            ""
-        ).strip()
+        return redirect(
+            url_for("donate")
+        )
 
-        notes = request.form.get(
-            "notes",
-            ""
-        ).strip()
+    amount_kobo = naira_to_kobo(
+        amount
+    )
 
-        # --------------------------------------------------------
-        # REQUIRED FIELDS
-        # --------------------------------------------------------
+    if amount_kobo is None:
 
-        if (
-            not donor_name
-            or not amount_text
-            or not purpose
-            or not email
-        ):
+        flash(
+            "Please enter a valid donation amount.",
+            "error"
+        )
 
-            flash(
-                "Please fill in your name, email, amount and purpose.",
-                "error"
-            )
+        return redirect(
+            url_for("donate")
+        )
 
-            return redirect(
-                url_for("donate")
-            )
+    if purpose not in DONATION_PURPOSES:
 
-        # --------------------------------------------------------
-        # MAILBOXLAYER
-        # --------------------------------------------------------
+        flash(
+            "Please select a valid donation purpose.",
+            "error"
+        )
 
-        if not validate_email_with_mailboxlayer(
-            email
-        ):
+        return redirect(
+            url_for("donate")
+        )
 
-            flash(
-                "Please provide a valid email address.",
-                "error"
-            )
+    reference = generate_payment_reference()
 
-            return redirect(
-                url_for("donate")
-            )
+    db = get_db()
 
-        # --------------------------------------------------------
-        # AMOUNT
-        # --------------------------------------------------------
-
-        try:
-
-            amount_decimal = Decimal(
-                amount_text
-            ).quantize(
-                Decimal("0.01")
-            )
-
-            if amount_decimal <= 0:
-                raise ValueError
-
-            amount_kobo = naira_to_kobo(
-                amount_decimal
-            )
-
-            amount = float(
-                amount_decimal
-            )
-
-        except (
-            InvalidOperation,
-            ValueError,
-            TypeError
-        ):
-
-            flash(
-                "Please enter a valid donation amount.",
-                "error"
-            )
-
-            return redirect(
-                url_for("donate")
-            )
-
-        # --------------------------------------------------------
-        # PURPOSE
-        # --------------------------------------------------------
-
-        if purpose not in DONATION_PURPOSES:
-
-            flash(
-                "Invalid donation purpose.",
-                "error"
-            )
-
-            return redirect(
-                url_for("donate")
-            )
-
-        # --------------------------------------------------------
-        # PAYSTACK KEY
-        # --------------------------------------------------------
-
-        if not PAYSTACK_SECRET_KEY:
-
-            flash(
-                "Online payment is not configured yet. "
-                "Please contact the mosque administrator.",
-                "error"
-            )
-
-            return redirect(
-                url_for("donate")
-            )
-
-        db = get_db()
-
-        reference = generate_payment_reference()
-
-        # --------------------------------------------------------
-        # SAVE PENDING DONATION FIRST
-        # --------------------------------------------------------
-
-        try:
-
-            db.execute("""
-                INSERT INTO donations
-                (
-                    donor_name,
-                    phone,
-                    email,
-                    amount,
-                    purpose,
-                    payment_reference,
-                    payment_method,
-                    payment_status,
-                    notes
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
+    try:
+        db.execute(
+            """
+            INSERT INTO donations (
                 donor_name,
                 phone,
                 email,
                 amount,
                 purpose,
+                payment_reference,
+                payment_method,
+                payment_status,
+                notes,
+                created_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                donor_name,
+                phone,
+                email,
+                float(
+                    Decimal(str(amount))
+                ),
+                purpose,
                 reference,
-                "Paystack",
-                "Pending",
-                notes
-            ))
-
-            db.commit()
-
-        except sqlite3.Error:
-
-            db.rollback()
-
-            flash(
-                "The donation could not be started right now. "
-                "Please try again.",
-                "error"
+                "paystack",
+                "pending",
+                notes,
+                datetime.utcnow().isoformat()
             )
+        )
 
-            return redirect(
-                url_for("donate")
+        db.commit()
+
+    except sqlite3.IntegrityError as error:
+        db.rollback()
+        app.logger.exception(
+            "DONATION DATABASE ERROR: %s",
+            error
+        )
+        flash(
+            "The donation could not be saved. Please try again.",
+            "error"
+        )
+        return redirect(url_for("donate"))
+
+    callback_url = url_for(
+        "paystack_callback",
+        _external=True
+    )
+
+    metadata = {
+        "donor_name": donor_name,
+        "phone": phone,
+        "purpose": purpose,
+        "cancel_action": url_for(
+            "donate",
+            _external=True
+        ),
+        "custom_fields": [
+            {
+                "display_name":
+                    "Donor Name",
+                "variable_name":
+                    "donor_name",
+                "value":
+                    donor_name
+            },
+            {
+                "display_name":
+                    "Purpose",
+                "variable_name":
+                    "purpose",
+                "value":
+                    purpose
+            }
+        ]
+    }
+
+    result, error = (
+        initialize_paystack_transaction(
+            email,
+            amount_kobo,
+            reference,
+            callback_url,
+            metadata
+        )
+    )
+
+    if error or not result:
+
+        db.execute(
+            """
+            UPDATE donations
+            SET payment_status = ?
+            WHERE payment_reference = ?
+            """,
+            (
+                "failed",
+                reference
             )
+        )
 
-        # --------------------------------------------------------
-        # INITIALIZE PAYSTACK
-        # --------------------------------------------------------
+        db.commit()
 
-        try:
+        flash(
+            "Payment could not be initialized.",
+            "error"
+        )
 
-            payment = initialize_paystack_transaction(
-                email=email,
-                amount_kobo=amount_kobo,
-                reference=reference,
-                donor_name=donor_name,
-                purpose=purpose
-            )
+        return redirect(
+            url_for("donate")
+        )
 
-            returned_reference = payment[
-                "reference"
-            ]
+    authorization_url = (
+        result
+        .get("data", {})
+        .get("authorization_url")
+    )
 
-            # If Paystack returns a different reference,
-            # update our local record.
-            if returned_reference != reference:
+    if not authorization_url:
 
-                db.execute(
-                    """
-                    UPDATE donations
-                    SET payment_reference = ?
-                    WHERE id = (
-                        SELECT id
-                        FROM donations
-                        WHERE payment_reference = ?
-                        LIMIT 1
-                    )
-                    """,
-                    (
-                        returned_reference,
-                        reference
-                    )
-                )
+        flash(
+            "Paystack did not return a payment link.",
+            "error"
+        )
 
-                db.commit()
+        return redirect(
+            url_for("donate")
+        )
 
-            return redirect(
-                payment["authorization_url"]
-            )
-
-        except (
-            URLError,
-            HTTPError,
-            TimeoutError,
-            ValueError,
-            RuntimeError,
-            json.JSONDecodeError
-        ) as error:
-
-            print(
-                "Paystack initialization error:",
-                error
-            )
-
-            flash(
-                "Paystack could not start the payment. "
-                "Please try again.",
-                "error"
-            )
-
-            return redirect(
-                url_for("donate")
-            )
-
-        except Exception as error:
-
-            print(
-                "Unexpected Paystack error:",
-                error
-            )
-
-            flash(
-                "Unable to start the payment right now. "
-                "Please try again.",
-                "error"
-            )
-
-            return redirect(
-                url_for("donate")
-            )
-
-    return render_template(
-        "donate.html",
-        donation_purposes=
-            DONATION_PURPOSES
+    return redirect(
+        authorization_url
     )
 
 
@@ -2137,7 +1981,7 @@ def paystack_callback():
     if not reference:
 
         flash(
-            "No Paystack transaction reference was received.",
+            "No payment reference was provided.",
             "error"
         )
 
@@ -2145,159 +1989,53 @@ def paystack_callback():
             url_for("donate")
         )
 
-    db = get_db()
-
-    donation = db.execute(
-        """
-        SELECT *
-        FROM donations
-        WHERE payment_reference = ?
-        """,
-        (reference,)
-    ).fetchone()
-
-    if donation is None:
-
-        flash(
-            "Donation record not found.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    # Already paid, for example through webhook.
-    if donation["payment_status"] == "Paid":
-
-        flash(
-            "Your donation was received successfully. "
-            "Thank you.",
-            "success"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    try:
-
-        payment_data = verify_paystack_transaction(
+    result, error = (
+        verify_paystack_transaction(
             reference
         )
-
-    except (
-        URLError,
-        HTTPError,
-        TimeoutError,
-        ValueError,
-        RuntimeError,
-        json.JSONDecodeError
-    ) as error:
-
-        print(
-            "Paystack verification error:",
-            error
-        )
-
-        flash(
-            "We could not verify the payment yet. "
-            "Please try again shortly.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    except Exception as error:
-
-        print(
-            "Unexpected Paystack verification error:",
-            error
-        )
-
-        flash(
-            "We could not verify the payment yet. "
-            "Please try again shortly.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    if not payment_data:
-
-        flash(
-            "Paystack could not verify this transaction.",
-            "error"
-        )
-
-        return redirect(
-            url_for("donate")
-        )
-
-    payment_status = payment_data.get(
-        "status"
     )
 
-    if payment_status == "success":
-
-        paid = mark_donation_as_paid(
-            reference,
-            payment_data
-        )
-
-        if paid:
-
-            flash(
-                "Donation payment successful. "
-                "JazakAllahu Khairan.",
-                "success"
-            )
-
-        else:
-
-            flash(
-                "The payment was returned as successful, "
-                "but we could not confirm the donation amount. "
-                "Please contact the mosque administrator.",
-                "error"
-            )
-
-    elif payment_status in (
-        "failed",
-        "abandoned",
-        "reversed"
-    ):
-
-        db.execute(
-            """
-            UPDATE donations
-            SET payment_status = ?
-            WHERE payment_reference = ?
-            """,
-            (
-                "Cancelled",
-                reference
-            )
-        )
-
-        db.commit()
+    if error or not result:
 
         flash(
-            "The Paystack payment was not completed.",
+            "Unable to verify the payment.",
             "error"
         )
 
-    else:
+        return redirect(
+            url_for("donate")
+        )
+
+    transaction = result.get(
+        "data",
+        {}
+    )
+
+    if (
+        result.get("status")
+        and transaction.get("status")
+        == "success"
+    ):
+
+        if mark_donation_as_paid(reference, transaction):
+            flash(
+                "Donation payment completed successfully. "
+                "Thank you for your support.",
+                "success"
+            )
+            return redirect(url_for("profile"))
 
         flash(
-            "The payment is still being processed. "
-            "Please check again shortly.",
-            "success"
+            "Payment verification failed because the transaction details "
+            "did not match the donation record.",
+            "error"
         )
+        return redirect(url_for("donate"))
+
+    flash(
+        "The donation payment was not completed.",
+        "error"
+    )
 
     return redirect(
         url_for("donate")
@@ -2308,21 +2046,82 @@ def paystack_callback():
 # ADMIN LOGIN
 # ================================================================
 
-@app.route("/admin/login")
+@app.route(
+    "/admin/login",
+    methods=["GET", "POST"]
+)
 def admin_login():
 
+    if admin_authenticated():
+
+        return redirect(
+            url_for("admin_dashboard")
+        )
+
+    if request.method == "GET":
+
+        return safe_render(
+            "admin_login.html"
+        )
+
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    password = request.form.get(
+        "password",
+        ""
+    )
+
+    db = get_db()
+
+    admin = db.execute(
+        """
+        SELECT *
+        FROM admins
+        WHERE email = ?
+        """,
+        (email,)
+    ).fetchone()
+
+    if not admin or not check_password_hash(
+        admin["password_hash"],
+        password
+    ):
+
+        flash(
+            "Invalid administrator credentials.",
+            "error"
+        )
+
+        return safe_render(
+            "admin_login.html"
+        )
+
+    session.clear()
+
+    session["admin_id"] = admin["id"]
+    session["admin_email"] = admin["email"]
+
     return redirect(
-        url_for("login")
+        url_for("admin_dashboard")
     )
 
 
-@app.route("/admin/logout")
+# ================================================================
+# ADMIN LOGOUT
+# ================================================================
+
+@app.route(
+    "/admin/logout"
+)
 def admin_logout():
 
     session.clear()
 
     flash(
-        "You have been logged out.",
+        "Administrator logged out.",
         "success"
     )
 
@@ -2336,197 +2135,59 @@ def admin_logout():
 # ================================================================
 
 @app.route("/admin")
-@app.route("/admin/")
 @admin_required
 def admin_dashboard():
 
     db = get_db()
 
-    # ------------------------------------------------------------
-    # TOTAL MEMBERS
-    # ------------------------------------------------------------
+    user_count = db.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM users
+        """
+    ).fetchone()["count"]
 
-    total_members = db.execute("""
-        SELECT COUNT(*) AS total
+    member_count = db.execute(
+        """
+        SELECT COUNT(*) AS count
         FROM members
-    """).fetchone()["total"]
+        """
+    ).fetchone()["count"]
 
-    # ------------------------------------------------------------
-    # PAID DONATION AMOUNT
-    # ------------------------------------------------------------
-
-    total_donations = db.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS total
+    donation_count = db.execute(
+        """
+        SELECT COUNT(*) AS count
         FROM donations
-        WHERE payment_status = 'Paid'
-    """).fetchone()["total"]
+        WHERE payment_status = 'paid'
+        """
+    ).fetchone()["count"]
 
-    # ------------------------------------------------------------
-    # PENDING DONATIONS
-    # ------------------------------------------------------------
-
-    pending_donations = db.execute("""
-        SELECT COUNT(*) AS total
+    donation_total = db.execute(
+        """
+        SELECT COALESCE(
+            SUM(amount),
+            0
+        ) AS total
         FROM donations
-        WHERE payment_status = 'Pending'
-    """).fetchone()["total"]
+        WHERE payment_status = 'paid'
+        """
+    ).fetchone()["total"]
 
-    # ------------------------------------------------------------
-    # ANNOUNCEMENTS
-    # ------------------------------------------------------------
-
-    total_announcements = db.execute("""
-        SELECT COUNT(*) AS total
+    announcement_count = db.execute(
+        """
+        SELECT COUNT(*) AS count
         FROM announcements
-    """).fetchone()["total"]
+        WHERE published = 1
+        """
+    ).fetchone()["count"]
 
-    # ------------------------------------------------------------
-    # DONATION COUNTS
-    # ------------------------------------------------------------
-
-    paid_donations_count = db.execute("""
-        SELECT COUNT(*) AS total
-        FROM donations
-        WHERE payment_status = 'Paid'
-    """).fetchone()["total"]
-
-    pending_donations_count = db.execute("""
-        SELECT COUNT(*) AS total
-        FROM donations
-        WHERE payment_status = 'Pending'
-    """).fetchone()["total"]
-
-    cancelled_donations_count = db.execute("""
-        SELECT COUNT(*) AS total
-        FROM donations
-        WHERE payment_status = 'Cancelled'
-    """).fetchone()["total"]
-
-    # ------------------------------------------------------------
-    # DONATION AMOUNTS
-    # ------------------------------------------------------------
-
-    pending_amount = db.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS total
-        FROM donations
-        WHERE payment_status = 'Pending'
-    """).fetchone()["total"]
-
-    cancelled_amount = db.execute("""
-        SELECT COALESCE(SUM(amount), 0) AS total
-        FROM donations
-        WHERE payment_status = 'Cancelled'
-    """).fetchone()["total"]
-
-    # ------------------------------------------------------------
-    # RECENT MEMBERS
-    # ------------------------------------------------------------
-
-    recent_members = db.execute("""
-        SELECT
-            id,
-            name,
-            surname,
-            phone,
-            email,
-            post,
-            created_at
-        FROM members
-        ORDER BY created_at DESC
-        LIMIT 6
-    """).fetchall()
-
-    # ------------------------------------------------------------
-    # MEMBER POST BREAKDOWN
-    # ------------------------------------------------------------
-
-    member_posts = db.execute("""
-        SELECT
-            post,
-            COUNT(*) AS total
-        FROM members
-        GROUP BY post
-        ORDER BY total DESC
-    """).fetchall()
-
-    # ------------------------------------------------------------
-    # RECENT DONATIONS
-    # ------------------------------------------------------------
-
-    recent_donations = db.execute("""
-        SELECT
-            id,
-            donor_name,
-            amount,
-            purpose,
-            payment_method,
-            payment_status,
-            created_at
-        FROM donations
-        ORDER BY created_at DESC
-        LIMIT 6
-    """).fetchall()
-
-    # ------------------------------------------------------------
-    # RECENT ANNOUNCEMENTS
-    # ------------------------------------------------------------
-
-    recent_announcements = db.execute("""
-        SELECT
-            id,
-            title,
-            published,
-            created_at
-        FROM announcements
-        ORDER BY created_at DESC
-        LIMIT 5
-    """).fetchall()
-
-    return render_template(
-        "admin/dashboard.html",
-
-        member_count=total_members,
-        paid_donations=total_donations,
-        announcement_count=total_announcements,
-
-        total_members=
-            total_members,
-
-        total_donations=
-            total_donations,
-
-        pending_donations=
-            pending_donations,
-
-        total_announcements=
-            total_announcements,
-
-        paid_donations_count=
-            paid_donations_count,
-
-        pending_donations_count=
-            pending_donations_count,
-
-        cancelled_donations_count=
-            cancelled_donations_count,
-
-        pending_amount=
-            pending_amount,
-
-        cancelled_amount=
-            cancelled_amount,
-
-        recent_members=
-            recent_members,
-
-        member_posts=
-            member_posts,
-
-        recent_donations=
-            recent_donations,
-
-        recent_announcements=
-            recent_announcements
+    return safe_render(
+        "admin.html",
+        user_count=user_count,
+        member_count=member_count,
+        donation_count=donation_count,
+        donation_total=donation_total,
+        announcement_count=announcement_count
     )
 
 
@@ -2534,20 +2195,24 @@ def admin_dashboard():
 # ADMIN MEMBERS
 # ================================================================
 
-@app.route("/admin/members")
+@app.route(
+    "/admin/members"
+)
 @admin_required
 def admin_members():
 
     db = get_db()
 
-    members = db.execute("""
+    members = db.execute(
+        """
         SELECT *
         FROM members
         ORDER BY created_at DESC
-    """).fetchall()
+        """
+    ).fetchall()
 
-    return render_template(
-        "admin/members.html",
+    return safe_render(
+        "admin_members.html",
         members=members
     )
 
@@ -2559,140 +2224,108 @@ def admin_members():
 @admin_required
 def admin_add_member():
 
-    if request.method == "POST":
+    if request.method == "GET":
 
-        name = request.form.get(
-            "name",
-            ""
-        ).strip()
+        return safe_render(
+            "admin_member_form.html",
+            member=None
+        )
 
-        surname = request.form.get(
-            "surname",
-            ""
-        ).strip()
+    name = request.form.get(
+        "name",
+        ""
+    ).strip()
 
-        phone = request.form.get(
-            "phone",
-            ""
-        ).strip()
+    surname = request.form.get(
+        "surname",
+        ""
+    ).strip()
 
-        email = request.form.get(
-            "email",
-            ""
-        ).strip()
+    phone = request.form.get(
+        "phone",
+        ""
+    ).strip()
 
-        address = request.form.get(
-            "address",
-            ""
-        ).strip()
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
 
-        post = request.form.get(
-            "post",
-            ""
-        ).strip()
+    address = request.form.get(
+        "address",
+        ""
+    ).strip()
 
-        notes = request.form.get(
-            "notes",
-            ""
-        ).strip()
+    post = request.form.get(
+        "post",
+        ""
+    ).strip()
 
-        if (
-            not name
-            or not surname
-            or not phone
-            or not address
-            or not post
-        ):
+    notes = request.form.get(
+        "notes",
+        ""
+    ).strip()
 
-            flash(
-                "Please fill in all required fields.",
-                "error"
-            )
-
-            return redirect(
-                url_for("admin_add_member")
-            )
-
-        if post not in POSTS:
-
-            flash(
-                "Please select a valid profession.",
-                "error"
-            )
-
-            return redirect(
-                url_for("admin_add_member")
-            )
-
-        if email:
-
-            if not validate_email_with_mailboxlayer(
-                email
-            ):
-
-                flash(
-                    "Please provide a valid email address.",
-                    "error"
-                )
-
-                return redirect(
-                    url_for("admin_add_member")
-                )
-
-        db = get_db()
-
-        try:
-
-            db.execute("""
-                INSERT INTO members
-                (
-                    name,
-                    surname,
-                    phone,
-                    email,
-                    address,
-                    post,
-                    notes
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            """, (
-                name,
-                surname,
-                phone,
-                email,
-                address,
-                post,
-                notes
-            ))
-
-            db.commit()
-
-        except sqlite3.Error:
-
-            db.rollback()
-
-            flash(
-                "Unable to add the member right now.",
-                "error"
-            )
-
-            return redirect(
-                url_for("admin_add_member")
-            )
+    if not all([
+        name,
+        surname,
+        phone,
+        email,
+        address,
+        post
+    ]):
 
         flash(
-            "Member added successfully.",
-            "success"
+            "Please complete all required fields.",
+            "error"
         )
 
-        return redirect(
-            url_for("admin_members")
+        return safe_render(
+            "admin_member_form.html",
+            member=None
         )
 
-    return render_template(
-        "admin/member_form.html",
-        member=None,
-        posts=POSTS
+    db = get_db()
+
+    now = datetime.utcnow().isoformat()
+
+    db.execute(
+        """
+        INSERT INTO members (
+            name,
+            surname,
+            phone,
+            email,
+            address,
+            post,
+            notes,
+            created_at,
+            updated_at
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            name,
+            surname,
+            phone,
+            email,
+            address,
+            post,
+            notes,
+            now,
+            now
+        )
+    )
+
+    db.commit()
+
+    flash(
+        "Member added successfully.",
+        "success"
+    )
+
+    return redirect(
+        url_for("admin_members")
     )
 
 
@@ -2701,7 +2334,9 @@ def admin_add_member():
     methods=["GET", "POST"]
 )
 @admin_required
-def admin_edit_member(member_id):
+def admin_edit_member(
+    member_id
+):
 
     db = get_db()
 
@@ -2714,7 +2349,7 @@ def admin_edit_member(member_id):
         (member_id,)
     ).fetchone()
 
-    if member is None:
+    if not member:
 
         flash(
             "Member not found.",
@@ -2725,210 +2360,109 @@ def admin_edit_member(member_id):
             url_for("admin_members")
         )
 
-    if request.method == "POST":
+    if request.method == "GET":
 
-        name = request.form.get(
-            "name",
-            ""
-        ).strip()
-
-        surname = request.form.get(
-            "surname",
-            ""
-        ).strip()
-
-        phone = request.form.get(
-            "phone",
-            ""
-        ).strip()
-
-        email = request.form.get(
-            "email",
-            ""
-        ).strip()
-
-        address = request.form.get(
-            "address",
-            ""
-        ).strip()
-
-        post = request.form.get(
-            "post",
-            ""
-        ).strip()
-
-        notes = request.form.get(
-            "notes",
-            ""
-        ).strip()
-
-        if (
-            not name
-            or not surname
-            or not phone
-            or not address
-            or not post
-        ):
-
-            flash(
-                "Please fill in all required fields.",
-                "error"
-            )
-
-            return redirect(
-                url_for(
-                    "admin_edit_member",
-                    member_id=member_id
-                )
-            )
-
-        if post not in POSTS:
-
-            flash(
-                "Please select a valid profession.",
-                "error"
-            )
-
-            return redirect(
-                url_for(
-                    "admin_edit_member",
-                    member_id=member_id
-                )
-            )
-
-        if email:
-
-            if not validate_email_with_mailboxlayer(
-                email
-            ):
-
-                flash(
-                    "Please provide a valid email address.",
-                    "error"
-                )
-
-                return redirect(
-                    url_for(
-                        "admin_edit_member",
-                        member_id=member_id
-                    )
-                )
-
-        try:
-
-            db.execute("""
-                UPDATE members
-                SET
-                    name = ?,
-                    surname = ?,
-                    phone = ?,
-                    email = ?,
-                    address = ?,
-                    post = ?,
-                    notes = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            """, (
-                name,
-                surname,
-                phone,
-                email,
-                address,
-                post,
-                notes,
-                member_id
-            ))
-
-            db.commit()
-
-        except sqlite3.Error:
-
-            db.rollback()
-
-            flash(
-                "Unable to update the member right now.",
-                "error"
-            )
-
-            return redirect(
-                url_for(
-                    "admin_edit_member",
-                    member_id=member_id
-                )
-            )
-
-        flash(
-            "Member updated successfully.",
-            "success"
+        return safe_render(
+            "admin_member_form.html",
+            member=member
         )
 
-        return redirect(
-            url_for("admin_members")
-        )
+    name = request.form.get(
+        "name",
+        ""
+    ).strip()
 
-    return render_template(
-        "admin/member_form.html",
-        member=member,
-        posts=POSTS
+    surname = request.form.get(
+        "surname",
+        ""
+    ).strip()
+
+    phone = request.form.get(
+        "phone",
+        ""
+    ).strip()
+
+    email = request.form.get(
+        "email",
+        ""
+    ).strip().lower()
+
+    address = request.form.get(
+        "address",
+        ""
+    ).strip()
+
+    post = request.form.get(
+        "post",
+        ""
+    ).strip()
+
+    notes = request.form.get(
+        "notes",
+        ""
+    ).strip()
+
+    db.execute(
+        """
+        UPDATE members
+        SET name = ?,
+            surname = ?,
+            phone = ?,
+            email = ?,
+            address = ?,
+            post = ?,
+            notes = ?,
+            updated_at = ?
+        WHERE id = ?
+        """,
+        (
+            name,
+            surname,
+            phone,
+            email,
+            address,
+            post,
+            notes,
+            datetime.utcnow().isoformat(),
+            member_id
+        )
+    )
+
+    db.commit()
+
+    flash(
+        "Member updated successfully.",
+        "success"
+    )
+
+    return redirect(
+        url_for("admin_members")
     )
 
 
 @app.route(
     "/admin/members/<int:member_id>/delete",
-    methods=["POST"]
+    methods=["GET", "POST"]
 )
 @admin_required
-def admin_delete_member(member_id):
+def admin_delete_member(
+    member_id
+):
 
     db = get_db()
 
-    member = db.execute(
+    db.execute(
         """
-        SELECT id
-        FROM members
+        DELETE FROM members
         WHERE id = ?
         """,
         (member_id,)
-    ).fetchone()
+    )
 
-    if member is None:
-
-        flash(
-            "Member not found.",
-            "error"
-        )
-
-        return redirect(
-            url_for("admin_members")
-        )
-
-    try:
-
-        db.execute(
-            """
-            DELETE FROM members
-            WHERE id = ?
-            """,
-            (member_id,)
-        )
-
-        db.commit()
-
-    except sqlite3.Error:
-
-        db.rollback()
-
-        flash(
-            "Unable to delete the member right now.",
-            "error"
-        )
-
-        return redirect(
-            url_for("admin_members")
-        )
+    db.commit()
 
     flash(
-        "Member deleted.",
+        "Member deleted successfully.",
         "success"
     )
 
@@ -2941,24 +2475,32 @@ def admin_delete_member(member_id):
 # ADMIN DONATIONS
 # ================================================================
 
-@app.route("/admin/donations")
+@app.route(
+    "/admin/donations"
+)
 @admin_required
 def admin_donations():
 
     db = get_db()
 
-    donations = db.execute("""
+    donations = db.execute(
+        """
         SELECT *
         FROM donations
         ORDER BY created_at DESC
-    """).fetchall()
+        """
+    ).fetchall()
 
-    return render_template(
-        "admin/donations.html",
+    return safe_render(
+        "admin_donations.html",
         donations=donations
     )
 
 
+@app.route(
+    "/admin/donations/<int:donation_id>/update",
+    methods=["POST"]
+)
 @app.route(
     "/admin/donations/<int:donation_id>/status",
     methods=["POST"]
@@ -2969,100 +2511,52 @@ def admin_update_donation_status(
 ):
 
     status = request.form.get(
-        "status",
-        "Pending"
-    ).strip()
+        "payment_status",
+        ""
+    ).strip().lower()
 
-    allowed_statuses = [
-        "Pending",
-        "Paid",
-        "Cancelled"
-    ]
-
-    if status not in allowed_statuses:
+    if status not in {
+        "pending",
+        "paid",
+        "failed",
+        "cancelled"
+    }:
 
         flash(
-            "Invalid payment status.",
+            "Invalid donation status.",
             "error"
         )
 
         return redirect(
             url_for("admin_donations")
         )
+
+    paid_at = None
+
+    if status == "paid":
+
+        paid_at = datetime.utcnow().isoformat()
 
     db = get_db()
 
-    donation = db.execute(
+    db.execute(
         """
-        SELECT id
-        FROM donations
+        UPDATE donations
+        SET payment_status = ?,
+            paid_at = ?
         WHERE id = ?
         """,
-        (donation_id,)
-    ).fetchone()
-
-    if donation is None:
-
-        flash(
-            "Donation not found.",
-            "error"
+        (
+            status,
+            paid_at,
+            donation_id
         )
+    )
 
-        return redirect(
-            url_for("admin_donations")
-        )
-
-    try:
-
-        if status == "Paid":
-
-            db.execute(
-                """
-                UPDATE donations
-                SET
-                    payment_status = ?,
-                    paid_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-                """,
-                (
-                    status,
-                    donation_id
-                )
-            )
-
-        else:
-
-            db.execute(
-                """
-                UPDATE donations
-                SET
-                    payment_status = ?,
-                    paid_at = NULL
-                WHERE id = ?
-                """,
-                (
-                    status,
-                    donation_id
-                )
-            )
-
-        db.commit()
-
-    except sqlite3.Error:
-
-        db.rollback()
-
-        flash(
-            "Unable to update the donation status right now.",
-            "error"
-        )
-
-        return redirect(
-            url_for("admin_donations")
-        )
+    db.commit()
 
     flash(
-        "Donation status updated successfully.",
+        "Donation updated successfully.",
         "success"
     )
 
@@ -3073,7 +2567,7 @@ def admin_update_donation_status(
 
 @app.route(
     "/admin/donations/<int:donation_id>/delete",
-    methods=["POST"]
+    methods=["GET", "POST"]
 )
 @admin_required
 def admin_delete_donation(
@@ -3082,53 +2576,18 @@ def admin_delete_donation(
 
     db = get_db()
 
-    donation = db.execute(
+    db.execute(
         """
-        SELECT id
-        FROM donations
+        DELETE FROM donations
         WHERE id = ?
         """,
         (donation_id,)
-    ).fetchone()
+    )
 
-    if donation is None:
-
-        flash(
-            "Donation not found.",
-            "error"
-        )
-
-        return redirect(
-            url_for("admin_donations")
-        )
-
-    try:
-
-        db.execute(
-            """
-            DELETE FROM donations
-            WHERE id = ?
-            """,
-            (donation_id,)
-        )
-
-        db.commit()
-
-    except sqlite3.Error:
-
-        db.rollback()
-
-        flash(
-            "Unable to delete the donation right now.",
-            "error"
-        )
-
-        return redirect(
-            url_for("admin_donations")
-        )
+    db.commit()
 
     flash(
-        "Donation deleted.",
+        "Donation deleted successfully.",
         "success"
     )
 
@@ -3173,75 +2632,64 @@ def admin_announcements():
         if not title or not body:
 
             flash(
-                "Title and announcement body are required.",
+                "Title and body are required.",
                 "error"
             )
 
             return redirect(
-                url_for(
-                    "admin_announcements"
-                )
+                url_for("admin_announcements")
             )
 
-        try:
+        now = datetime.utcnow().isoformat()
 
-            db.execute("""
-                INSERT INTO announcements
-                (
-                    title,
-                    body,
-                    published
-                )
-                VALUES (?, ?, ?)
-            """, (
+        db.execute(
+            """
+            INSERT INTO announcements (
                 title,
                 body,
-                published
-            ))
-
-            db.commit()
-
-        except sqlite3.Error:
-
-            db.rollback()
-
-            flash(
-                "Unable to create the announcement right now.",
-                "error"
+                published,
+                created_at,
+                updated_at
             )
-
-            return redirect(
-                url_for(
-                    "admin_announcements"
-                )
+            VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                title,
+                body,
+                published,
+                now,
+                now
             )
+        )
+
+        db.commit()
 
         flash(
-            "Announcement created.",
+            "Announcement created successfully.",
             "success"
         )
 
         return redirect(
-            url_for(
-                "admin_announcements"
-            )
+            url_for("admin_announcements")
         )
 
-    rows = db.execute("""
+    announcements = db.execute(
+        """
         SELECT *
         FROM announcements
         ORDER BY created_at DESC
-    """).fetchall()
+        """
+    ).fetchall()
 
-    return render_template(
-        "admin/announcements.html",
-        announcements=rows
+    return safe_render(
+        "admin_announcements.html",
+        announcements=announcements
     )
 
 
 @app.route(
     "/admin/announcements/<int:announcement_id>/delete",
-    methods=["POST"]
+    methods=["GET", "POST"]
 )
 @admin_required
 def admin_delete_announcement(
@@ -3250,85 +2698,78 @@ def admin_delete_announcement(
 
     db = get_db()
 
-    announcement = db.execute(
+    db.execute(
         """
-        SELECT id
-        FROM announcements
+        DELETE FROM announcements
         WHERE id = ?
         """,
         (announcement_id,)
-    ).fetchone()
+    )
 
-    if announcement is None:
-
-        flash(
-            "Announcement not found.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "admin_announcements"
-            )
-        )
-
-    try:
-
-        db.execute(
-            """
-            DELETE FROM announcements
-            WHERE id = ?
-            """,
-            (announcement_id,)
-        )
-
-        db.commit()
-
-    except sqlite3.Error:
-
-        db.rollback()
-
-        flash(
-            "Unable to delete the announcement right now.",
-            "error"
-        )
-
-        return redirect(
-            url_for(
-                "admin_announcements"
-            )
-        )
+    db.commit()
 
     flash(
-        "Announcement deleted.",
+        "Announcement deleted successfully.",
         "success"
     )
 
     return redirect(
-        url_for(
-            "admin_announcements"
-        )
+        url_for("admin_announcements")
     )
 
 
+@app.route("/health")
+def health():
+    try:
+        db = get_db()
+        db.execute("SELECT 1").fetchone()
+        return {"status": "ok"}, 200
+    except Exception:
+        app.logger.exception("Health check failed")
+        return {"status": "error"}, 503
+
+
 # ================================================================
-# ERROR PAGES
+# ERROR HANDLERS
 # ================================================================
 
 @app.errorhandler(404)
 def page_not_found(error):
 
-    return render_template(
-        "404.html"
-    ), 404
+    try:
+        return safe_render("404.html"), 404
+    except Exception:
+        return (
+            "<h1>404 - Page Not Found</h1>"
+            "<p>FSSSMC Central Mosque</p>"
+        ), 404
 
 
 @app.errorhandler(500)
 def internal_error(error):
 
-    return render_template(
-        "500.html"
-    ), 500
+    try:
+        db = g.get("db")
+
+        if db:
+            db.rollback()
+
+    except Exception:
+        pass
+
+    app.logger.exception(
+        "UNHANDLED APPLICATION ERROR: %s",
+        error
+    )
+
+    try:
+        return safe_render("500.html"), 500
+    except Exception:
+        return (
+            "<h1>500 - Server Error</h1>"
+            "<p>The server encountered an error. Check Render Live Tail "
+            "for the traceback.</p>"
+        ), 500
 
 
 # ================================================================
@@ -3336,19 +2777,19 @@ def internal_error(error):
 # ================================================================
 
 with app.app_context():
-
     init_db()
 
 
 # ================================================================
-# START DEVELOPMENT SERVER
+# RUN
 # ================================================================
 
 if __name__ == "__main__":
 
     app.run(
-        debug=True,
+        debug=os.environ.get("FLASK_DEBUG", "0") == "1",
         use_reloader=False,
-        host="127.0.0.1",
-        port=5000
+        host="0.0.0.0",
+        port=int(os.environ.get("PORT", "5000"))
     )
+
