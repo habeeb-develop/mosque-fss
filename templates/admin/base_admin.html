@@ -2,53 +2,286 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Admin | FSSSMC Central Mosque{% endblock %}</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="FSSSMC Central Mosque Administration"
+    >
+
+    <title>
+        {% block title %}
+            FSSSMC Admin
+        {% endblock %}
+    </title>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
-</head>
-<body class="admin-body">
-<div class="admin-shell">
-    <header class="admin-header">
-        <div class="admin-header-inner">
-            <a class="admin-brand" href="{{ url_for('admin_dashboard') }}">
-                <img src="{{ url_for('static', filename='images/fsssmc.jpeg') }}" alt="FSSSMC logo">
-                <span>
-                    <strong>FSSSMC ADMIN</strong>
-                    <span>Central Mosque Administration</span>
-                </span>
-            </a>
-            <div class="admin-header-actions">
-                <a href="{{ url_for('home') }}">View Website</a>
-                <a href="{{ url_for('admin_logout') }}">Sign Out</a>
-            </div>
-        </div>
-    </header>
 
-    <div class="admin-layout">
-        <aside class="admin-sidebar">
-            <p>Administration</p>
-            <a class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}" href="{{ url_for('admin_dashboard') }}">Dashboard</a>
-            <a class="{% if request.endpoint in ['admin_members','admin_add_member','admin_edit_member','admin_delete_member'] %}active{% endif %}" href="{{ url_for('admin_members') }}">Members</a>
-            <a class="{% if request.endpoint in ['admin_donations','admin_update_donation_status','admin_delete_donation'] %}active{% endif %}" href="{{ url_for('admin_donations') }}">Donations</a>
-            <a class="{% if request.endpoint in ['admin_announcements','admin_delete_announcement'] %}active{% endif %}" href="{{ url_for('admin_announcements') }}">Announcements</a>
-        </aside>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- IMPORTANT:
+         This is the ADMIN stylesheet.
+         Do not change this to style.css.
+    -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/admin.css') }}"
+    >
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="admin-body">
+
+<div class="admin-app">
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside class="admin-sidebar">
+
+        <div class="sidebar-brand">
+
+            <a
+                href="{{ url_for('admin_dashboard') }}"
+                class="brand-link"
+            >
+
+                <div class="brand-logo">
+                    <img
+                        src="{{ url_for('static', filename='images/fsssmc.jpeg') }}"
+                        alt="FSSSMC Central Mosque logo"
+                    >
+                </div>
+
+                <div class="brand-copy">
+                    <strong>FSSSMC</strong>
+                    <span>Central Mosque</span>
+                </div>
+
+            </a>
+
+        </div>
+
+
+        <div class="sidebar-user">
+
+            <div class="sidebar-avatar">
+                {{ session.get('admin_email', 'A')[0]|upper }}
+            </div>
+
+            <div class="sidebar-user-copy">
+
+                <strong>Administrator</strong>
+
+                <span>
+                    {{ session.get('admin_email', 'Admin') }}
+                </span>
+
+            </div>
+
+        </div>
+
+
+        <nav class="sidebar-nav">
+
+            <div class="nav-label">
+                MAIN MENU
+            </div>
+
+            <a
+                href="{{ url_for('admin_dashboard') }}"
+                class="nav-link {% if request.endpoint == 'admin_dashboard' %}active{% endif %}"
+            >
+                <span class="nav-icon">⌂</span>
+                <span>Dashboard</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('admin_members') }}"
+                class="nav-link {% if request.endpoint in ['admin_members', 'admin_add_member', 'admin_edit_member'] %}active{% endif %}"
+            >
+                <span class="nav-icon">♙</span>
+                <span>Members</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('admin_donations') }}"
+                class="nav-link {% if request.endpoint in ['admin_donations', 'admin_update_donation_status'] %}active{% endif %}"
+            >
+                <span class="nav-icon">₦</span>
+                <span>Donations</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('admin_announcements') }}"
+                class="nav-link {% if request.endpoint == 'admin_announcements' %}active{% endif %}"
+            >
+                <span class="nav-icon">◈</span>
+                <span>Announcements</span>
+            </a>
+
+
+            <div class="nav-label nav-label-spaced">
+                WEBSITE
+            </div>
+
+
+            <a
+                href="{{ url_for('home') }}"
+                class="nav-link"
+                target="_blank"
+                rel="noopener"
+            >
+                <span class="nav-icon">↗</span>
+                <span>View Website</span>
+            </a>
+
+        </nav>
+
+
+        <div class="sidebar-footer">
+
+            <div class="sidebar-footer-line"></div>
+
+            <a
+                href="{{ url_for('admin_logout') }}"
+                class="logout-link"
+            >
+                <span class="nav-icon">⇥</span>
+                <span>Sign Out</span>
+            </a>
+
+        </div>
+
+    </aside>
+
+
+    <!-- =====================================================
+         MAIN APPLICATION
+    ====================================================== -->
+
+    <div class="admin-main">
+
+        <!-- TOP HEADER -->
+
+        <header class="admin-topbar">
+
+            <div class="topbar-left">
+
+                <div class="topbar-breadcrumb">
+                    <span>FSSSMC</span>
+                    <strong>/</strong>
+                    <span>Administration</span>
+                </div>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <a
+                    href="{{ url_for('home') }}"
+                    class="topbar-website"
+                    target="_blank"
+                    rel="noopener"
+                >
+                    View public website
+                    <span>↗</span>
+                </a>
+
+                <div class="topbar-divider"></div>
+
+                <div class="topbar-admin">
+
+                    <div class="topbar-avatar">
+                        {{ session.get('admin_email', 'A')[0]|upper }}
+                    </div>
+
+                    <div>
+                        <strong>Administrator</strong>
+                        <span>Admin account</span>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- PAGE CONTENT -->
 
         <main class="admin-content">
+
             {% with messages = get_flashed_messages(with_categories=true) %}
+
                 {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="flash {{ category }}">{{ message }}</div>
-                    {% endfor %}
+
+                    <div class="flash-stack">
+
+                        {% for category, message in messages %}
+
+                            <div class="flash-message {{ category }}">
+
+                                <span class="flash-symbol">
+                                    {% if category == 'success' %}
+                                        ✓
+                                    {% elif category == 'error' %}
+                                        !
+                                    {% else %}
+                                        •
+                                    {% endif %}
+                                </span>
+
+                                <span>
+                                    {{ message }}
+                                </span>
+
+                            </div>
+
+                        {% endfor %}
+
+                    </div>
+
                 {% endif %}
+
             {% endwith %}
 
+
             {% block content %}{% endblock %}
+
         </main>
+
+
+        <footer class="admin-footer">
+
+            <span>
+                © 2026 FSSSMC Central Mosque
+            </span>
+
+            <span>
+                Administration Portal
+            </span>
+
+        </footer>
+
     </div>
+
 </div>
+
 </body>
 </html>

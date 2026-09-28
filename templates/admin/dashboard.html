@@ -7,194 +7,41 @@ Dashboard | FSSSMC Admin
 
 {% block content %}
 
-<div class="admin-title">
-
-    <div>
-        <h1>Dashboard</h1>
-
-        <p>
-            Overview of mosque administration activity.
-        </p>
-    </div>
-
-    <div class="admin-title-actions">
-
-        <a
-            href="{{ url_for('admin_add_member') }}"
-            class="admin-btn admin-btn-primary"
-        >
-            Add Member
-        </a>
-
-    </div>
-
-</div>
+<div class="admin-page">
 
 
-<!-- STATISTICS -->
+    <!-- =====================================================
+         PAGE HEADER
+    ====================================================== -->
 
-<div class="stat-grid">
+    <section class="dashboard-header">
 
-    <div class="stat-card">
+        <div>
 
-        <div class="stat-card-label">
-            Total Members
+            <span class="dashboard-eyebrow">
+                ADMINISTRATION OVERVIEW
+            </span>
+
+            <h1>
+                Good day, Administrator.
+            </h1>
+
+            <p>
+                Here's what's happening across FSSSMC Central Mosque.
+            </p>
+
         </div>
 
-        <div class="stat-card-value">
-            {{ member_count }}
-        </div>
 
-        <div class="stat-card-description">
-            Registered mosque members
-        </div>
-
-    </div>
-
-
-    <div class="stat-card">
-
-        <div class="stat-card-label">
-            Paid Donations
-        </div>
-
-        <div class="stat-card-value">
-            ₦{{ "{:,.2f}".format(paid_donations or 0) }}
-        </div>
-
-        <div class="stat-card-description">
-            Successfully completed donations
-        </div>
-
-    </div>
-
-
-    <div class="stat-card">
-
-        <div class="stat-card-label">
-            Pending Donations
-        </div>
-
-        <div class="stat-card-value">
-            {{ pending_donations }}
-        </div>
-
-        <div class="stat-card-description">
-            Donations awaiting confirmation
-        </div>
-
-    </div>
-
-
-    <div class="stat-card">
-
-        <div class="stat-card-label">
-            Announcements
-        </div>
-
-        <div class="stat-card-value">
-            {{ announcement_count }}
-        </div>
-
-        <div class="stat-card-description">
-            Published mosque announcements
-        </div>
-
-    </div>
-
-</div>
-
-
-<!-- DASHBOARD PANELS -->
-
-<div class="admin-panels">
-
-
-    <!-- RECENT MEMBERS -->
-
-    <section class="admin-panel">
-
-        <div class="admin-panel-head">
-
-            <div>
-                <h2>
-                    Recent Members
-                </h2>
-
-                <p>
-                    Latest registered members
-                </p>
-            </div>
+        <div class="dashboard-header-actions">
 
             <a
-                href="{{ url_for('admin_members') }}"
-                class="admin-btn admin-btn-secondary"
+                href="{{ url_for('admin_add_member') }}"
+                class="primary-button"
             >
-                View All
+                <span>+</span>
+                Add Member
             </a>
-
-        </div>
-
-
-        <div class="admin-panel-body">
-
-            {% if recent_members %}
-
-                <div class="admin-table-wrap">
-
-                    <table class="admin-table">
-
-                        <thead>
-
-                            <tr>
-                                <th>Name</th>
-                                <th>Post</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            {% for member in recent_members %}
-
-                                <tr>
-
-                                    <td>
-                                        <strong>
-                                            {{ member.name }}
-                                            {{ member.surname }}
-                                        </strong>
-                                    </td>
-
-                                    <td>
-                                        {{ member.post }}
-                                    </td>
-
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
-                </div>
-
-            {% else %}
-
-                <div class="admin-empty">
-
-                    <h3>
-                        No Members Yet
-                    </h3>
-
-                    <p>
-                        No members have registered yet.
-                    </p>
-
-                </div>
-
-            {% endif %}
 
         </div>
 
@@ -202,115 +49,777 @@ Dashboard | FSSSMC Admin
 
 
 
-    <!-- RECENT DONATIONS -->
+    <!-- =====================================================
+         STATISTICS
+    ====================================================== -->
 
-    <section class="admin-panel">
-
-        <div class="admin-panel-head">
-
-            <div>
-                <h2>
-                    Recent Donations
-                </h2>
-
-                <p>
-                    Latest donation activity
-                </p>
-            </div>
-
-            <a
-                href="{{ url_for('admin_donations') }}"
-                class="admin-btn admin-btn-secondary"
-            >
-                View All
-            </a>
-
-        </div>
+    <section
+        class="stat-grid"
+        aria-label="Administration statistics"
+    >
 
 
-        <div class="admin-panel-body">
+        <!-- USERS -->
 
-            {% if recent_donations %}
+        <article class="stat-card">
 
-                <div class="admin-table-wrap">
+            <div class="stat-card-top">
 
-                    <table class="admin-table">
-
-                        <thead>
-
-                            <tr>
-                                <th>Donor</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                            </tr>
-
-                        </thead>
-
-                        <tbody>
-
-                            {% for donation in recent_donations %}
-
-                                <tr>
-
-                                    <td>
-                                        <strong>
-                                            {{ donation.donor_name }}
-                                        </strong>
-                                    </td>
-
-                                    <td>
-                                        ₦{{ "{:,.2f}".format(donation.amount or 0) }}
-                                    </td>
-
-                                    <td>
-
-                                        {% if donation.payment_status == "paid" %}
-
-                                            <span class="status status-paid">
-                                                Paid
-                                            </span>
-
-                                        {% elif donation.payment_status == "pending" %}
-
-                                            <span class="status status-pending">
-                                                Pending
-                                            </span>
-
-                                        {% else %}
-
-                                            <span class="status status-failed">
-                                                {{ donation.payment_status }}
-                                            </span>
-
-                                        {% endif %}
-
-                                    </td>
-
-                                </tr>
-
-                            {% endfor %}
-
-                        </tbody>
-
-                    </table>
-
+                <div class="stat-icon stat-icon-green">
+                    U
                 </div>
 
-            {% else %}
+                <span class="stat-label">
+                    REGISTERED USERS
+                </span>
 
-                <div class="admin-empty">
+            </div>
 
-                    <h3>
-                        No Donations Yet
-                    </h3>
+            <div class="stat-number">
+                {{ user_count }}
+            </div>
+
+            <div class="stat-description">
+                Accounts registered on the platform
+            </div>
+
+        </article>
+
+
+
+        <!-- MEMBERS -->
+
+        <article class="stat-card">
+
+            <div class="stat-card-top">
+
+                <div class="stat-icon stat-icon-gold">
+                    M
+                </div>
+
+                <span class="stat-label">
+                    COMMUNITY MEMBERS
+                </span>
+
+            </div>
+
+            <div class="stat-number">
+                {{ member_count }}
+            </div>
+
+            <div class="stat-description">
+                Member records in the mosque database
+            </div>
+
+        </article>
+
+
+
+        <!-- DONATIONS -->
+
+        <article class="stat-card stat-card-featured">
+
+            <div class="stat-card-top">
+
+                <div class="stat-icon stat-icon-dark">
+                    ₦
+                </div>
+
+                <span class="stat-label">
+                    PAID DONATIONS
+                </span>
+
+            </div>
+
+            <div class="stat-number stat-money">
+                ₦{{ "{:,.0f}".format(paid_donations or 0) }}
+            </div>
+
+            <div class="stat-description">
+                {{ donation_count }} completed payment{{ '' if donation_count == 1 else 's' }}
+            </div>
+
+        </article>
+
+
+
+        <!-- ANNOUNCEMENTS -->
+
+        <article class="stat-card">
+
+            <div class="stat-card-top">
+
+                <div class="stat-icon stat-icon-light">
+                    A
+                </div>
+
+                <span class="stat-label">
+                    ANNOUNCEMENTS
+                </span>
+
+            </div>
+
+            <div class="stat-number">
+                {{ announcement_count }}
+            </div>
+
+            <div class="stat-description">
+                Currently published announcements
+            </div>
+
+        </article>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         MAIN DASHBOARD
+    ====================================================== -->
+
+    <section class="dashboard-grid dashboard-main-grid">
+
+
+        <!-- DONATION CHART -->
+
+        <article class="dashboard-panel chart-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="panel-eyebrow">
+                        FINANCIAL OVERVIEW
+                    </span>
+
+                    <h2>
+                        Donation activity
+                    </h2>
 
                     <p>
-                        No donations have been recorded.
+                        Paid donations recorded over the last six months.
                     </p>
 
                 </div>
 
+                <a
+                    href="{{ url_for('admin_donations') }}"
+                    class="panel-link"
+                >
+                    View donations
+                    <span>→</span>
+                </a>
+
+            </div>
+
+
+            <div class="chart-wrapper">
+
+                <div class="chart-y-axis">
+
+                    <span>₦</span>
+
+                </div>
+
+
+                <div class="chart-area">
+
+                    {% for item in donation_chart %}
+
+                    <div class="chart-column">
+
+                        <div class="chart-amount">
+
+                            ₦{{ "{:,.0f}".format(item.amount or 0) }}
+
+                        </div>
+
+                        <div class="chart-track">
+
+                            <div
+                                class="chart-bar"
+                                style="height: {{ item.height }}%;"
+                            ></div>
+
+                        </div>
+
+                        <span class="chart-month">
+                            {{ item.label }}
+                        </span>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+
+            <div class="chart-footer">
+
+                <span>
+                    Donation trend
+                </span>
+
+                <strong>
+                    {{ donation_count }} completed payment{{ '' if donation_count == 1 else 's' }}
+                </strong>
+
+            </div>
+
+        </article>
+
+
+
+        <!-- DONATION SUMMARY -->
+
+        <article class="dashboard-panel summary-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="panel-eyebrow">
+                        PAYMENT STATUS
+                    </span>
+
+                    <h2>
+                        Donation summary
+                    </h2>
+
+                </div>
+
+            </div>
+
+
+            <div class="summary-total">
+
+                <span>
+                    Total received
+                </span>
+
+                <strong>
+                    ₦{{ "{:,.0f}".format(paid_donations or 0) }}
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <div>
+
+                    <span class="summary-dot completed"></span>
+
+                    <span>
+                        Completed donations
+                    </span>
+
+                </div>
+
+                <strong>
+                    {{ donation_count }}
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <div>
+
+                    <span class="summary-dot pending"></span>
+
+                    <span>
+                        Pending donations
+                    </span>
+
+                </div>
+
+                <strong>
+                    {{ pending_donations }}
+                </strong>
+
+            </div>
+
+
+            <div class="summary-item">
+
+                <div>
+
+                    <span class="summary-dot announcement"></span>
+
+                    <span>
+                        Published announcements
+                    </span>
+
+                </div>
+
+                <strong>
+                    {{ announcement_count }}
+                </strong>
+
+            </div>
+
+
+            <div class="summary-divider"></div>
+
+
+            <a
+                href="{{ url_for('admin_donations') }}"
+                class="secondary-button"
+            >
+                Manage donations
+                <span>→</span>
+            </a>
+
+
+            <a
+                href="{{ url_for('admin_announcements') }}"
+                class="text-action"
+            >
+                Manage announcements
+            </a>
+
+        </article>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         LOWER DASHBOARD
+    ====================================================== -->
+
+    <section class="dashboard-grid dashboard-lower-grid">
+
+
+        <!-- RECENT MEMBERS -->
+
+        <article class="dashboard-panel table-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="panel-eyebrow">
+                        COMMUNITY
+                    </span>
+
+                    <h2>
+                        Recent members
+                    </h2>
+
+                </div>
+
+                <a
+                    href="{{ url_for('admin_members') }}"
+                    class="panel-link"
+                >
+                    View all
+                    <span>→</span>
+                </a>
+
+            </div>
+
+
+            {% if recent_members %}
+
+            <div class="table-wrapper">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Member</th>
+                            <th>Position / Post</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for member in recent_members %}
+
+                        <tr>
+
+                            <td>
+
+                                <div class="table-person">
+
+                                    <div class="person-avatar">
+                                        {{ member.name[0]|upper }}
+                                    </div>
+
+                                    <div>
+
+                                        <strong>
+                                            {{ member.name }}
+                                            {{ member.surname }}
+                                        </strong>
+
+                                        <span>
+                                            Community member
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                <span class="role-badge">
+                                    {{ member.post }}
+                                </span>
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    M
+                </div>
+
+                <strong>
+                    No members yet
+                </strong>
+
+                <span>
+                    Registered members will appear here.
+                </span>
+
+            </div>
+
             {% endif %}
+
+        </article>
+
+
+
+        <!-- RECENT DONATIONS -->
+
+        <article class="dashboard-panel table-panel">
+
+            <div class="panel-header">
+
+                <div>
+
+                    <span class="panel-eyebrow">
+                        FINANCE
+                    </span>
+
+                    <h2>
+                        Recent donations
+                    </h2>
+
+                </div>
+
+                <a
+                    href="{{ url_for('admin_donations') }}"
+                    class="panel-link"
+                >
+                    View all
+                    <span>→</span>
+                </a>
+
+            </div>
+
+
+            {% if recent_donations %}
+
+            <div class="table-wrapper">
+
+                <table class="admin-table">
+
+                    <thead>
+
+                        <tr>
+                            <th>Donor</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody>
+
+                        {% for donation in recent_donations %}
+
+                        <tr>
+
+                            <td>
+
+                                <div class="table-person">
+
+                                    <div class="person-avatar donation-avatar">
+                                        ₦
+                                    </div>
+
+                                    <div>
+
+                                        <strong>
+                                            {{ donation.donor_name }}
+                                        </strong>
+
+                                        <span>
+                                            Donation
+                                        </span>
+
+                                    </div>
+
+                                </div>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong class="amount-value">
+                                    ₦{{ "{:,.2f}".format(donation.amount or 0) }}
+                                </strong>
+
+                            </td>
+
+
+                            <td>
+
+                                {% set status = donation.payment_status|lower %}
+
+                                {% if status == 'paid' %}
+
+                                    <span class="status-badge status-paid">
+                                        <span></span>
+                                        Paid
+                                    </span>
+
+                                {% elif status == 'pending' %}
+
+                                    <span class="status-badge status-pending">
+                                        <span></span>
+                                        Pending
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-badge status-other">
+                                        <span></span>
+                                        {{ donation.payment_status }}
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+            {% else %}
+
+            <div class="empty-state">
+
+                <div class="empty-icon">
+                    ₦
+                </div>
+
+                <strong>
+                    No donations yet
+                </strong>
+
+                <span>
+                    Donation activity will appear here.
+                </span>
+
+            </div>
+
+            {% endif %}
+
+        </article>
+
+    </section>
+
+
+
+    <!-- =====================================================
+         QUICK ACTIONS
+    ====================================================== -->
+
+    <section class="quick-section">
+
+        <div class="quick-heading">
+
+            <div>
+
+                <span class="panel-eyebrow">
+                    QUICK ACCESS
+                </span>
+
+                <h2>
+                    Administration tools
+                </h2>
+
+            </div>
+
+        </div>
+
+
+        <div class="quick-grid">
+
+
+            <a
+                href="{{ url_for('admin_add_member') }}"
+                class="quick-card"
+            >
+
+                <span class="quick-number">
+                    01
+                </span>
+
+                <div class="quick-icon">
+                    +
+                </div>
+
+                <div>
+
+                    <strong>
+                        Add a member
+                    </strong>
+
+                    <span>
+                        Register a new mosque member
+                    </span>
+
+                </div>
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
+
+
+
+            <a
+                href="{{ url_for('admin_members') }}"
+                class="quick-card"
+            >
+
+                <span class="quick-number">
+                    02
+                </span>
+
+                <div class="quick-icon">
+                    M
+                </div>
+
+                <div>
+
+                    <strong>
+                        Manage members
+                    </strong>
+
+                    <span>
+                        View and manage community records
+                    </span>
+
+                </div>
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
+
+
+
+            <a
+                href="{{ url_for('admin_donations') }}"
+                class="quick-card"
+            >
+
+                <span class="quick-number">
+                    03
+                </span>
+
+                <div class="quick-icon">
+                    ₦
+                </div>
+
+                <div>
+
+                    <strong>
+                        Donations
+                    </strong>
+
+                    <span>
+                        Monitor mosque contributions
+                    </span>
+
+                </div>
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
+
+
+
+            <a
+                href="{{ url_for('admin_announcements') }}"
+                class="quick-card"
+            >
+
+                <span class="quick-number">
+                    04
+                </span>
+
+                <div class="quick-icon">
+                    A
+                </div>
+
+                <div>
+
+                    <strong>
+                        Announcements
+                    </strong>
+
+                    <span>
+                        Publish important mosque updates
+                    </span>
+
+                </div>
+
+                <span class="quick-arrow">
+                    →
+                </span>
+
+            </a>
 
         </div>
 

@@ -1,38 +1,154 @@
 {% extends "base.html" %}
+
 {% block title %}Get Involved | FSSSMC Central Mosque{% endblock %}
+
 {% block content %}
+
 <section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / Get Involved</p>
+
+        <div class="page-eyebrow">
+            Community
+        </div>
+
         <h1>Get Involved</h1>
-        <p>There are many ways to participate in the worship, learning and service of the mosque.</p>
+
+        <p>
+            There are many ways to contribute to the life and
+            development of our mosque.
+        </p>
+
     </div>
+
 </section>
+
 
 <section class="section">
+
     <div class="container">
-        <div class="section-head">
-            <p class="section-kicker">Participation</p>
-            <h2>Find a way to serve your community.</h2>
+
+        <div class="section-heading center">
+
+            <div class="page-eyebrow">
+                Participate
+            </div>
+
+            <h2>
+                Be Part of Something Meaningful
+            </h2>
+
+            <p>
+                Your time, knowledge, skills and support can make
+                a meaningful contribution to the community.
+            </p>
+
         </div>
 
-        <div class="info-grid">
-            <article class="info-card">
-                <h3>Become a Member</h3>
-                <p>Submit your membership information through the community registration form.</p>
-                <a class="btn btn-outline" style="margin-top:18px;" href="{{ url_for('contact') }}#membership">Register</a>
+
+        <div class="grid grid-3">
+
+            <article class="card">
+
+                <div class="card-body">
+
+                    <div class="card-icon">V</div>
+
+                    <h3>Volunteer</h3>
+
+                    <p>
+                        Offer your time and skills to support mosque
+                        programmes and community activities.
+                    </p>
+
+                </div>
+
             </article>
-            <article class="info-card">
-                <h3>Support the Mosque</h3>
-                <p>Support mosque activities through a recorded donation.</p>
-                <a class="btn btn-outline" style="margin-top:18px;" href="{{ url_for('donate') }}">Donate</a>
+
+
+            <article class="card">
+
+                <div class="card-body">
+
+                    <div class="card-icon">E</div>
+
+                    <h3>Join Activities</h3>
+
+                    <p>
+                        Participate in educational, spiritual and
+                        community programmes.
+                    </p>
+
+                </div>
+
             </article>
-            <article class="info-card">
-                <h3>Community Service</h3>
-                <p>Learn about the committees responsible for welfare, education, da'awa, maintenance and development.</p>
-                <a class="btn btn-outline" style="margin-top:18px;" href="{{ url_for('contact') }}#committees">View Committees</a>
+
+
+            <article class="card">
+
+                <div class="card-body">
+
+                    <div class="card-icon">S</div>
+
+                    <h3>Support</h3>
+
+                    <p>
+                        Support the development and activities of the
+                        mosque through your contributions.
+                    </p>
+
+                </div>
+
             </article>
+
         </div>
+
     </div>
+
 </section>
+
+
+<section class="section section-muted">
+
+    <div class="container">
+
+        <div class="cta">
+
+            <div class="cta-content">
+
+                <h2>
+                    Every Contribution Matters
+                </h2>
+
+                <p>
+                    A strong community is built through the
+                    participation and cooperation of its members.
+                </p>
+
+                <div class="cta-actions">
+
+                    <a
+                        href="{{ url_for('donate') }}"
+                        class="btn btn-gold"
+                    >
+                        Support the Mosque
+                    </a>
+
+                    <a
+                        href="{{ url_for('contact') }}"
+                        class="btn btn-light"
+                    >
+                        Contact Us
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
 {% endblock %}

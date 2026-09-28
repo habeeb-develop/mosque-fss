@@ -1,146 +1,84 @@
 {% extends "base.html" %}
 
-{% block title %}
-Sign In | FSSSMC Central Mosque
-{% endblock %}
-
+{% block title %}Sign In | FSSSMC Central Mosque{% endblock %}
 
 {% block content %}
 
-<section class="auth-section">
+<section class="auth-page">
 
-    <div class="container">
+    <div class="auth-card">
 
-        <div class="auth-wrap">
+        <div class="auth-header">
 
-            <div class="auth-card">
+            <div class="page-eyebrow">
+                FSSSMC Community
+            </div>
 
-                <div class="auth-header">
+            <h1>
+                Welcome Back
+            </h1>
 
-                    <p class="section-kicker">
-                        FSSSMC ACCOUNT
-                    </p>
+            <p>
+                Sign in to access your account.
+            </p>
 
-                    <h1>
-                        Sign In
-                    </h1>
-
-                    <p>
-                        Sign in to access your FSSSMC account.
-                    </p>
-
-                </div>
+        </div>
 
 
-                <!-- FLASH MESSAGES -->
+        <form method="POST">
 
-                {% with messages = get_flashed_messages(with_categories=true) %}
+            <div class="form-group">
 
-                    {% if messages %}
+                <label for="email">
+                    Email Address
+                </label>
 
-                        <div class="auth-messages">
-
-                            {% for category, message in messages %}
-
-                                <div
-                                    class="
-                                        flash
-                                        {% if category %}
-                                            {{ category }}
-                                        {% endif %}
-                                    "
-                                >
-                                    {{ message }}
-                                </div>
-
-                            {% endfor %}
-
-                        </div>
-
-                    {% endif %}
-
-                {% endwith %}
-
-
-                <!-- LOGIN FORM -->
-
-                <form
-                    method="POST"
-                    action="{{ url_for('login') }}"
-                    class="auth-form"
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    placeholder="you@example.com"
+                    required
                 >
 
-                    <input
-                        type="hidden"
-                        name="next"
-                        value="{{ request.args.get('next', '') }}"
-                    >
+            </div>
 
 
-                    <div class="form-group">
+            <div class="form-group mt-3">
 
-                        <label for="email">
-                            Email Address
-                        </label>
+                <label for="password">
+                    Password
+                </label>
 
-                        <input
-                            id="email"
-                            type="email"
-                            name="email"
-                            placeholder="Enter your email"
-                            autocomplete="email"
-                            required
-                        >
-
-                    </div>
-
-
-                    <div class="form-group">
-
-                        <label for="password">
-                            Password
-                        </label>
-
-                        <input
-                            id="password"
-                            type="password"
-                            name="password"
-                            placeholder="Enter your password"
-                            autocomplete="current-password"
-                            required
-                        >
-
-                    </div>
-
-
-                    <button
-                        type="submit"
-                        class="btn btn-green auth-submit"
-                    >
-                        Sign In
-                    </button>
-
-                </form>
-
-
-                <!-- CREATE ACCOUNT -->
-
-                <div class="auth-footer">
-
-                    <p>
-                        Don't have an account?
-                    </p>
-
-                    <a
-                        href="{{ url_for('register') }}"
-                        class="auth-link"
-                    >
-                        Create an Account
-                    </a>
-
-                </div>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    placeholder="Enter your password"
+                    required
+                >
 
             </div>
+
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+                style="width:100%; margin-top:24px;"
+            >
+                Sign In
+            </button>
+
+        </form>
+
+
+        <div class="auth-footer">
+
+            Don't have an account?
+
+            <a href="{{ url_for('register') }}">
+                Create one
+            </a>
 
         </div>
 

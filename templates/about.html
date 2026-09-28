@@ -1,82 +1,181 @@
 {% extends "base.html" %}
-{% block title %}About the Mosque | FSSSMC Central Mosque{% endblock %}
+
+{% block title %}About Us | FSSSMC Central Mosque{% endblock %}
+
 {% block content %}
-<section class="page-hero page-hero-premium">
+
+<section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / About</p>
-        <div class="hero-rule"></div>
-        <h1>About the Mosque</h1>
-        <p>A place of worship, knowledge, peace, unity and community service.</p>
+
+        <div class="page-eyebrow">
+            About FSSSMC
+        </div>
+
+        <h1>Our Mosque & Our Mission</h1>
+
+        <p>
+            A place of worship, knowledge, peace, unity and
+            community service.
+        </p>
+
     </div>
+
 </section>
 
-<section class="section about-intro">
-    <div class="container split about-split">
-        <div>
-            <p class="section-kicker">Our Purpose</p>
-            <div class="section-head">
-                <h2>Serving the Ummah through worship, knowledge and service.</h2>
+
+<section class="section">
+
+    <div class="container">
+
+        <div class="content-grid">
+
+            <div class="content-image">
+
+                <img
+                    src="{{ url_for('static', filename='images/fssmc structure 2.jpeg') }}"
+                    alt="FSSSMC Central Mosque building"
+                >
+
             </div>
-            <div class="prose prose-large">
-                <p>FSSSMC Central Mosque exists as a place for congregational worship, Islamic learning, community engagement and service to the Ummah.</p>
-                <p>The mosque's work is rooted in the Qur'an and Sunnah and supported by a leadership structure responsible for administrative and spiritual decision-making and approval.</p>
+
+
+            <div class="content-copy">
+
+                <div class="page-eyebrow">
+                    Who We Are
+                </div>
+
+                <h2>
+                    Serving the Ummah
+                </h2>
+
+                <p>
+                    FSSSMC Central Mosque is a place dedicated to
+                    worship, Islamic learning, community development
+                    and service.
+                </p>
+
+                <p>
+                    We strive to provide an environment where Muslims
+                    can worship Allah, acquire beneficial knowledge,
+                    strengthen relationships and contribute positively
+                    to society.
+                </p>
+
+                <ul class="check-list">
+
+                    <li>Daily congregational prayers</li>
+                    <li>Jummah services</li>
+                    <li>Islamic education</li>
+                    <li>Community programmes</li>
+                    <li>Spiritual guidance</li>
+
+                </ul>
+
             </div>
-            <ul class="feature-list feature-list-premium">
-                <li>Congregational prayer and Jummah service</li>
-                <li>Islamic education and learning</li>
-                <li>Community welfare and service</li>
-                <li>Da'awa and community engagement</li>
-                <li>Masjid maintenance and development</li>
-            </ul>
+
         </div>
 
-        <div class="about-image-frame">
-            <div class="image-accent"></div>
-            <img class="editorial-image" src="{{ url_for('static', filename='images/fssmc structure 2.jpeg') }}" alt="FSSSMC Central Mosque structure">
-            <div class="image-caption">
-                <span>FSSSMC</span>
-                <strong>Worship • Knowledge • Service</strong>
-            </div>
-        </div>
     </div>
+
 </section>
 
-<section class="section section-soft facilities-section">
+
+<section class="section section-muted">
+
     <div class="container">
-        <div class="section-head centered-head">
-            <p class="section-kicker">Our Facilities</p>
-            <h2>Spaces that support the life of the mosque.</h2>
-            <p>Facilities are provided to support worship, learning, community activities and the daily needs of worshippers.</p>
+
+        <div class="section-heading center">
+
+            <div class="page-eyebrow">
+                Our Facilities
+            </div>
+
+            <h2>
+                A Welcoming Space for the Community
+            </h2>
+
         </div>
 
-        <div class="facility-grid">
-            {% for facility in facilities %}
-            <article class="facility-card">
-                <div class="facility-number">{{ '%02d'|format(loop.index) }}</div>
-                <div>
-                    <h3>{{ facility }}</h3>
-                    <p>Dedicated space serving the worship, learning and community needs of FSSSMC.</p>
+
+        <div class="grid grid-3">
+
+            <article class="card">
+                <div class="card-body">
+                    <div class="card-icon">01</div>
+                    <h3>Main Prayer Hall</h3>
+                    <p>
+                        A dedicated space for congregational worship
+                        and daily prayers.
+                    </p>
                 </div>
             </article>
-            {% endfor %}
+
+
+            <article class="card">
+                <div class="card-body">
+                    <div class="card-icon">02</div>
+                    <h3>Women's Prayer Area</h3>
+                    <p>
+                        A dedicated prayer space designed to support
+                        comfortable worship.
+                    </p>
+                </div>
+            </article>
+
+
+            <article class="card">
+                <div class="card-body">
+                    <div class="card-icon">03</div>
+                    <h3>Islamic Library</h3>
+                    <p>
+                        Resources for Islamic study, reading and
+                        personal development.
+                    </p>
+                </div>
+            </article>
+
+
+            <article class="card">
+                <div class="card-body">
+                    <div class="card-icon">04</div>
+                    <h3>Ablution Facilities</h3>
+                    <p>
+                        Facilities supporting preparation for prayer
+                        and worship.
+                    </p>
+                </div>
+            </article>
+
+
+            <article class="card">
+                <div class="card-body">
+                    <div class="card-icon">05</div>
+                    <h3>Classrooms</h3>
+                    <p>
+                        Spaces for Islamic education and community
+                        learning activities.
+                    </p>
+                </div>
+            </article>
+
+
+            <article class="card">
+                <div class="card-body">
+                    <div class="card-icon">06</div>
+                    <h3>Meeting Halls</h3>
+                    <p>
+                        Spaces for community meetings, programmes
+                        and organised activities.
+                    </p>
+                </div>
+            </article>
+
         </div>
+
     </div>
+
 </section>
 
-<section class="section about-values">
-    <div class="container">
-        <div class="values-panel">
-            <div>
-                <p class="section-kicker">What We Stand For</p>
-                <h2>A mosque built around faith and community.</h2>
-            </div>
-            <div class="values-grid">
-                <div><strong>Worship</strong><span>Congregational prayer and devotion.</span></div>
-                <div><strong>Knowledge</strong><span>Learning rooted in the Qur'an and Sunnah.</span></div>
-                <div><strong>Unity</strong><span>Building bonds across the community.</span></div>
-                <div><strong>Service</strong><span>Supporting people and community welfare.</span></div>
-            </div>
-        </div>
-    </div>
-</section>
 {% endblock %}

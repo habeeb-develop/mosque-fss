@@ -2,113 +2,205 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#063f32">
-    <meta name="description" content="FSSSMC Central Mosque — a place of worship, knowledge, peace, unity and community service.">
-    <title>{% block title %}FSSSMC Central Mosque{% endblock %}</title>
 
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <meta
+        name="description"
+        content="FSSSMC Central Mosque — Worship, Knowledge, Peace, Unity and Community Service."
+    >
+
+    <meta
+        name="theme-color"
+        content="#063f32"
+    >
+
+    <title>
+        {% block title %}FSSSMC Central Mosque{% endblock %}
+    </title>
+
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Main Website Stylesheet -->
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+    {% block head %}{% endblock %}
 </head>
+
 <body>
-<a class="skip-link" href="#main-content">Skip to content</a>
 
-<div class="topbar">
-    <div class="container topbar-inner">
-        <span>FSSSMC CENTRAL MOSQUE</span>
-        <span class="topbar-divider">•</span>
-        <span>COMMUNITY</span>
-        <span class="topbar-divider">•</span>
-        <span>WORSHIP</span>
-        <span class="topbar-divider">•</span>
-        <span>SERVICE</span>
-    </div>
-</div>
+    <!-- =========================================================
+         TOP BAR
+         ========================================================= -->
 
-<header class="site-header">
-    <div class="container nav-shell">
-        <a class="brand" href="{{ url_for('home') }}" aria-label="FSSSMC Central Mosque home">
-            <span class="brand-logo-wrap">
-                <img
-                    class="brand-logo"
-                    src="{{ url_for('static', filename='images/fsssmc.jpeg') }}"
-                    alt="FSSSMC Central Mosque logo"
-                >
-            </span>
-            <span class="brand-copy">
-                <strong>FSSSMC</strong>
-                <small>Central Mosque</small>
-            </span>
-        </a>
+    <div class="topbar">
+        <div class="container topbar-inner">
 
-        <details class="mobile-nav">
-            <summary aria-label="Open navigation">Menu</summary>
-            <nav class="mobile-menu">
-                {% include "_nav.html" %}
-            </nav>
-        </details>
-
-        <nav class="desktop-nav" aria-label="Primary navigation">
-            {% include "_nav.html" %}
-        </nav>
-    </div>
-</header>
-
-{% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-    <div class="flash-stack container" aria-live="polite">
-        {% for category, message in messages %}
-            <div class="flash {{ category }}">{{ message }}</div>
-        {% endfor %}
-    </div>
-    {% endif %}
-{% endwith %}
-
-<main id="main-content">
-    {% block content %}{% endblock %}
-</main>
-
-<footer class="site-footer">
-    <div class="container footer-grid">
-        <div class="footer-brand">
-            <img src="{{ url_for('static', filename='images/fsssmc.jpeg') }}" alt="FSSSMC logo">
-            <div>
-                <h2>FSSSMC Central Mosque</h2>
-                <p>A place of worship, knowledge, peace, unity and community service.</p>
+            <div class="topbar-message">
+                <span>FSSSMC CENTRAL MOSQUE</span>
+                <span class="topbar-dot">•</span>
+                <span>COMMUNITY</span>
+                <span class="topbar-dot">•</span>
+                <span>WORSHIP</span>
+                <span class="topbar-dot">•</span>
+                <span>SERVICE</span>
             </div>
-        </div>
 
-        <div>
-            <h3>Explore</h3>
-            <a href="{{ url_for('about') }}">About the Mosque</a>
-            <a href="{{ url_for('prayer') }}">Prayer Times</a>
-            <a href="{{ url_for('services') }}">Services</a>
-            <a href="{{ url_for('events') }}">Events</a>
-        </div>
+            <div class="topbar-right">
+                <span>Serving the Ummah</span>
+            </div>
 
-        <div>
-            <h3>Community</h3>
-            <a href="{{ url_for('learn') }}">Learn</a>
-            <a href="{{ url_for('get_involved') }}">Get Involved</a>
-            <a href="{{ url_for('contact') }}">Leadership & Contact</a>
-            <a href="{{ url_for('donate') }}">Support the Mosque</a>
-        </div>
-
-        <div>
-            <h3>Connect</h3>
-            <p>Lagos, Nigeria</p>
-            <p>info@fsssmc.org</p>
-            <a class="footer-admin" href="{{ url_for('admin_login') }}">Administration</a>
         </div>
     </div>
 
-    <div class="container footer-bottom">
-        <span>© {{ current_year }} FSSSMC Central Mosque. All rights reserved.</span>
-        <span>Worship • Knowledge • Service • Community</span>
+
+    <!-- =========================================================
+         NAVIGATION
+         ========================================================= -->
+
+    {% include "_nav.html" %}
+
+
+    <!-- =========================================================
+         FLASH MESSAGES
+         ========================================================= -->
+
+    <div class="container flash-container">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
+            {% if messages %}
+
+                {% for category, message in messages %}
+
+                    <div class="flash flash-{{ category }}">
+                        <span>{{ message }}</span>
+                    </div>
+
+                {% endfor %}
+
+            {% endif %}
+
+        {% endwith %}
+
     </div>
-</footer>
+
+
+    <!-- =========================================================
+         MAIN CONTENT
+         ========================================================= -->
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+
+    <!-- =========================================================
+         FOOTER
+         ========================================================= -->
+
+    <footer class="site-footer">
+
+        <div class="container">
+
+            <div class="footer-grid">
+
+                <div class="footer-brand">
+
+                    <div class="footer-logo">
+                        <img
+                            src="{{ url_for('static', filename='images/fsssmc.jpeg') }}"
+                            alt="FSSSMC Central Mosque"
+                        >
+                    </div>
+
+                    <h3>FSSSMC Central Mosque</h3>
+
+                    <p>
+                        A place of worship, knowledge, peace, unity
+                        and community service.
+                    </p>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h4>Quick Links</h4>
+
+                    <a href="{{ url_for('index') }}">Home</a>
+                    <a href="{{ url_for('about') }}">About</a>
+                    <a href="{{ url_for('prayer') }}">Prayer Times</a>
+                    <a href="{{ url_for('services') }}">Services</a>
+                    <a href="{{ url_for('events') }}">Events</a>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h4>Community</h4>
+
+                    <a href="{{ url_for('learn') }}">Learn</a>
+                    <a href="{{ url_for('get_involved') }}">Get Involved</a>
+                    <a href="{{ url_for('announcements') }}">Announcements</a>
+                    <a href="{{ url_for('donate') }}">Donate</a>
+
+                </div>
+
+
+                <div class="footer-column">
+
+                    <h4>Contact</h4>
+
+                    <p>Lagos, Nigeria</p>
+                    <p>info@fsssmc.org</p>
+                    <p>Central Mosque Community</p>
+
+                    <a
+                        class="footer-contact-link"
+                        href="{{ url_for('contact') }}"
+                    >
+                        Contact Us →
+                    </a>
+
+                </div>
+
+            </div>
+
+
+            <div class="footer-bottom">
+
+                <p>
+                    © 2026 FSSSMC Central Mosque.
+                    All rights reserved.
+                </p>
+
+                <p>
+                    Worship • Knowledge • Peace • Unity • Service
+                </p>
+
+            </div>
+
+        </div>
+
+    </footer>
+
+
+    {% block scripts %}{% endblock %}
+
 </body>
 </html>

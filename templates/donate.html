@@ -1,71 +1,204 @@
 {% extends "base.html" %}
+
 {% block title %}Donate | FSSSMC Central Mosque{% endblock %}
+
 {% block content %}
+
 <section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / Support</p>
+
+        <div class="page-eyebrow">
+            Support FSSSMC
+        </div>
+
         <h1>Support the Mosque</h1>
-        <p>Record a donation towards the mosque and its community purposes.</p>
+
+        <p>
+            Your contribution helps support worship, learning,
+            community activities and the development of the mosque.
+        </p>
+
     </div>
+
 </section>
+
 
 <section class="section">
-    <div class="container split">
-        <div>
-            <p class="section-kicker">Giving</p>
-            <div class="section-head">
-                <h2>Every contribution can support the work of the mosque.</h2>
-            </div>
-            <div class="prose">
+
+    <div class="container">
+
+        <div class="contact-grid">
+
+            <div class="contact-info">
+
+                <h2>
+                    Give With Purpose
+                </h2>
+
                 <p>
-                    Donations can be recorded for general mosque activities, education,
-                    welfare, Ramadan, Zakat, Sadaqah and building or maintenance purposes.
+                    Every contribution can help support the work
+                    and activities of the mosque.
                 </p>
-                <p>
-                    This current form records the donation as pending until it is confirmed
-                    by an authorised administrator.
-                </p>
+
+
+                <div class="contact-items">
+
+                    <div class="contact-item">
+
+                        <div class="contact-item-icon">
+                            01
+                        </div>
+
+                        <div>
+                            <strong>Community Development</strong>
+
+                            <span>
+                                Support projects and activities
+                                that benefit the community.
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="contact-item">
+
+                        <div class="contact-item-icon">
+                            02
+                        </div>
+
+                        <div>
+                            <strong>Education</strong>
+
+                            <span>
+                                Support Islamic learning and
+                                educational programmes.
+                            </span>
+                        </div>
+
+                    </div>
+
+
+                    <div class="contact-item">
+
+                        <div class="contact-item-icon">
+                            03
+                        </div>
+
+                        <div>
+                            <strong>Masjid Operations</strong>
+
+                            <span>
+                                Help maintain and improve mosque
+                                facilities and services.
+                            </span>
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
+
+
+            <div class="form-card">
+
+                <div class="section-heading">
+
+                    <div class="page-eyebrow">
+                        Contribution
+                    </div>
+
+                    <h2>
+                        Make a Donation
+                    </h2>
+
+                    <p>
+                        Complete the form below to continue.
+                    </p>
+
+                </div>
+
+
+                <form method="POST">
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label for="name">
+                                Full Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="name"
+                                name="name"
+                                placeholder="Enter your full name"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label for="email">
+                                Email Address
+                            </label>
+
+                            <input
+                                type="email"
+                                id="email"
+                                name="email"
+                                placeholder="Enter your email"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label for="amount">
+                                Donation Amount
+                            </label>
+
+                            <input
+                                type="number"
+                                id="amount"
+                                name="amount"
+                                min="1"
+                                step="1"
+                                placeholder="Enter amount in Naira"
+                                required
+                            >
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="form-actions">
+
+                        <button
+                            type="submit"
+                            class="btn btn-primary"
+                        >
+                            Continue Donation
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
         </div>
 
-        <div class="form-card">
-            <h2>Donation Form</h2>
-            <p>Enter the donation details below.</p>
-            <form class="form-layout" method="post">
-                <div class="form-group full">
-                    <label for="donor_name">Full name *</label>
-                    <input id="donor_name" name="donor_name" required>
-                </div>
-                <div class="form-group">
-                    <label for="phone">Phone</label>
-                    <input id="phone" name="phone" type="tel">
-                </div>
-                <div class="form-group">
-                    <label for="email">Email</label>
-                    <input id="email" name="email" type="email">
-                </div>
-                <div class="form-group">
-                    <label for="amount">Amount (₦) *</label>
-                    <input id="amount" name="amount" type="number" min="1" step="0.01" required>
-                </div>
-                <div class="form-group">
-                    <label for="purpose">Purpose *</label>
-                    <select id="purpose" name="purpose" required>
-                        <option value="">Select purpose</option>
-                        {% for purpose in donation_purposes %}
-                        <option value="{{ purpose }}">{{ purpose }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <div class="form-group full">
-                    <label for="notes">Notes</label>
-                    <textarea id="notes" name="notes"></textarea>
-                </div>
-                <div class="form-actions">
-                    <button class="btn btn-green" type="submit">Record Donation</button>
-                </div>
-            </form>
-        </div>
     </div>
+
 </section>
+
 {% endblock %}

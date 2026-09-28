@@ -1,40 +1,124 @@
 {% extends "base.html" %}
-{% block title %}My Account | FSSSMC Central Mosque{% endblock %}
+
+{% block title %}My Profile | FSSSMC Central Mosque{% endblock %}
+
 {% block content %}
+
 <section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / Account</p>
-        <h1>My Account</h1>
-        <p>Your FSSSMC community account information.</p>
+
+        <div class="page-eyebrow">
+            My Account
+        </div>
+
+        <h1>
+            Profile
+        </h1>
+
+        <p>
+            Manage your community account information.
+        </p>
+
     </div>
+
 </section>
 
+
 <section class="section">
+
     <div class="container">
-        <div class="form-card">
-            <div class="section-head">
-                <p class="section-kicker">Account</p>
-                <h2>{{ user.name }} {{ user.surname }}</h2>
+
+        <div class="profile-layout">
+
+            <aside class="profile-sidebar">
+
+                <div class="page-eyebrow">
+                    Account
+                </div>
+
+                <h3>
+                    My Profile
+                </h3>
+
+
+                <nav class="profile-nav">
+
+                    <a href="#" class="active">
+                        Profile
+                    </a>
+
+                    <a href="{{ url_for('index') }}">
+                        Home
+                    </a>
+
+                    <a href="{{ url_for('contact') }}">
+                        Contact
+                    </a>
+
+                </nav>
+
+            </aside>
+
+
+            <div class="profile-content">
+
+                <div class="form-card">
+
+                    <div class="section-heading">
+
+                        <div class="page-eyebrow">
+                            Personal Information
+                        </div>
+
+                        <h2>
+                            Account Details
+                        </h2>
+
+                    </div>
+
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                Full Name
+                            </label>
+
+                            <input
+                                type="text"
+                                value="{{ user.name if user else '' }}"
+                                readonly
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Email Address
+                            </label>
+
+                            <input
+                                type="email"
+                                value="{{ user.email if user else '' }}"
+                                readonly
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
             </div>
-            <div class="info-grid">
-                <article class="info-card">
-                    <h3>Name</h3>
-                    <p>{{ user.name }} {{ user.surname }}</p>
-                </article>
-                <article class="info-card">
-                    <h3>Email</h3>
-                    <p>{{ user.email }}</p>
-                </article>
-                <article class="info-card">
-                    <h3>Member since</h3>
-                    <p>{{ user.created_at }}</p>
-                </article>
-            </div>
-            <div class="hero-actions">
-                <a class="btn btn-outline" href="{{ url_for('contact') }}">Community</a>
-                <a class="btn btn-green" href="{{ url_for('logout') }}">Sign Out</a>
-            </div>
+
         </div>
+
     </div>
+
 </section>
+
 {% endblock %}

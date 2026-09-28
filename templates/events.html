@@ -1,36 +1,116 @@
 {% extends "base.html" %}
+
 {% block title %}Events | FSSSMC Central Mosque{% endblock %}
+
 {% block content %}
+
 <section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / Events</p>
-        <h1>Events & Announcements</h1>
-        <p>Stay informed about programmes and announcements published by the mosque.</p>
+
+        <div class="page-eyebrow">
+            Community Calendar
+        </div>
+
+        <h1>Events & Programmes</h1>
+
+        <p>
+            Stay connected with activities and programmes at
+            FSSSMC Central Mosque.
+        </p>
+
     </div>
+
 </section>
+
 
 <section class="section">
+
     <div class="container">
-        <div class="section-head">
-            <p class="section-kicker">Community Calendar</p>
-            <h2>What is happening at FSSSMC.</h2>
+
+        <div class="section-heading">
+
+            <div class="page-eyebrow">
+                What's Happening
+            </div>
+
+            <h2>
+                Upcoming Events
+            </h2>
+
+            <p>
+                Check back regularly for mosque programmes,
+                educational activities and community events.
+            </p>
+
         </div>
 
-        {% if announcements %}
-        <div class="info-grid">
-            {% for item in announcements %}
-            <article class="info-card">
-                <p class="section-kicker">{{ item.created_at }}</p>
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.body }}</p>
+
+        {% if events %}
+
+        <div class="events-grid">
+
+            {% for event in events %}
+
+            <article class="event-card">
+
+                {% if event.image %}
+
+                <div class="event-image">
+                    <img
+                        src="{{ event.image }}"
+                        alt="{{ event.title }}"
+                    >
+                </div>
+
+                {% endif %}
+
+
+                <div class="event-body">
+
+                    {% if event.date %}
+                    <div class="event-date">
+                        {{ event.date }}
+                    </div>
+                    {% endif %}
+
+                    <h3>
+                        {{ event.title }}
+                    </h3>
+
+                    {% if event.description %}
+                    <p>
+                        {{ event.description }}
+                    </p>
+                    {% endif %}
+
+                </div>
+
             </article>
+
             {% endfor %}
+
         </div>
+
         {% else %}
-        <div class="empty">
-            There are currently no published announcements. Check back for updates.
+
+        <div class="empty-state">
+
+            <h3>
+                No Upcoming Events
+            </h3>
+
+            <p>
+                There are currently no events available.
+                Please check back soon for upcoming programmes.
+            </p>
+
         </div>
+
         {% endif %}
+
     </div>
+
 </section>
+
 {% endblock %}

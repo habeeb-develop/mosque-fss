@@ -1,29 +1,82 @@
 {% extends "base.html" %}
+
 {% block title %}Announcements | FSSSMC Central Mosque{% endblock %}
+
 {% block content %}
+
 <section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / Announcements</p>
+
+        <div class="page-eyebrow">
+            Community Updates
+        </div>
+
         <h1>Announcements</h1>
-        <p>Official updates published by the mosque administration.</p>
+
+        <p>
+            Important news, notices and updates from FSSSMC
+            Central Mosque.
+        </p>
+
     </div>
+
 </section>
 
+
 <section class="section">
+
     <div class="container">
+
         {% if announcements %}
-        <div class="directory">
-            {% for item in announcements %}
-            <article class="info-card">
-                <p class="section-kicker">{{ item.created_at }}</p>
-                <h3>{{ item.title }}</h3>
-                <p>{{ item.body }}</p>
+
+        <div class="announcement-list">
+
+            {% for announcement in announcements %}
+
+            <article class="announcement">
+
+                {% if announcement.created_at %}
+
+                <div class="announcement-meta">
+                    {{ announcement.created_at }}
+                </div>
+
+                {% endif %}
+
+                <h3>
+                    {{ announcement.title }}
+                </h3>
+
+                <p>
+                    {{ announcement.content }}
+                </p>
+
             </article>
+
             {% endfor %}
+
         </div>
+
         {% else %}
-        <div class="empty">No announcements have been published.</div>
+
+        <div class="empty-state">
+
+            <h3>
+                No Announcements
+            </h3>
+
+            <p>
+                There are currently no announcements available.
+                Please check back later.
+            </p>
+
+        </div>
+
         {% endif %}
+
     </div>
+
 </section>
+
 {% endblock %}

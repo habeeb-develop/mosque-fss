@@ -1,54 +1,155 @@
 {% extends "base.html" %}
+
 {% block title %}Services | FSSSMC Central Mosque{% endblock %}
+
 {% block content %}
+
 <section class="page-hero">
+
     <div class="container">
-        <p class="breadcrumb">FSSSMC / Services</p>
-        <h1>Services</h1>
-        <p>Worship, learning and practical service for the mosque community.</p>
+
+        <div class="page-eyebrow">
+            Our Services
+        </div>
+
+        <h1>Serving the Community</h1>
+
+        <p>
+            Supporting worship, learning, spiritual development
+            and community life.
+        </p>
+
     </div>
+
 </section>
+
 
 <section class="section">
+
     <div class="container">
-        <div class="section-head">
-            <p class="section-kicker">What We Provide</p>
-            <h2>Services supporting the life of the Ummah.</h2>
+
+        <div class="section-heading center">
+
+            <div class="page-eyebrow">
+                What We Offer
+            </div>
+
+            <h2>
+                Services for the Ummah
+            </h2>
+
+            <p>
+                Our mosque provides a range of services and activities
+                designed to support the spiritual and social needs
+                of the community.
+            </p>
+
         </div>
 
-        <div class="info-grid">
-            <article class="info-card">
-                <h3>Prayer & Worship</h3>
-                <p>Congregational worship, daily prayer and Jummah service.</p>
+
+        <div class="services-grid">
+
+            <article class="service-card">
+                <h3>Daily Prayers</h3>
+                <p>
+                    Congregational prayers are held throughout the day
+                    according to the prayer schedule.
+                </p>
             </article>
-            <article class="info-card">
-                <h3>Islamic Learning</h3>
-                <p>Learning spaces and programmes supporting Islamic education.</p>
+
+
+            <article class="service-card">
+                <h3>Jummah Service</h3>
+                <p>
+                    Weekly Friday prayer and Khutbah for members of
+                    the community.
+                </p>
             </article>
-            <article class="info-card">
-                <h3>Da'awa</h3>
-                <p>Community engagement and efforts focused on Islamic learning and guidance.</p>
+
+
+            <article class="service-card">
+                <h3>Islamic Education</h3>
+                <p>
+                    Opportunities for learning Qur'an, Sunnah and
+                    beneficial Islamic knowledge.
+                </p>
             </article>
-            <article class="info-card">
-                <h3>Welfare</h3>
-                <p>Community welfare activities and support for members of the Ummah.</p>
+
+
+            <article class="service-card">
+                <h3>Community Support</h3>
+                <p>
+                    Activities and initiatives that encourage
+                    cooperation and community development.
+                </p>
             </article>
-            <article class="info-card">
-                <h3>Masjid Maintenance</h3>
-                <p>Care and maintenance of the mosque and its facilities.</p>
+
+
+            <article class="service-card">
+                <h3>Spiritual Guidance</h3>
+                <p>
+                    Support and guidance through qualified mosque
+                    leadership and scholars.
+                </p>
             </article>
-            <article class="info-card">
-                <h3>Community Service</h3>
-                <p>Practical programmes that strengthen unity, participation and service.</p>
+
+
+            <article class="service-card">
+                <h3>Community Programmes</h3>
+                <p>
+                    Programmes designed to bring worshippers together
+                    and strengthen community relationships.
+                </p>
             </article>
+
         </div>
+
     </div>
+
 </section>
 
-<section class="quote-band">
-    <div class="container quote">
-        <p>“Serving the Ummah is part of the life of the mosque.”</p>
-        <span>FSSSMC Central Mosque</span>
+
+<section class="section section-muted">
+
+    <div class="container">
+
+        <div class="cta">
+
+            <div class="cta-content">
+
+                <h2>
+                    Find Your Place in the Community
+                </h2>
+
+                <p>
+                    Learn, worship, participate and serve alongside
+                    your fellow community members.
+                </p>
+
+                <div class="cta-actions">
+
+                    <a
+                        href="{{ url_for('get_involved') }}"
+                        class="btn btn-gold"
+                    >
+                        Get Involved
+                    </a>
+
+                    <a
+                        href="{{ url_for('contact') }}"
+                        class="btn btn-light"
+                    >
+                        Contact Us
+                    </a>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
+
 </section>
+
 {% endblock %}

@@ -1,29 +1,23 @@
 {% extends "base.html" %}
 
-{% block title %}
-Leadership & Community | FSSSMC Central Mosque
-{% endblock %}
-
+{% block title %}Leadership & Community | FSSSMC Central Mosque{% endblock %}
 
 {% block content %}
-
-<!-- PAGE HERO -->
 
 <section class="page-hero">
 
     <div class="container">
 
-        <p class="breadcrumb">
-            FSSSMC / Leadership & Community
-        </p>
-
-        <h1>
+        <div class="page-eyebrow">
             Leadership & Community
-        </h1>
+        </div>
+
+        <h1>Serving the Ummah Together</h1>
 
         <p>
-            Serving the mosque through leadership, worship,
-            knowledge and community service.
+            Meet the leadership and committees responsible for
+            supporting the administrative and spiritual life
+            of FSSSMC Central Mosque.
         </p>
 
     </div>
@@ -31,359 +25,250 @@ Leadership & Community | FSSSMC Central Mosque
 </section>
 
 
-
-<!-- EXECUTIVE MEMBERS -->
-
 <section class="section">
 
     <div class="container">
 
-        <div class="section-head">
+        <div class="section-heading">
 
-            <p class="section-kicker">
-                Leadership
-            </p>
+            <div class="page-eyebrow">
+                Executive Members
+            </div>
 
             <h2>
-                Executive Members
+                Leadership of the Masjid
             </h2>
 
             <p>
-                The mosque's leadership provides administrative
-                and spiritual direction and supports the activities
-                of the community.
+                The executive is the highest organ for decision-making
+                and approval authority in both administrative and
+                spiritual matters.
             </p>
 
         </div>
 
 
-        {% if executive_members %}
+        <div class="leadership-grid">
 
-            <div class="info-grid">
+            <article class="leader-card">
+                <span class="leader-role">Amir</span>
+                <h3>
+                    Muritala Adekunle Balogun
+                </h3>
+                <p>
+                    Executive Leadership
+                </p>
+            </article>
 
-                {% for member in executive_members %}
 
-                    <article class="info-card">
+            <article class="leader-card">
+                <span class="leader-role">Imam</span>
+                <h3>
+                    Mustapha Motilola Alli
+                </h3>
+                <p>
+                    Spiritual Leadership
+                </p>
+            </article>
 
-                        <h3>
-                            {{ member.name }}
-                        </h3>
 
-                        {% if member.role %}
+            <article class="leader-card">
+                <span class="leader-role">Secretary</span>
+                <h3>
+                    Ishaq Aderemi Abimbola
+                </h3>
+                <p>
+                    Administration
+                </p>
+            </article>
 
-                            <p class="card-label">
-                                {{ member.role }}
-                            </p>
 
-                        {% endif %}
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Abdul Ganiyu Olayinka Dabiri
+                </h3>
+            </article>
 
-                        {% if member.description %}
 
-                            <p>
-                                {{ member.description }}
-                            </p>
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Lukman Badiru
+                </h3>
+            </article>
 
-                        {% endif %}
 
-                    </article>
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Lateef Usman
+                </h3>
+            </article>
 
-                {% endfor %}
 
-            </div>
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Prof. Zaid Aderolu
+                </h3>
+            </article>
 
-        {% else %}
 
-            <div class="empty">
-                Leadership information will be published here.
-            </div>
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Lasisi Abayomi Lawal
+                </h3>
+            </article>
 
-        {% endif %}
+
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Hassan Muhammad Bello
+                </h3>
+            </article>
+
+
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Engr. Ismail Sanni
+                </h3>
+            </article>
+
+
+            <article class="leader-card">
+                <span class="leader-role">Executive Member</span>
+                <h3>
+                    Monsuru Oladehide
+                </h3>
+            </article>
+
+        </div>
 
     </div>
 
 </section>
 
 
-
-<!-- PAST EXECUTIVE -->
-
-<section class="section section-soft">
+<section class="section section-muted">
 
     <div class="container">
 
-        <div class="section-head">
+        <div class="section-heading">
 
-            <p class="section-kicker">
-                Service & History
-            </p>
+            <div class="page-eyebrow">
+                Jummah Service
+            </div>
 
             <h2>
-                Past Executive
+                Friday Prayer
             </h2>
 
             <p>
-                We recognise those who have contributed to the
-                development and service of the mosque community.
+                Jummah service is supported by a rotational team of
+                Imam and Khatib responsible for delivering the Friday
+                sermon and leading the congregation.
             </p>
 
         </div>
 
 
-        {% if past_executive %}
+        <div class="grid grid-2">
 
-            <div class="directory">
+            <article class="card">
 
-                {% for member in past_executive %}
+                <div class="card-body">
 
-                    <div class="directory-item">
-
-                        {% if member.name is defined %}
-
-                            <strong>
-                                {{ member.name }}
-                            </strong>
-
-                        {% else %}
-
-                            <strong>
-                                {{ member }}
-                            </strong>
-
-                        {% endif %}
-
-
-                        {% if member.role is defined and member.role %}
-
-                            <span>
-                                {{ member.role }}
-                            </span>
-
-                        {% endif %}
-
+                    <div class="card-icon">
+                        J
                     </div>
 
-                {% endfor %}
+                    <h3>
+                        Rotational Imam / Khatib
+                    </h3>
 
-            </div>
+                    <p>
+                        Ustadh Abdul Granny Adebayo Ejalonibu
+                    </p>
 
-        {% else %}
+                </div>
 
-            <div class="empty">
-                Past executive information will be published here.
-            </div>
+            </article>
 
-        {% endif %}
+
+            <article class="card">
+
+                <div class="card-body">
+
+                    <div class="card-icon">
+                        C
+                    </div>
+
+                    <h3>
+                        Community Contact
+                    </h3>
+
+                    <p>
+                        Contact the mosque for information about
+                        Jummah schedules, programmes and community
+                        activities.
+                    </p>
+
+                    <a
+                        href="mailto:info@fsssmc.org"
+                        class="btn btn-primary btn-small mt-3"
+                    >
+                        Email the Mosque
+                    </a>
+
+                </div>
+
+            </article>
+
+        </div>
 
     </div>
 
 </section>
 
-
-
-<!-- MASJID COMMITTEES -->
 
 <section class="section">
 
     <div class="container">
 
-        <div class="section-head">
+        <div class="cta">
 
-            <p class="section-kicker">
-                Community Organisation
-            </p>
-
-            <h2>
-                Masjid Committees
-            </h2>
-
-            <p>
-                Committees support the smooth running of mosque
-                activities and community programmes.
-            </p>
-
-        </div>
-
-
-        {% if committees %}
-
-            <div class="committee-list">
-
-                {% for committee in committees %}
-
-                    <article class="committee-card">
-
-                        {% if committee.name is defined %}
-
-                            <h3>
-                                {{ committee.name }}
-                            </h3>
-
-                            {% if committee.description %}
-
-                                <p>
-                                    {{ committee.description }}
-                                </p>
-
-                            {% endif %}
-
-                        {% else %}
-
-                            <h3>
-                                {{ committee }}
-                            </h3>
-
-                        {% endif %}
-
-                    </article>
-
-                {% endfor %}
-
-            </div>
-
-        {% else %}
-
-            <div class="empty">
-                Committee information will be published here.
-            </div>
-
-        {% endif %}
-
-    </div>
-
-</section>
-
-
-
-<!-- JUMMAH -->
-
-<section class="section section-dark">
-
-    <div class="container">
-
-        <div class="section-head section-head-light">
-
-            <p class="section-kicker">
-                Jummah Service
-            </p>
-
-            <h2>
-                Jummah Imam & Khatib
-            </h2>
-
-            <p>
-                Jummah services are supported by a rotational
-                Imam and Khatib arrangement.
-            </p>
-
-        </div>
-
-
-        {% if jummah_imams %}
-
-            <div class="info-grid">
-
-                {% for imam in jummah_imams %}
-
-                    <article class="info-card info-card-dark">
-
-                        {% if imam.name is defined %}
-
-                            <h3>
-                                {{ imam.name }}
-                            </h3>
-
-                            {% if imam.role %}
-
-                                <p>
-                                    {{ imam.role }}
-                                </p>
-
-                            {% endif %}
-
-                        {% else %}
-
-                            <h3>
-                                {{ imam }}
-                            </h3>
-
-                        {% endif %}
-
-                    </article>
-
-                {% endfor %}
-
-            </div>
-
-        {% else %}
-
-            <div class="empty empty-dark">
-                Jummah Imam information will be published here.
-            </div>
-
-        {% endif %}
-
-    </div>
-
-</section>
-
-
-
-<!-- CONTACT ACTIONS -->
-
-<section class="section">
-
-    <div class="container">
-
-        <div class="contact-actions">
-
-            <div>
-
-                <p class="section-kicker">
-                    Get Involved
-                </p>
+            <div class="cta-content">
 
                 <h2>
-                    Be part of the FSSSMC community.
+                    Need to Reach Us?
                 </h2>
 
                 <p>
-                    Members of the community can register with the
-                    mosque and participate in its programmes and
-                    activities.
+                    For enquiries, community matters and mosque
+                    information, get in touch with FSSSMC.
                 </p>
 
-            </div>
-
-
-            <div class="button-row">
-
-                {% if session.get("user_id") %}
+                <div class="cta-actions">
 
                     <a
-                        href="{{ url_for('member_register') }}"
+                        href="mailto:info@fsssmc.org"
                         class="btn btn-gold"
                     >
-                        Register as a Member
+                        Email Us
                     </a>
-
-                {% else %}
 
                     <a
-                        href="{{ url_for('login', next='/members/register') }}"
-                        class="btn btn-gold"
+                        href="{{ url_for('index') }}"
+                        class="btn btn-light"
                     >
-                        Sign In to Register
+                        Return Home
                     </a>
 
-                {% endif %}
-
-
-                <a
-                    href="mailto:info@fsssmc.org"
-                    class="btn btn-light-outline"
-                >
-                    Email the Mosque
-                </a>
+                </div>
 
             </div>
 

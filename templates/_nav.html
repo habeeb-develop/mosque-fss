@@ -1,13 +1,27 @@
-<a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}">Home</a>
-<a class="{% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">About</a>
-<a class="{% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">Prayer Times</a>
-<a class="{% if request.endpoint == 'services' %}active{% endif %}" href="{{ url_for('services') }}">Services</a>
-<a class="{% if request.endpoint == 'events' or request.endpoint == 'announcements' %}active{% endif %}" href="{{ url_for('events') }}">Events</a>
-<a class="{% if request.endpoint == 'learn' %}active{% endif %}" href="{{ url_for('learn') }}">Learn</a>
-<a class="{% if request.endpoint == 'get_involved' %}active{% endif %}" href="{{ url_for('get_involved') }}">Get Involved</a>
-<a class="{% if request.endpoint == 'contact' %}active{% endif %}" href="{{ url_for('contact') }}">Contact</a>
-{% if session.get('user_id') %}
-    <a class="nav-account" href="{{ url_for('profile') }}">My Account</a>
-{% else %}
-    <a class="nav-account" href="{{ url_for('login') }}">Sign In</a>
-{% endif %}
+<div class="nav-links">
+    <a class="{% if request.endpoint in ['index', 'home'] %}active{% endif %}" href="{{ url_for('index') }}">Home</a>
+    <a class="{% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">About</a>
+    <a class="{% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">Prayer Times</a>
+    <a class="{% if request.endpoint == 'services' %}active{% endif %}" href="{{ url_for('services') }}">Services</a>
+    <a class="{% if request.endpoint in ['events', 'announcements'] %}active{% endif %}" href="{{ url_for('events') }}">Events</a>
+    <a class="{% if request.endpoint == 'learn' %}active{% endif %}" href="{{ url_for('learn') }}">Learn</a>
+    <a class="{% if request.endpoint == 'get_involved' %}active{% endif %}" href="{{ url_for('get_involved') }}">Get Involved</a>
+    <a class="{% if request.endpoint == 'contact' %}active{% endif %}" href="{{ url_for('contact') }}">Contact</a>
+</div>
+
+<div class="nav-account-area">
+    {% if session.get('user_id') %}
+        <a class="nav-account" href="{{ url_for('profile') }}">My Account</a>
+        <a class="nav-signout" href="{{ url_for('logout') }}">Sign Out</a>
+    {% elif session.get('admin_id') %}
+        <a class="nav-account" href="{{ url_for('admin_dashboard') }}">Administration</a>
+        <a class="nav-signout" href="{{ url_for('admin_logout') }}">Sign Out</a>
+    {% else %}
+        <a class="nav-account" href="{{ url_for('login') }}">Sign In</a>
+        <a class="nav-register" href="{{ url_for('register') }}">Create Account</a>
+    {% endif %}
+</div>
+
+<div class="nav-donate">
+    <a class="btn btn-gold btn-small" href="{{ url_for('donate') }}">Donate</a>
+</div>
