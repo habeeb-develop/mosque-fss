@@ -29,6 +29,7 @@ from werkzeug.security import (
     generate_password_hash,
     check_password_hash
 )
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 try:
     from dotenv import load_dotenv
@@ -51,11 +52,20 @@ app = Flask(__name__)
 SECRET_KEY = os.environ.get("SECRET_KEY", "FsssmcCentralMosque_2026!Secure").strip()
 
 if not SECRET_KEY:
-    # A random fallback keeps local development usable.
-    # On Render, ALWAYS set SECRET_KEY in Environment Variables.
-    SECRET_KEY = secrets.token_hex(32)
+    # A stable local fallback prevents sessions from disappearing between
+    # development restarts. Set SECRET_KEY in Render for production.
+    SECRET_KEY = "FsssmcCentralMosque_2026!Secure"
 
 app.secret_key = SECRET_KEY
+
+# Render terminates HTTPS at its proxy. ProxyFix lets Flask correctly see
+# the original HTTPS scheme when generating Paystack callback URLs.
+app.wsgi_app = ProxyFix(
+    app.wsgi_app,
+    x_for=1,
+    x_proto=1,
+    x_host=1
+)
 
 # Session configuration
 app.config["SESSION_COOKIE_HTTPONLY"] = True
@@ -65,6 +75,7 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 # Local development remains HTTP.
 app.config["SESSION_COOKIE_SECURE"] = (
     os.environ.get("RENDER", "").lower() == "true"
+    or os.environ.get("FLASK_ENV", "").lower() == "production"
 )
 
 app.config["SESSION_COOKIE_NAME"] = "fsssmc_session"
@@ -108,7 +119,7 @@ PAYSTACK_SECRET_KEY = os.environ.get(
 
 PAYSTACK_PUBLIC_KEY = os.environ.get(
     "PAYSTACK_PUBLIC_KEY",
-    "pk_test_3a23b0594bd9ee4878b78d7d090f4d4a12a62721"
+    "pk_test_0d971bb72ebed6d23d0471924df87bd5941db555"
 ).strip()
 
 PAYSTACK_BASE_URL = os.environ.get(
@@ -241,6 +252,18 @@ FACILITIES = [
     "Ablution Facilities",
     "Classrooms",
     "Meeting Halls"
+]
+
+# Posts/roles used by the Contact & Leadership page and member registration.
+# Keep this as a simple list so the existing contact template can render it safely.
+POSTS = [
+    "Amir",
+    "Imam",
+    "Secretary",
+    "Treasurer",
+    "Executive Member",
+    "Committee Member",
+    "Member"
 ]
 
 
@@ -512,7 +535,7 @@ def init_db():
 
     admin_password = os.environ.get(
         "ADMIN_PASSWORD",
-        "ChangeThisPassword123!"
+        "FsssmcCentralMosque_2026!Secure"
     )
 
     if not admin_password:
@@ -656,24 +679,56 @@ def inject_globals():
 # ================================================================
 
 def safe_render(template_name, **context):
-    """
-    Render a normal template. If a deployment accidentally missed a
-    template, return a useful HTML response instead of causing a second
-    TemplateNotFound exception inside the 500 handler.
-    """
-    try:
-        return render_template(template_name, **context)
-    except Exception as error:
-        from jinja2 import TemplateNotFound
+    """Render templates while supporting both the old and new admin layout."""
 
-        if isinstance(error, TemplateNotFound):
-            app.logger.error(
-                "MISSING TEMPLATE: %s. "
-                "Make sure the templates folder is committed and pushed.",
-                template_name
-            )
-            return (
-                f"""<!doctype html>
+    aliases = {
+        "admin_login.html": [
+            "admin/login.html",
+            "admin_login.html"
+        ],
+        "admin.html": [
+            "admin/dashboard.html",
+            "admin_dashboard.html",
+            "admin.html"
+        ],
+        "admin_members.html": [
+            "admin/members.html",
+            "admin_members.html"
+        ],
+        "admin_member_form.html": [
+            "admin/member_form.html",
+            "admin_member_form.html"
+        ],
+        "admin_donations.html": [
+            "admin/donations.html",
+            "admin_donations.html",
+            "donations.html"
+        ],
+        "admin_announcements.html": [
+            "admin/announcements.html",
+            "admin_announcements.html"
+        ],
+    }
+
+    candidates = aliases.get(template_name, [template_name])
+
+    for candidate in candidates:
+        try:
+            app.jinja_env.get_template(candidate)
+            return render_template(candidate, **context)
+        except Exception as error:
+            from jinja2 import TemplateNotFound
+            if isinstance(error, TemplateNotFound):
+                continue
+            raise
+
+    app.logger.error(
+        "MISSING TEMPLATE. Tried: %s",
+        ", ".join(candidates)
+    )
+
+    return (
+        f"""<!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
@@ -688,16 +743,13 @@ h1{{color:#006b57}}code{{background:#eef3f1;padding:3px 7px;border-radius:5px}}
 <body>
 <div class="box">
 <h1>FSSSMC Central Mosque</h1>
-<p>This page could not be loaded because the template
-<code>{template_name}</code> is missing from the deployed project.</p>
-<p>Commit and push your complete <code>templates</code> folder to GitHub,
-then let Render deploy the new commit.</p>
+<p>This page could not be loaded because its template is missing from the deployed project.</p>
+<p>Templates checked: <code>{", ".join(candidates)}</code></p>
 </div>
 </body>
 </html>""",
-                500
-            )
-        raise
+        500
+    )
 
 
 # ================================================================
@@ -720,6 +772,9 @@ def require_login():
         "get_involved",
         "contact",
         "announcements",
+        "donate",
+        "member_register",
+        "register_member",
         "login",
         "open_registration",
         "register",
@@ -1094,21 +1149,120 @@ def about():
 # PRAYER
 # ================================================================
 
+# ================================================================
+# PRAYER TIMES - ALADHAN API
+# ================================================================
+
+def get_prayer_times():
+    """Fetch today's Lagos prayer times from the AlAdhan API.
+
+    Prayer times are deliberately NOT hard-coded into prayer.html.
+    The Flask server requests the current day's values from AlAdhan.
+    Method 2 is used, matching the mosque site's existing configuration.
+    School 0 uses the standard juristic calculation for Asr.
+    """
+
+    today = datetime.now().strftime("%d-%m-%Y")
+
+    params = urlencode({
+        "city": "Lagos",
+        "country": "Nigeria",
+        "method": 2,
+        "school": 0
+    })
+
+    api_url = (
+        "https://api.aladhan.com/v1/timingsByCity/"
+        f"{today}?{params}"
+    )
+
+    try:
+        req = Request(
+            api_url,
+            headers={
+                "User-Agent": "FSSSMC-Central-Mosque/1.0"
+            }
+        )
+
+        with urlopen(req, timeout=10) as response:
+            payload = json.loads(
+                response.read().decode("utf-8")
+            )
+
+        if payload.get("code") != 200:
+            raise ValueError("AlAdhan returned an unsuccessful response.")
+
+        data = payload.get("data", {})
+        timings = data.get("timings", {})
+        date_info = data.get("date", {})
+
+        prayer_times = {
+            "Fajr": timings.get("Fajr", "--:--"),
+            "Sunrise": timings.get("Sunrise", "--:--"),
+            "Dhuhr": timings.get("Dhuhr", "--:--"),
+            "Asr": timings.get("Asr", "--:--"),
+            "Maghrib": timings.get("Maghrib", "--:--"),
+            "Isha": timings.get("Isha", "--:--")
+        }
+
+        return {
+            "times": prayer_times,
+            "date": date_info.get("readable", today),
+            "hijri": date_info.get("hijri", {}).get("date", ""),
+            "location": "Lagos, Nigeria",
+            "method": "AlAdhan — ISNA (Method 2)",
+            "error": None
+        }
+
+    except (
+        URLError,
+        HTTPError,
+        TimeoutError,
+        ValueError,
+        KeyError,
+        json.JSONDecodeError
+    ) as error:
+
+        app.logger.warning(
+            "Prayer API request failed: %s",
+            error
+        )
+
+        # Safe fallback for temporary API/network failure. The API remains
+        # the primary source; these values are only displayed if the request
+        # cannot be completed.
+        fallback_times = {
+            "Fajr": "05:20",
+            "Sunrise": "06:35",
+            "Dhuhr": "12:38",
+            "Asr": "15:51",
+            "Maghrib": "18:40",
+            "Isha": "19:45"
+        }
+
+        return {
+            "times": fallback_times,
+            "date": today,
+            "hijri": "",
+            "location": "Lagos, Nigeria",
+            "method": "AlAdhan — ISNA (Method 2)",
+            "error": "Live prayer-time service is temporarily unavailable. Showing the latest fallback schedule."
+        }
+
+
 @app.route("/prayer")
 def prayer():
 
-    prayer_times = {
-        "Fajr": "04:58",
-        "Sunrise": "06:20",
-        "Dhuhr": "12:13",
-        "Asr": "15:49",
-        "Maghrib": "17:52",
-        "Isha": "19:11"
-    }
+    prayer_data = get_prayer_times()
 
     return safe_render(
         "prayer.html",
-        prayer_times=prayer_times
+        prayer_times=prayer_data["times"],
+        prayer_date=prayer_data["date"],
+        hijri_date=prayer_data["hijri"],
+        location=prayer_data["location"],
+        prayer_method=prayer_data["method"],
+        prayer_error=prayer_data["error"]
     )
 
 
@@ -1567,7 +1721,7 @@ def initialize_paystack_transaction(
 
     payload = {
         "email": email,
-        "amount": str(amount_kobo),
+        "amount": amount_kobo,
         "currency": "NGN",
         "reference": reference,
         "callback_url": callback_url
@@ -2085,10 +2239,18 @@ def admin_login():
         (email,)
     ).fetchone()
 
-    if not admin or not check_password_hash(
-        admin["password_hash"],
-        password
-    ):
+    try:
+        password_ok = bool(
+            admin
+            and check_password_hash(
+                admin["password_hash"],
+                password
+            )
+        )
+    except Exception:
+        password_ok = False
+
+    if not password_ok:
 
         flash(
             "Invalid administrator credentials.",
@@ -2101,8 +2263,11 @@ def admin_login():
 
     session.clear()
 
-    session["admin_id"] = admin["id"]
-    session["admin_email"] = admin["email"]
+    session["admin_id"] = int(admin["id"])
+    session["admin_email"] = str(admin["email"])
+    session.modified = True
+
+    flash("Administrator login successful.", "success")
 
     return redirect(
         url_for("admin_dashboard")
