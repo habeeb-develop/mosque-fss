@@ -1,5 +1,5 @@
 <div class="nav-links">
-    <a class="{% if request.endpoint in ['index', 'home'] %}active{% endif %}" href="{{ url_for('index') }}">Home</a>
+    <a class="{% if request.endpoint == 'home' %}active{% endif %}" href="{{ url_for('home') }}">Home</a>
     <a class="{% if request.endpoint == 'about' %}active{% endif %}" href="{{ url_for('about') }}">About</a>
     <a class="{% if request.endpoint == 'prayer' %}active{% endif %}" href="{{ url_for('prayer') }}">Prayer Times</a>
     <a class="{% if request.endpoint == 'services' %}active{% endif %}" href="{{ url_for('services') }}">Services</a>
