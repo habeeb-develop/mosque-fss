@@ -16,15 +16,15 @@ import json
 import hashlib
 import hmac
 import secrets
-import smtplib
+
 
 from urllib.parse import urlencode
 from urllib.request import urlopen, Request
 from urllib.error import URLError, HTTPError
 
-from email.message import EmailMessage
+
 from functools import wraps
-from datetime import datetime, timedelta
+from datetime import datetime
 from decimal import Decimal, InvalidOperation
 
 from werkzeug.security import (
@@ -151,43 +151,7 @@ PAYSTACK_BASE_URL = PAYSTACK_BASE_URL.rstrip("/")
 PAYSTACK_CURRENCY = "NGN"
 
 
-# ================================================================
-# EMAIL / OTP
-# ================================================================
-
-SMTP_HOST = os.environ.get(
-    "SMTP_HOST",
-    "smtp.gmail.com",
-).strip()
-
-try:
-    SMTP_PORT = int(
-        os.environ.get(
-            "SMTP_PORT",
-            "587",
-        )
-    )
-except ValueError:
-    SMTP_PORT = 587
-
-
-SMTP_USERNAME = os.environ.get(
-    "SMTP_USERNAME",
-    "ojugbelehabeeb06@gmail.com",
-).strip()
-
-SMTP_PASSWORD = os.environ.get(
-    "SMTP_PASSWORD",
-    "clwyraarljdpvgvj",
-).strip()
-
-SMTP_FROM = os.environ.get(
-    "SMTP_FROM",
-    SMTP_USERNAME,
-).strip()
-
-OTP_EXPIRY_MINUTES = 10
-OTP_RESEND_SECONDS = 60
+ 
 
 
 # ================================================================
@@ -1058,8 +1022,7 @@ def require_login():
         "login",
         "open_registration",
         "register",
-        "verify_email",
-        "resend_verification",
+        
 
         "logout",
 
@@ -1191,204 +1154,6 @@ def validate_email_with_mailboxlayer(email):
         return True
 
 
-# ================================================================
-# OTP
-# ================================================================
-
-def generate_otp():
-
-    return str(
-        secrets.randbelow(900000) + 100000
-    )
-
-
-def send_verification_email(
-    email,
-    name,
-    code,
-):
-
-    if not SMTP_USERNAME or not SMTP_PASSWORD:
-
-        raise RuntimeError(
-            "SMTP_USERNAME and SMTP_PASSWORD are not configured."
-        )
-
-    message = EmailMessage()
-
-    message["Subject"] = (
-        "FSSSMC Central Mosque - Email Verification"
-    )
-
-    message["From"] = (
-        SMTP_FROM or SMTP_USERNAME
-    )
-
-    message["To"] = email
-
-    message.set_content(
-        f"""
-Assalamu Alaikum {name},
-
-Your FSSSMC Central Mosque verification code is:
-
-{code}
-
-This code expires in {OTP_EXPIRY_MINUTES} minutes.
-
-If you did not create an account on the FSSSMC Central Mosque website,
-you can ignore this email.
-
-FSSSMC Central Mosque
-"""
-    )
-
-    with smtplib.SMTP(
-        SMTP_HOST,
-        SMTP_PORT,
-        timeout=30,
-    ) as server:
-
-        server.ehlo()
-
-        server.starttls()
-
-        server.ehlo()
-
-        server.login(
-            SMTP_USERNAME,
-            SMTP_PASSWORD,
-        )
-
-        server.send_message(
-            message
-        )
-
-
-def create_and_send_otp(
-    user_id,
-    email,
-    name,
-):
-
-    db = get_db()
-
-    now = datetime.utcnow()
-
-    existing = db.execute(
-        """
-        SELECT verification_sent_at
-        FROM users
-        WHERE id = ?
-        """,
-        (user_id,),
-    ).fetchone()
-
-    if (
-        existing
-        and existing["verification_sent_at"]
-    ):
-
-        try:
-
-            last_sent = datetime.fromisoformat(
-                existing["verification_sent_at"]
-            )
-
-            elapsed = (
-                now - last_sent
-            ).total_seconds()
-
-            if elapsed < OTP_RESEND_SECONDS:
-
-                remaining = max(
-                    1,
-                    int(
-                        OTP_RESEND_SECONDS
-                        - elapsed
-                    ),
-                )
-
-                return (
-                    False,
-                    (
-                        f"Please wait {remaining} "
-                        "seconds before requesting another code."
-                    ),
-                )
-
-        except ValueError:
-            pass
-
-    code = generate_otp()
-
-    expires = (
-        now
-        + timedelta(
-            minutes=OTP_EXPIRY_MINUTES
-        )
-    ).isoformat()
-
-    sent_at = now.isoformat()
-
-    db.execute(
-        """
-        UPDATE users
-        SET verification_code = ?,
-            verification_expires = ?,
-            verification_sent_at = ?
-        WHERE id = ?
-        """,
-        (
-            code,
-            expires,
-            sent_at,
-            user_id,
-        ),
-    )
-
-    db.commit()
-
-    try:
-
-        send_verification_email(
-            email,
-            name,
-            code,
-        )
-
-    except Exception as error:
-
-        db.execute(
-            """
-            UPDATE users
-            SET verification_code = NULL,
-                verification_expires = NULL,
-                verification_sent_at = NULL
-            WHERE id = ?
-            """,
-            (user_id,),
-        )
-
-        db.commit()
-
-        app.logger.exception(
-            "Could not send verification email: %s",
-            error,
-        )
-
-        return (
-            False,
-            (
-                "Could not send the verification code. "
-                "Please check the SMTP configuration."
-            ),
-        )
-
-    return (
-        True,
-        "A verification code has been sent to your email.",
-    )
 
 
 # ================================================================
@@ -1501,7 +1266,7 @@ def login():
         )
 
     # ------------------------------------------------------------
-    # NORMAL USER
+    # NORMAL USER LOGIN
     # ------------------------------------------------------------
 
     user = db.execute(
@@ -1547,40 +1312,7 @@ def login():
         )
 
     # ------------------------------------------------------------
-    # VERIFY EMAIL
-    # ------------------------------------------------------------
-
-    if not bool(
-        user["email_verified"]
-    ):
-
-        session.clear()
-
-        session["pending_user_id"] = int(
-            user["id"]
-        )
-
-        session["pending_email"] = str(
-            user["email"]
-        )
-
-        session["pending_name"] = str(
-            user["name"]
-        )
-
-        session.modified = True
-
-        flash(
-            "Please verify your email before logging in.",
-            "error",
-        )
-
-        return redirect(
-            url_for("verify_email")
-        )
-
-    # ------------------------------------------------------------
-    # LOGIN USER
+    # LOGIN USER DIRECTLY
     # ------------------------------------------------------------
 
     session.clear()
@@ -1626,6 +1358,8 @@ def login():
         url_for("profile")
     )
 
+    
+
 
 # ================================================================
 # CREATE ACCOUNT
@@ -1644,6 +1378,7 @@ def open_registration():
 # ================================================================
 # REGISTER
 # ================================================================
+
 
 @app.route(
     "/register",
@@ -1768,6 +1503,90 @@ def register():
         (email,),
     ).fetchone()
 
+    if existing_user:
+
+        flash(
+            "An account with this email already exists. Please log in instead.",
+            "error",
+        )
+
+        return redirect(
+            url_for("login")
+        )
+
+    now = datetime.utcnow().isoformat()
+
+    try:
+
+        cursor = db.execute(
+            """
+            INSERT INTO users (
+                name,
+                surname,
+                email,
+                password_hash,
+                created_at,
+                email_verified,
+                verification_code,
+                verification_expires,
+                verification_sent_at
+            )
+            VALUES (?, ?, ?, ?, ?, 1, NULL, NULL, NULL)
+            """,
+            (
+                name,
+                surname,
+                email,
+                generate_password_hash(
+                    password
+                ),
+                now,
+            ),
+        )
+
+        db.commit()
+
+    except sqlite3.IntegrityError:
+
+        db.rollback()
+
+        flash(
+            "An account with this email already exists.",
+            "error",
+        )
+
+        return redirect(
+            url_for("login")
+        )
+
+    user_id = cursor.lastrowid
+
+    # ------------------------------------------------------------
+    # LOG THE NEW USER IN IMMEDIATELY
+    # ------------------------------------------------------------
+
+    session.clear()
+
+    session["user_id"] = int(
+        user_id
+    )
+
+    session["user_name"] = name
+
+    session["user_surname"] = surname
+
+    session["user_email"] = email
+
+    session.modified = True
+
+    flash(
+        f"Account created successfully. Welcome, {name}.",
+        "success",
+    )
+
+    return redirect(
+        url_for("profile")
+    )
     # ------------------------------------------------------------
     # EXISTING UNVERIFIED USER
     # ------------------------------------------------------------
@@ -1925,415 +1744,8 @@ def register():
 # VERIFY EMAIL
 # ================================================================
 
-@app.route(
-    "/verify-email",
-    methods=["GET", "POST"],
-)
-def verify_email():
 
-    user_id = session.get(
-        "pending_user_id"
-    )
 
-    if not user_id:
-
-        return redirect(
-            url_for("register")
-        )
-
-    db = get_db()
-
-    user = db.execute(
-        """
-        SELECT *
-        FROM users
-        WHERE id = ?
-        """,
-        (user_id,),
-    ).fetchone()
-
-    if not user:
-
-        session.clear()
-
-        return redirect(
-            url_for("register")
-        )
-
-    if bool(
-        user["email_verified"]
-    ):
-
-        session.clear()
-
-        flash(
-            "Your email is already verified. Please log in.",
-            "success",
-        )
-
-        return redirect(
-            url_for("login")
-        )
-
-    if request.method == "GET":
-
-        return render_template_string(
-            """
-<!doctype html>
-<html lang="en">
-
-<head>
-
-<meta charset="utf-8">
-
-<meta name="viewport"
-      content="width=device-width, initial-scale=1">
-
-<title>Email Verification | FSSSMC Central Mosque</title>
-
-<style>
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
-    background: #f4f7f5;
-    font-family: Inter, Arial, sans-serif;
-    color: #17352d;
-}
-
-.verify-box {
-    width: 100%;
-    max-width: 500px;
-    background: #ffffff;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 18px 60px rgba(0,0,0,.10);
-}
-
-.logo {
-    width: 76px;
-    height: 76px;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto 20px;
-}
-
-h1 {
-    margin: 0 0 10px;
-    text-align: center;
-    color: #006b57;
-}
-
-p {
-    line-height: 1.7;
-    text-align: center;
-}
-
-.email {
-    font-weight: 700;
-    color: #006b57;
-    word-break: break-word;
-}
-
-input {
-    width: 100%;
-    padding: 15px;
-    border: 1px solid #ccd8d3;
-    border-radius: 10px;
-    font-size: 22px;
-    text-align: center;
-    letter-spacing: 7px;
-    margin-top: 18px;
-}
-
-button {
-    width: 100%;
-    border: 0;
-    padding: 14px;
-    margin-top: 18px;
-    border-radius: 10px;
-    background: #006b57;
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #005846;
-}
-
-.resend {
-    display: block;
-    text-align: center;
-    margin-top: 18px;
-    color: #006b57;
-    text-decoration: none;
-    font-weight: 700;
-}
-
-</style>
-
-</head>
-
-<body>
-
-<div class="verify-box">
-
-<img
-    class="logo"
-    src="{{ url_for('static', filename='images/fsssmc.jpeg') }}"
-    alt="FSSSMC Central Mosque"
->
-
-<h1>Verify Your Email</h1>
-
-<p>
-We sent a 6-digit verification code to
-</p>
-
-<p class="email">
-{{ user["email"] }}
-</p>
-
-<form method="post">
-
-<input
-    type="text"
-    name="code"
-    inputmode="numeric"
-    autocomplete="one-time-code"
-    maxlength="6"
-    pattern="[0-9]{6}"
-    placeholder="000000"
-    required
->
-
-<button type="submit">
-Verify Email
-</button>
-
-</form>
-
-<a
-    class="resend"
-    href="{{ url_for('resend_verification') }}"
->
-Resend verification code
-</a>
-
-</div>
-
-</body>
-
-</html>
-            """,
-            user=user,
-        )
-
-    code = request.form.get(
-        "code",
-        "",
-    ).strip()
-
-    if (
-        not code
-        or not code.isdigit()
-        or len(code) != 6
-    ):
-
-        flash(
-            "The verification code must contain 6 digits.",
-            "error",
-        )
-
-        return redirect(
-            url_for("verify_email")
-        )
-
-    stored_code = user["verification_code"]
-
-    expires = user["verification_expires"]
-
-    if not stored_code or not expires:
-
-        flash(
-            "Your verification code has expired. Please request a new one.",
-            "error",
-        )
-
-        return redirect(
-            url_for("verify_email")
-        )
-
-    try:
-
-        expiry_time = datetime.fromisoformat(
-            expires
-        )
-
-    except ValueError:
-
-        expiry_time = (
-            datetime.utcnow()
-            - timedelta(seconds=1)
-        )
-
-    if datetime.utcnow() > expiry_time:
-
-        flash(
-            "Your verification code has expired. Please request a new one.",
-            "error",
-        )
-
-        return redirect(
-            url_for("verify_email")
-        )
-
-    if not secrets.compare_digest(
-        str(stored_code),
-        code,
-    ):
-
-        flash(
-            "Incorrect verification code.",
-            "error",
-        )
-
-        return redirect(
-            url_for("verify_email")
-        )
-
-    db.execute(
-        """
-        UPDATE users
-        SET email_verified = 1,
-            verification_code = NULL,
-            verification_expires = NULL,
-            verification_sent_at = NULL
-        WHERE id = ?
-        """,
-        (user_id,),
-    )
-
-    db.commit()
-
-    name = str(
-        user["name"]
-    )
-
-    surname = str(
-        user["surname"]
-    )
-
-    email = str(
-        user["email"]
-    )
-
-    session.clear()
-
-    session["user_id"] = int(
-        user_id
-    )
-
-    session["user_name"] = name
-
-    session["user_surname"] = surname
-
-    session["user_email"] = email
-
-    session.modified = True
-
-    flash(
-        f"Email verified successfully. Welcome, {name}.",
-        "success",
-    )
-
-    return redirect(
-        url_for("profile")
-    )
-
-
-# ================================================================
-# RESEND VERIFICATION
-# ================================================================
-
-@app.route(
-    "/resend-verification"
-)
-def resend_verification():
-
-    user_id = session.get(
-        "pending_user_id"
-    )
-
-    if not user_id:
-
-        return redirect(
-            url_for("register")
-        )
-
-    db = get_db()
-
-    user = db.execute(
-        """
-        SELECT *
-        FROM users
-        WHERE id = ?
-        """,
-        (user_id,),
-    ).fetchone()
-
-    if not user:
-
-        session.clear()
-
-        flash(
-            "Account not found.",
-            "error",
-        )
-
-        return redirect(
-            url_for("register")
-        )
-
-    if bool(
-        user["email_verified"]
-    ):
-
-        session.clear()
-
-        flash(
-            "Your email is already verified.",
-            "success",
-        )
-
-        return redirect(
-            url_for("login")
-        )
-
-    success, message = create_and_send_otp(
-        user["id"],
-        user["email"],
-        user["name"],
-    )
-
-    flash(
-        message,
-        "success" if success else "error",
-    )
-
-    return redirect(
-        url_for("verify_email")
-    )
 
 
 # ================================================================
