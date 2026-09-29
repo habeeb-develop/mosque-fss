@@ -24,20 +24,38 @@
 
         </div>
 
-
-        <form method="POST">
+        <form method="POST" action="{{ url_for('register') }}">
 
             <div class="form-group">
 
                 <label for="name">
-                    Full Name
+                    First Name
                 </label>
 
                 <input
                     type="text"
                     id="name"
                     name="name"
-                    placeholder="Enter your full name"
+                    placeholder="Enter your first name"
+                    autocomplete="given-name"
+                    required
+                >
+
+            </div>
+
+
+            <div class="form-group mt-3">
+
+                <label for="surname">
+                    Surname
+                </label>
+
+                <input
+                    type="text"
+                    id="surname"
+                    name="surname"
+                    placeholder="Enter your surname"
+                    autocomplete="family-name"
                     required
                 >
 
@@ -55,6 +73,7 @@
                     id="email"
                     name="email"
                     placeholder="you@example.com"
+                    autocomplete="email"
                     required
                 >
 
@@ -72,6 +91,7 @@
                     id="password"
                     name="password"
                     placeholder="Create a password"
+                    autocomplete="new-password"
                     required
                 >
 
@@ -89,6 +109,7 @@
                     id="confirm_password"
                     name="confirm_password"
                     placeholder="Confirm your password"
+                    autocomplete="new-password"
                     required
                 >
 
