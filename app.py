@@ -3352,10 +3352,7 @@ def donate():
         ""
     )
 
-    user_surname = session.get(
-        "user_surname",
-        ""
-    )
+    
 
     if request.method == "GET":
 
@@ -3364,7 +3361,7 @@ def donate():
             donation_purposes=DONATION_PURPOSES,
             user_email=user_email,
             user_name=user_name,
-            user_surname=user_surname
+            
         )
 
     donor_name = request.form.get(
@@ -3400,7 +3397,7 @@ def donate():
     if not donor_name:
 
         donor_name = (
-            f"{user_name} {user_surname}"
+            f"{user_name} "
         ).strip()
 
     if not email:

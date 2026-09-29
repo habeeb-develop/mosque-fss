@@ -30,6 +30,10 @@
 
         <div class="contact-grid">
 
+            <!-- =====================================================
+                 DONATION INFORMATION
+                 ===================================================== -->
+
             <div class="contact-info">
 
                 <h2>
@@ -37,7 +41,7 @@
                 </h2>
 
                 <p>
-                    Every contribution can help support the work
+                    Every contribution helps support the work
                     and activities of the mosque.
                 </p>
 
@@ -102,6 +106,10 @@
             </div>
 
 
+            <!-- =====================================================
+                 DONATION FORM
+                 ===================================================== -->
+
             <div class="form-card">
 
                 <div class="section-heading">
@@ -115,32 +123,43 @@
                     </h2>
 
                     <p>
-                        Complete the form below to continue.
+                        Complete the form below to continue securely
+                        with Paystack.
                     </p>
 
                 </div>
 
 
-                <form method="POST">
+                <form
+                    method="POST"
+                    action="{{ url_for('donate') }}"
+                >
 
                     <div class="form-grid">
 
+
+                        <!-- FULL NAME -->
+
                         <div class="form-group">
 
-                            <label for="name">
+                            <label for="donor_name">
                                 Full Name
                             </label>
 
                             <input
                                 type="text"
-                                id="name"
-                                name="name"
+                                id="donor_name"
+                                name="donor_name"
+                                value="{{ user_name or '' }}"
                                 placeholder="Enter your full name"
+                                autocomplete="name"
                                 required
                             >
 
                         </div>
 
+
+                        <!-- EMAIL -->
 
                         <div class="form-group">
 
@@ -152,14 +171,38 @@
                                 type="email"
                                 id="email"
                                 name="email"
+                                value="{{ user_email or '' }}"
                                 placeholder="Enter your email"
+                                autocomplete="email"
                                 required
                             >
 
                         </div>
 
 
-                        <div class="form-group full">
+                        <!-- PHONE -->
+
+                        <div class="form-group">
+
+                            <label for="phone">
+                                Phone Number
+                            </label>
+
+                            <input
+                                type="tel"
+                                id="phone"
+                                name="phone"
+                                placeholder="08012345678"
+                                autocomplete="tel"
+                                required
+                            >
+
+                        </div>
+
+
+                        <!-- AMOUNT -->
+
+                        <div class="form-group">
 
                             <label for="amount">
                                 Donation Amount
@@ -169,16 +212,69 @@
                                 type="number"
                                 id="amount"
                                 name="amount"
-                                min="1"
+                                min="100"
                                 step="1"
                                 placeholder="Enter amount in Naira"
+                                inputmode="numeric"
                                 required
                             >
 
                         </div>
 
+
+                        <!-- PURPOSE -->
+
+                        <div class="form-group full">
+
+                            <label for="purpose">
+                                Donation Purpose
+                            </label>
+
+                            <select
+                                id="purpose"
+                                name="purpose"
+                                required
+                            >
+
+                                <option value="">
+                                    Select donation purpose
+                                </option>
+
+                                {% for purpose in donation_purposes %}
+
+                                    <option value="{{ purpose }}">
+                                        {{ purpose }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <!-- OPTIONAL NOTES -->
+
+                        <div class="form-group full">
+
+                            <label for="notes">
+                                Additional Note
+                                <span>(Optional)</span>
+                            </label>
+
+                            <textarea
+                                id="notes"
+                                name="notes"
+                                rows="4"
+                                placeholder="Add a note about your donation if needed"
+                            ></textarea>
+
+                        </div>
+
                     </div>
 
+
+                    <!-- SUBMIT -->
 
                     <div class="form-actions">
 
@@ -186,10 +282,16 @@
                             type="submit"
                             class="btn btn-primary"
                         >
-                            Continue Donation
+                            Continue to Paystack
                         </button>
 
                     </div>
+
+
+                    <p class="form-note">
+                        You will be securely redirected to Paystack
+                        to complete your payment.
+                    </p>
 
                 </form>
 
