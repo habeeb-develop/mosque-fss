@@ -7,7 +7,7 @@ from flask import (
     session,
     flash,
     g,
-    render_template_string
+    render_template_string,
 )
 
 import sqlite3
@@ -29,7 +29,7 @@ from decimal import Decimal, InvalidOperation
 
 from werkzeug.security import (
     generate_password_hash,
-    check_password_hash
+    check_password_hash,
 )
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -40,20 +40,23 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 try:
     from dotenv import load_dotenv
+
     load_dotenv()
+
 except ImportError:
     pass
 
 
 # ================================================================
-# APPLICATION CONFIGURATION
+# APPLICATION
 # ================================================================
 
 app = Flask(__name__)
 
+
 SECRET_KEY = os.environ.get(
     "SECRET_KEY",
-    "FsssmcCentralMosque_2026!Secure"
+    "FsssmcCentralMosque_2026!Secure",
 ).strip()
 
 if not SECRET_KEY:
@@ -61,24 +64,32 @@ if not SECRET_KEY:
 
 app.secret_key = SECRET_KEY
 
+
 app.wsgi_app = ProxyFix(
     app.wsgi_app,
     x_for=1,
     x_proto=1,
-    x_host=1
+    x_host=1,
 )
 
-app.config["SESSION_COOKIE_HTTPONLY"] = True
-app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
-app.config["SESSION_COOKIE_SECURE"] = (
-    os.environ.get("RENDER", "").lower() == "true"
-    or os.environ.get("FLASK_ENV", "").lower() == "production"
-)
-app.config["SESSION_COOKIE_NAME"] = "fsssmc_session"
-app.config["SESSION_COOKIE_PATH"] = "/"
-app.config["SESSION_COOKIE_DOMAIN"] = None
-app.config["PREFERRED_URL_SCHEME"] = "https"
 
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=(
+        os.environ.get("RENDER", "").lower() == "true"
+        or os.environ.get("FLASK_ENV", "").lower() == "production"
+    ),
+    SESSION_COOKIE_NAME="fsssmc_session",
+    SESSION_COOKIE_PATH="/",
+    SESSION_COOKIE_DOMAIN=None,
+    PREFERRED_URL_SCHEME="https",
+)
+
+
+# ================================================================
+# DATABASE LOCATION
+# ================================================================
 
 BASE_DIR = os.path.dirname(
     os.path.abspath(__file__)
@@ -86,18 +97,18 @@ BASE_DIR = os.path.dirname(
 
 DATABASE_DIR = os.path.join(
     BASE_DIR,
-    "database"
+    "database",
 )
 
 DATABASE = os.environ.get(
     "DATABASE_PATH",
-    os.path.join(DATABASE_DIR, "fss.db")
+    os.path.join(DATABASE_DIR, "fss.db"),
 ).strip()
 
 if not DATABASE:
     DATABASE = os.path.join(
         DATABASE_DIR,
-        "fss.db"
+        "fss.db",
     )
 
 DATABASE = os.path.abspath(DATABASE)
@@ -107,7 +118,7 @@ DATABASE_PARENT = os.path.dirname(DATABASE)
 if DATABASE_PARENT:
     os.makedirs(
         DATABASE_PARENT,
-        exist_ok=True
+        exist_ok=True,
     )
 
 print("DATABASE LOCATION:", DATABASE)
@@ -119,51 +130,60 @@ print("DATABASE LOCATION:", DATABASE)
 
 PAYSTACK_SECRET_KEY = os.environ.get(
     "PAYSTACK_SECRET_KEY",
-    ""
+    "sk_test_0d971bb72ebed6d23d0471924df87bd5941db555",
 ).strip()
 
 PAYSTACK_PUBLIC_KEY = os.environ.get(
     "PAYSTACK_PUBLIC_KEY",
-    ""
+    "pk_test_3a23b0594bd9ee4878b78d7d090f4d4a12a62721",
 ).strip()
 
 PAYSTACK_BASE_URL = os.environ.get(
     "PAYSTACK_BASE_URL",
-    "https://api.paystack.co"
+    "https://api.paystack.co",
 ).strip()
+
+if not PAYSTACK_BASE_URL:
+    PAYSTACK_BASE_URL = "https://api.paystack.co"
+
+PAYSTACK_BASE_URL = PAYSTACK_BASE_URL.rstrip("/")
 
 PAYSTACK_CURRENCY = "NGN"
 
 
 # ================================================================
-# EMAIL / OTP CONFIGURATION
+# EMAIL / OTP
 # ================================================================
 
 SMTP_HOST = os.environ.get(
     "SMTP_HOST",
-    "smtp.gmail.com"
+    "smtp.gmail.com",
 ).strip()
 
-SMTP_PORT = int(
-    os.environ.get(
-        "SMTP_PORT",
-        "587"
+try:
+    SMTP_PORT = int(
+        os.environ.get(
+            "SMTP_PORT",
+            "587",
+        )
     )
-)
+except ValueError:
+    SMTP_PORT = 587
+
 
 SMTP_USERNAME = os.environ.get(
     "SMTP_USERNAME",
-    "ojugbelehabeeb06@gmail.com"
+    "ojugbelehabeeb06@gmail.com",
 ).strip()
 
 SMTP_PASSWORD = os.environ.get(
     "SMTP_PASSWORD",
-    "clwyraarljdpvgvj"
-)
+    "clwyraarljdpvgvj",
+).strip()
 
 SMTP_FROM = os.environ.get(
     "SMTP_FROM",
-    SMTP_USERNAME
+    SMTP_USERNAME,
 ).strip()
 
 OTP_EXPIRY_MINUTES = 10
@@ -176,7 +196,7 @@ OTP_RESEND_SECONDS = 60
 
 MAILBOXLAYER_API_KEY = os.environ.get(
     "MAILBOXLAYER_API_KEY",
-    "edb349802dd334a9479417e4b16e060a"
+    "edb349802dd334a9479417e4b16e060a ",
 ).strip()
 
 
@@ -191,62 +211,62 @@ DONATION_PURPOSES = [
     "Community Service",
     "Zakat",
     "Sadaqah",
-    "Other"
+    "Other",
 ]
 
 
 EXECUTIVE_MEMBERS = [
     {
         "name": "Amir Muritala Adekunle Balogun",
-        "role": "Amir"
+        "role": "Amir",
     },
     {
         "name": "Imam Mustapha Motilola Alli",
-        "role": "Imam"
+        "role": "Imam",
     },
     {
         "name": "Ishaq Aderemi Abimbola",
-        "role": "Secretary"
+        "role": "Secretary",
     },
     {
         "name": "Abdul Ganiyu Olayinka Dabiri",
-        "role": "Executive Member"
+        "role": "Executive Member",
     },
     {
         "name": "Lukman Badiru",
-        "role": "Executive Member"
+        "role": "Executive Member",
     },
     {
         "name": "Lateef Usman",
-        "role": "Executive Member"
+        "role": "Executive Member",
     },
     {
         "name": "Prof. Zaid Aderolu",
-        "role": "Executive Member"
+        "role": "Executive Member",
     },
     {
         "name": "Lasisi Abayomi Lawal",
-        "role": "Executive Member"
+        "role": "Executive Member",
     },
     {
         "name": "Hassan Muhammad Bello",
-        "role": "Executive Member"
+        "role": "Executive Member",
     },
     {
         "name": "Engr. Ismail Sanni",
-        "role": "Executive Member"
+        "role": "Executive Member",
     },
     {
         "name": "Monsuru Oladehide",
-        "role": "Executive Member"
-    }
+        "role": "Executive Member",
+    },
 ]
 
 
 PAST_EXECUTIVE = [
     {
         "name": "Previous Executive",
-        "role": "Past Executive Member"
+        "role": "Past Executive Member",
     }
 ]
 
@@ -257,40 +277,40 @@ COMMITTEES = [
         "description": (
             "Coordinates Islamic learning, lectures, "
             "classes and educational programmes."
-        )
+        ),
     },
     {
         "name": "Welfare Committee",
         "description": (
             "Supports members and community welfare initiatives."
-        )
+        ),
     },
     {
         "name": "Finance Committee",
         "description": (
             "Supports responsible financial administration "
             "and accountability."
-        )
+        ),
     },
     {
         "name": "Maintenance Committee",
         "description": (
             "Coordinates mosque facilities and maintenance."
-        )
+        ),
     },
     {
         "name": "Youth Committee",
         "description": (
             "Coordinates activities and programmes for young members."
-        )
-    }
+        ),
+    },
 ]
 
 
 JUMMAH_IMAMS = [
     {
         "name": "Ustadh Abdul Granny Adebayo Ejalonibu",
-        "role": "Jummah Imam / Khatib"
+        "role": "Jummah Imam / Khatib",
     }
 ]
 
@@ -301,7 +321,7 @@ FACILITIES = [
     "Islamic Library",
     "Ablution Facilities",
     "Classrooms",
-    "Meeting Halls"
+    "Meeting Halls",
 ]
 
 
@@ -318,21 +338,20 @@ POSTS = [
     "Trader",
     "Artisan",
     "Retired",
-    "Other"
+    "Other",
 ]
 
 
 # ================================================================
-# DATABASE
+# DATABASE HELPERS
 # ================================================================
 
 def get_db():
-
     if "db" not in g:
 
         g.db = sqlite3.connect(
             DATABASE,
-            timeout=30
+            timeout=30,
         )
 
         g.db.row_factory = sqlite3.Row
@@ -353,17 +372,37 @@ def close_db(exception=None):
 
     db = g.pop(
         "db",
-        None
+        None,
     )
 
     if db is not None:
         db.close()
 
 
+def table_exists(table_name):
+
+    db = get_db()
+
+    row = db.execute(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table'
+        AND name = ?
+        """,
+        (table_name,),
+    ).fetchone()
+
+    return row is not None
+
+
 def column_exists(
     table_name,
-    column_name
+    column_name,
 ):
+
+    if not table_exists(table_name):
+        return False
 
     db = get_db()
 
@@ -380,14 +419,17 @@ def column_exists(
 def add_column_if_missing(
     table_name,
     column_name,
-    definition
+    definition,
 ):
 
     db = get_db()
 
+    if not table_exists(table_name):
+        return
+
     if not column_exists(
         table_name,
-        column_name
+        column_name,
     ):
 
         db.execute(
@@ -399,6 +441,10 @@ def add_column_if_missing(
 
         db.commit()
 
+
+# ================================================================
+# DATABASE INITIALIZATION
+# ================================================================
 
 def init_db():
 
@@ -431,33 +477,13 @@ def init_db():
             surname TEXT NOT NULL,
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            created_at TEXT NOT NULL,
+            email_verified INTEGER DEFAULT 0,
+            verification_code TEXT,
+            verification_expires TEXT,
+            verification_sent_at TEXT
         )
         """
-    )
-
-    add_column_if_missing(
-        "users",
-        "email_verified",
-        "INTEGER DEFAULT 0"
-    )
-
-    add_column_if_missing(
-        "users",
-        "verification_code",
-        "TEXT"
-    )
-
-    add_column_if_missing(
-        "users",
-        "verification_expires",
-        "TEXT"
-    )
-
-    add_column_if_missing(
-        "users",
-        "verification_sent_at",
-        "TEXT"
     )
 
     # ------------------------------------------------------------
@@ -521,46 +547,135 @@ def init_db():
         """
     )
 
+    db.commit()
+
     # ------------------------------------------------------------
     # MIGRATIONS
     # ------------------------------------------------------------
 
     migrations = [
+        (
+            "users",
+            "email_verified",
+            "INTEGER DEFAULT 0",
+        ),
+        (
+            "users",
+            "verification_code",
+            "TEXT",
+        ),
+        (
+            "users",
+            "verification_expires",
+            "TEXT",
+        ),
+        (
+            "users",
+            "verification_sent_at",
+            "TEXT",
+        ),
 
-        ("members", "email", "TEXT"),
-        ("members", "notes", "TEXT"),
-        ("members", "created_at", "TEXT"),
-        ("members", "updated_at", "TEXT"),
+        (
+            "members",
+            "email",
+            "TEXT",
+        ),
+        (
+            "members",
+            "notes",
+            "TEXT",
+        ),
+        (
+            "members",
+            "created_at",
+            "TEXT",
+        ),
+        (
+            "members",
+            "updated_at",
+            "TEXT",
+        ),
 
-        ("donations", "phone", "TEXT"),
-        ("donations", "email", "TEXT"),
-        ("donations", "amount", "REAL"),
-        ("donations", "purpose", "TEXT"),
-        ("donations", "payment_reference", "TEXT"),
-        ("donations", "payment_method", "TEXT DEFAULT 'paystack'"),
-        ("donations", "payment_status", "TEXT DEFAULT 'pending'"),
-        ("donations", "notes", "TEXT"),
-        ("donations", "created_at", "TEXT"),
-        ("donations", "paid_at", "TEXT"),
+        (
+            "donations",
+            "phone",
+            "TEXT",
+        ),
+        (
+            "donations",
+            "email",
+            "TEXT",
+        ),
+        (
+            "donations",
+            "amount",
+            "REAL",
+        ),
+        (
+            "donations",
+            "purpose",
+            "TEXT",
+        ),
+        (
+            "donations",
+            "payment_reference",
+            "TEXT",
+        ),
+        (
+            "donations",
+            "payment_method",
+            "TEXT DEFAULT 'paystack'",
+        ),
+        (
+            "donations",
+            "payment_status",
+            "TEXT DEFAULT 'pending'",
+        ),
+        (
+            "donations",
+            "notes",
+            "TEXT",
+        ),
+        (
+            "donations",
+            "created_at",
+            "TEXT",
+        ),
+        (
+            "donations",
+            "paid_at",
+            "TEXT",
+        ),
 
-        ("announcements", "published", "INTEGER DEFAULT 1"),
-        ("announcements", "created_at", "TEXT"),
-        ("announcements", "updated_at", "TEXT"),
-
-        ("users", "email_verified", "INTEGER DEFAULT 0"),
-        ("users", "verification_code", "TEXT"),
-        ("users", "verification_expires", "TEXT"),
-        ("users", "verification_sent_at", "TEXT")
+        (
+            "announcements",
+            "published",
+            "INTEGER DEFAULT 1",
+        ),
+        (
+            "announcements",
+            "created_at",
+            "TEXT",
+        ),
+        (
+            "announcements",
+            "updated_at",
+            "TEXT",
+        ),
     ]
 
-    for table_name, column_name, definition in migrations:
+    for (
+        table_name,
+        column_name,
+        definition,
+    ) in migrations:
 
         try:
 
             add_column_if_missing(
                 table_name,
                 column_name,
-                definition
+                definition,
             )
 
         except sqlite3.OperationalError as error:
@@ -569,67 +684,93 @@ def init_db():
                 "Migration failed for %s.%s: %s",
                 table_name,
                 column_name,
-                error
+                error,
             )
 
     # ------------------------------------------------------------
     # INDEXES
     # ------------------------------------------------------------
 
-    db.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_members_phone
-        ON members(phone)
-        """
-    )
+    try:
+        db.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_members_phone
+            ON members(phone)
+            """
+        )
 
-    db.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_members_post
-        ON members(post)
-        """
-    )
+        db.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_members_post
+            ON members(post)
+            """
+        )
 
-    db.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_donations_status
-        ON donations(payment_status)
-        """
-    )
+        db.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_members_email
+            ON members(email)
+            """
+        )
 
-    db.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_donations_created
-        ON donations(created_at)
-        """
-    )
+        db.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_donations_status
+            ON donations(payment_status)
+            """
+        )
+
+        db.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_donations_created
+            ON donations(created_at)
+            """
+        )
+
+        db.execute(
+            """
+            CREATE INDEX IF NOT EXISTS idx_announcements_published
+            ON announcements(published)
+            """
+        )
+
+        db.commit()
+
+    except sqlite3.OperationalError as error:
+
+        app.logger.warning(
+            "Index creation warning: %s",
+            error,
+        )
 
     # ------------------------------------------------------------
-    # ADMIN
+    # ADMIN ACCOUNT
     # ------------------------------------------------------------
 
     admin_email = os.environ.get(
         "ADMIN_EMAIL",
-        "admin@fsssmc.org"
+        "admin@fsssmc.org",
     ).strip().lower()
 
     admin_password = os.environ.get(
         "ADMIN_PASSWORD",
-        "FsssmcCentralMosque_2026!Secure"
-    )
+        "FsssmcCentralMosque_2026!Secure",
+    ).strip()
 
     if not admin_password:
 
         if os.environ.get(
             "RENDER",
-            ""
+            "",
         ).lower() == "true":
 
             raise RuntimeError(
                 "ADMIN_PASSWORD is required in Render Environment Variables."
             )
 
-        admin_password = "ChangeThisPassword123!"
+        admin_password = (
+            "ChangeThisPassword123!"
+        )
 
     existing_admin = db.execute(
         """
@@ -637,7 +778,7 @@ def init_db():
         FROM admins
         WHERE email = ?
         """,
-        (admin_email,)
+        (admin_email,),
     ).fetchone()
 
     if not existing_admin:
@@ -656,8 +797,8 @@ def init_db():
                 generate_password_hash(
                     admin_password
                 ),
-                datetime.utcnow().isoformat()
-            )
+                datetime.utcnow().isoformat(),
+            ),
         )
 
     else:
@@ -666,7 +807,7 @@ def init_db():
 
             password_matches = check_password_hash(
                 existing_admin["password_hash"],
-                admin_password
+                admin_password,
             )
 
         except Exception:
@@ -685,15 +826,15 @@ def init_db():
                     generate_password_hash(
                         admin_password
                     ),
-                    admin_email
-                )
+                    admin_email,
+                ),
             )
 
     db.commit()
 
 
 # ================================================================
-# AUTH HELPERS
+# AUTHENTICATION
 # ================================================================
 
 def account_authenticated():
@@ -718,7 +859,7 @@ def admin_required(function):
         if not admin_authenticated():
 
             return redirect(
-                url_for("admin_login")
+                url_for("login")
             )
 
         return function(
@@ -741,6 +882,7 @@ def inject_globals():
         "paystack_public_key": PAYSTACK_PUBLIC_KEY,
         "current_year": datetime.now().year,
         "logged_in": account_authenticated(),
+        "admin_logged_in": admin_authenticated(),
         "current_user_name": session.get(
             "user_name"
         ),
@@ -749,58 +891,60 @@ def inject_globals():
         ),
         "current_user_email": session.get(
             "user_email"
-        )
+        ),
     }
 
 
 # ================================================================
-# SAFE TEMPLATE RENDER
+# SAFE TEMPLATE RENDERING
 # ================================================================
 
 def safe_render(
     template_name,
-    **context
+    **context,
 ):
 
     aliases = {
 
         "admin_login.html": [
             "admin/login.html",
-            "admin_login.html"
+            "admin_login.html",
         ],
 
         "admin.html": [
             "admin/dashboard.html",
             "admin_dashboard.html",
-            "admin.html"
+            "admin.html",
         ],
 
         "admin_members.html": [
             "admin/members.html",
-            "admin_members.html"
+            "admin_members.html",
         ],
 
         "admin_member_form.html": [
             "admin/member_form.html",
-            "admin_member_form.html"
+            "admin_member_form.html",
         ],
 
         "admin_donations.html": [
             "admin/donations.html",
             "admin_donations.html",
-            "donations.html"
+            "donations.html",
         ],
 
         "admin_announcements.html": [
             "admin/announcements.html",
-            "admin_announcements.html"
-        ]
+            "admin_announcements.html",
+        ],
     }
 
     candidates = aliases.get(
         template_name,
-        [template_name]
+        [template_name],
     )
+
+    from jinja2 import TemplateNotFound
 
     for candidate in candidates:
 
@@ -812,20 +956,12 @@ def safe_render(
 
             return render_template(
                 candidate,
-                **context
+                **context,
             )
 
-        except Exception as error:
+        except TemplateNotFound:
 
-            from jinja2 import TemplateNotFound
-
-            if isinstance(
-                error,
-                TemplateNotFound
-            ):
-                continue
-
-            raise
+            continue
 
     return (
         f"""
@@ -836,51 +972,63 @@ def safe_render(
         <meta name="viewport"
               content="width=device-width,initial-scale=1">
         <title>FSSSMC Central Mosque</title>
+
         <style>
         body {{
-            font-family: Arial,sans-serif;
-            background:#f7f8f7;
-            margin:0;
-            padding:40px;
-            color:#17352d;
+            font-family: Arial, sans-serif;
+            background: #f7f8f7;
+            margin: 0;
+            padding: 40px;
+            color: #17352d;
         }}
 
         .box {{
-            max-width:720px;
-            margin:40px auto;
-            background:white;
-            padding:32px;
-            border-radius:16px;
-            box-shadow:0 8px 30px rgba(0,0,0,.08);
+            max-width: 720px;
+            margin: 40px auto;
+            background: white;
+            padding: 32px;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0,0,0,.08);
         }}
 
         h1 {{
-            color:#006b57;
+            color: #006b57;
         }}
 
         code {{
-            background:#eef3f1;
-            padding:3px 7px;
-            border-radius:5px;
+            background: #eef3f1;
+            padding: 3px 7px;
+            border-radius: 5px;
         }}
         </style>
         </head>
+
         <body>
+
         <div class="box">
+
         <h1>FSSSMC Central Mosque</h1>
+
         <p>
-        This page could not be loaded because its template
-        is missing from the deployed project.
+        The requested page template could not be found.
         </p>
+
+        <p>
+        Template:
+        <code>{template_name}</code>
+        </p>
+
         <p>
         Templates checked:
         <code>{", ".join(candidates)}</code>
         </p>
+
         </div>
+
         </body>
         </html>
         """,
-        500
+        500,
     )
 
 
@@ -903,22 +1051,30 @@ def require_login():
         "contact",
         "announcements",
         "donate",
+
         "member_register",
         "register_member",
+
         "login",
         "open_registration",
         "register",
         "verify_email",
         "resend_verification",
+
         "logout",
+
         "static",
+
         "paystack_webhook",
         "paystack_callback",
+
         "admin_login",
         "admin_logout",
+
         "page_not_found",
         "internal_error",
-        "health"
+
+        "health",
     }
 
     endpoint = request.endpoint
@@ -938,7 +1094,7 @@ def require_login():
     return redirect(
         url_for(
             "login",
-            next=request.path
+            next=request.path,
         )
     )
 
@@ -987,24 +1143,25 @@ def validate_email_with_mailboxlayer(email):
             "access_key": MAILBOXLAYER_API_KEY,
             "email": email,
             "smtp": "0",
-            "format": "1"
+            "format": "1",
         })
 
-        url = (
+        api_url = (
             "https://apilayer.net/api/check?"
             + params
         )
 
         req = Request(
-            url,
+            api_url,
             headers={
-                "User-Agent": "FSSSMC-Central-Mosque/1.0"
-            }
+                "User-Agent":
+                    "FSSSMC-Central-Mosque/1.0",
+            },
         )
 
         with urlopen(
             req,
-            timeout=10
+            timeout=10,
         ) as response:
 
             data = json.loads(
@@ -1016,12 +1173,10 @@ def validate_email_with_mailboxlayer(email):
         if data.get("success") is False:
             return True
 
-        disposable = data.get(
+        if data.get(
             "disposable",
-            False
-        )
-
-        if disposable:
+            False,
+        ):
             return False
 
         return True
@@ -1030,30 +1185,27 @@ def validate_email_with_mailboxlayer(email):
 
         app.logger.warning(
             "Mailboxlayer validation failed: %s",
-            error
+            error,
         )
 
-        # Fail open if Mailboxlayer is temporarily unavailable.
         return True
 
 
 # ================================================================
-# OTP HELPERS
+# OTP
 # ================================================================
 
 def generate_otp():
 
     return str(
-        secrets.randbelow(
-            900000
-        ) + 100000
+        secrets.randbelow(900000) + 100000
     )
 
 
 def send_verification_email(
     email,
     name,
-    code
+    code,
 ):
 
     if not SMTP_USERNAME or not SMTP_PASSWORD:
@@ -1094,14 +1246,18 @@ FSSSMC Central Mosque
     with smtplib.SMTP(
         SMTP_HOST,
         SMTP_PORT,
-        timeout=30
+        timeout=30,
     ) as server:
+
+        server.ehlo()
 
         server.starttls()
 
+        server.ehlo()
+
         server.login(
             SMTP_USERNAME,
-            SMTP_PASSWORD
+            SMTP_PASSWORD,
         )
 
         server.send_message(
@@ -1112,7 +1268,7 @@ FSSSMC Central Mosque
 def create_and_send_otp(
     user_id,
     email,
-    name
+    name,
 ):
 
     db = get_db()
@@ -1125,10 +1281,13 @@ def create_and_send_otp(
         FROM users
         WHERE id = ?
         """,
-        (user_id,)
+        (user_id,),
     ).fetchone()
 
-    if existing and existing["verification_sent_at"]:
+    if (
+        existing
+        and existing["verification_sent_at"]
+    ):
 
         try:
 
@@ -1142,13 +1301,20 @@ def create_and_send_otp(
 
             if elapsed < OTP_RESEND_SECONDS:
 
-                remaining = int(
-                    OTP_RESEND_SECONDS - elapsed
+                remaining = max(
+                    1,
+                    int(
+                        OTP_RESEND_SECONDS
+                        - elapsed
+                    ),
                 )
 
                 return (
                     False,
-                    f"Please wait {remaining} seconds before requesting another code."
+                    (
+                        f"Please wait {remaining} "
+                        "seconds before requesting another code."
+                    ),
                 )
 
         except ValueError:
@@ -1157,7 +1323,8 @@ def create_and_send_otp(
     code = generate_otp()
 
     expires = (
-        now + timedelta(
+        now
+        + timedelta(
             minutes=OTP_EXPIRY_MINUTES
         )
     ).isoformat()
@@ -1176,8 +1343,8 @@ def create_and_send_otp(
             code,
             expires,
             sent_at,
-            user_id
-        )
+            user_id,
+        ),
     )
 
     db.commit()
@@ -1187,7 +1354,7 @@ def create_and_send_otp(
         send_verification_email(
             email,
             name,
-            code
+            code,
         )
 
     except Exception as error:
@@ -1200,24 +1367,27 @@ def create_and_send_otp(
                 verification_sent_at = NULL
             WHERE id = ?
             """,
-            (user_id,)
+            (user_id,),
         )
 
         db.commit()
 
         app.logger.exception(
             "Could not send verification email: %s",
-            error
+            error,
         )
 
         return (
             False,
-            "Could not send the verification code. Please check the email configuration."
+            (
+                "Could not send the verification code. "
+                "Please check the SMTP configuration."
+            ),
         )
 
     return (
         True,
-        "A verification code has been sent to your email."
+        "A verification code has been sent to your email.",
     )
 
 
@@ -1227,40 +1397,43 @@ def create_and_send_otp(
 
 @app.route(
     "/login",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 def login():
 
     if account_authenticated():
+
         return redirect(
             url_for("profile")
         )
 
     if admin_authenticated():
+
         return redirect(
             url_for("admin_dashboard")
         )
 
     if request.method == "GET":
+
         return safe_render(
             "login.html"
         )
 
     email = request.form.get(
         "email",
-        ""
+        "",
     ).strip().lower()
 
     password = request.form.get(
         "password",
-        ""
+        "",
     )
 
     if not email or not password:
 
         flash(
             "Please enter your email and password.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1270,7 +1443,7 @@ def login():
     db = get_db()
 
     # ------------------------------------------------------------
-    # ADMIN LOGIN
+    # ADMIN LOGIN THROUGH NORMAL LOGIN PAGE
     # ------------------------------------------------------------
 
     admin = db.execute(
@@ -1279,7 +1452,7 @@ def login():
         FROM admins
         WHERE email = ?
         """,
-        (email,)
+        (email,),
     ).fetchone()
 
     if admin:
@@ -1288,7 +1461,7 @@ def login():
 
             password_ok = check_password_hash(
                 admin["password_hash"],
-                password
+                password,
             )
 
         except Exception:
@@ -1311,7 +1484,7 @@ def login():
 
             flash(
                 "Admin login successful.",
-                "success"
+                "success",
             )
 
             return redirect(
@@ -1320,7 +1493,7 @@ def login():
 
         flash(
             "Invalid email or password.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1337,14 +1510,14 @@ def login():
         FROM users
         WHERE email = ?
         """,
-        (email,)
+        (email,),
     ).fetchone()
 
     if not user:
 
         flash(
             "Invalid email or password.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1355,7 +1528,7 @@ def login():
 
         password_ok = check_password_hash(
             user["password_hash"],
-            password
+            password,
         )
 
     except Exception:
@@ -1366,7 +1539,7 @@ def login():
 
         flash(
             "Invalid email or password.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1374,12 +1547,14 @@ def login():
         )
 
     # ------------------------------------------------------------
-    # EMAIL VERIFICATION
+    # VERIFY EMAIL
     # ------------------------------------------------------------
 
     if not bool(
         user["email_verified"]
     ):
+
+        session.clear()
 
         session["pending_user_id"] = int(
             user["id"]
@@ -1397,7 +1572,7 @@ def login():
 
         flash(
             "Please verify your email before logging in.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -1405,7 +1580,7 @@ def login():
         )
 
     # ------------------------------------------------------------
-    # LOGIN
+    # LOGIN USER
     # ------------------------------------------------------------
 
     session.clear()
@@ -1430,18 +1605,19 @@ def login():
 
     flash(
         f"Login successful. Welcome back, {user['name']}.",
-        "success"
+        "success",
     )
 
     next_url = request.args.get(
         "next",
-        ""
+        "",
     ).strip()
 
     if (
         next_url.startswith("/")
         and not next_url.startswith("//")
     ):
+
         return redirect(
             next_url
         )
@@ -1471,14 +1647,9 @@ def open_registration():
 
 @app.route(
     "/register",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 def register():
-
-    # IMPORTANT:
-    # Registration must NEVER require a previous session.
-    # This was the reason your Create Account button was returning
-    # to the login page.
 
     if account_authenticated():
 
@@ -1492,43 +1663,35 @@ def register():
             url_for("admin_dashboard")
         )
 
-    # ------------------------------------------------------------
-    # GET
-    # ------------------------------------------------------------
-
     if request.method == "GET":
 
         return safe_render(
             "register.html"
         )
 
-    # ------------------------------------------------------------
-    # POST
-    # ------------------------------------------------------------
-
     name = request.form.get(
         "name",
-        ""
+        "",
     ).strip()
 
     surname = request.form.get(
         "surname",
-        ""
+        "",
     ).strip()
 
     email = request.form.get(
         "email",
-        ""
+        "",
     ).strip().lower()
 
     password = request.form.get(
         "password",
-        ""
+        "",
     )
 
     confirm_password = request.form.get(
         "confirm_password",
-        ""
+        "",
     )
 
     if not all([
@@ -1536,12 +1699,12 @@ def register():
         surname,
         email,
         password,
-        confirm_password
+        confirm_password,
     ]):
 
         flash(
             "Please fill in all fields.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1552,7 +1715,7 @@ def register():
 
         flash(
             "Please enter a valid email address.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1565,7 +1728,7 @@ def register():
 
         flash(
             "Please use a valid non-disposable email address.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1576,7 +1739,7 @@ def register():
 
         flash(
             "Passwords do not match.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1587,7 +1750,7 @@ def register():
 
         flash(
             "Password must be at least 6 characters.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1602,16 +1765,21 @@ def register():
         FROM users
         WHERE email = ?
         """,
-        (email,)
+        (email,),
     ).fetchone()
 
     # ------------------------------------------------------------
-    # EXISTING UNVERIFIED ACCOUNT
+    # EXISTING UNVERIFIED USER
     # ------------------------------------------------------------
 
-    if existing_user and not bool(
-        existing_user["email_verified"]
+    if (
+        existing_user
+        and not bool(
+            existing_user["email_verified"]
+        )
     ):
+
+        session.clear()
 
         session["pending_user_id"] = int(
             existing_user["id"]
@@ -1628,36 +1796,27 @@ def register():
         success, message = create_and_send_otp(
             existing_user["id"],
             email,
-            existing_user["name"]
+            existing_user["name"],
         )
 
-        if success:
-
-            flash(
-                message,
-                "success"
-            )
-
-        else:
-
-            flash(
-                message,
-                "error"
-            )
+        flash(
+            message,
+            "success" if success else "error",
+        )
 
         return redirect(
             url_for("verify_email")
         )
 
     # ------------------------------------------------------------
-    # EXISTING VERIFIED ACCOUNT
+    # EXISTING VERIFIED USER
     # ------------------------------------------------------------
 
     if existing_user:
 
         flash(
             "An account with this email already exists. Please log in instead.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -1690,8 +1849,8 @@ def register():
                 generate_password_hash(
                     password
                 ),
-                now
-            )
+                now,
+            ),
         )
 
         db.commit()
@@ -1702,7 +1861,7 @@ def register():
 
         flash(
             "An account with this email already exists.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -1710,6 +1869,8 @@ def register():
         )
 
     user_id = cursor.lastrowid
+
+    session.clear()
 
     session["pending_user_id"] = int(
         user_id
@@ -1724,41 +1885,26 @@ def register():
     success, message = create_and_send_otp(
         user_id,
         email,
-        name
+        name,
     )
 
     if not success:
 
-        # Remove the account if the first verification email
-        # could not be sent. This prevents unusable accounts.
         db.execute(
             """
             DELETE FROM users
             WHERE id = ?
             """,
-            (user_id,)
+            (user_id,),
         )
 
         db.commit()
 
-        session.pop(
-            "pending_user_id",
-            None
-        )
-
-        session.pop(
-            "pending_email",
-            None
-        )
-
-        session.pop(
-            "pending_name",
-            None
-        )
+        session.clear()
 
         flash(
             message,
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -1767,7 +1913,7 @@ def register():
 
     flash(
         message,
-        "success"
+        "success",
     )
 
     return redirect(
@@ -1781,7 +1927,7 @@ def register():
 
 @app.route(
     "/verify-email",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 def verify_email():
 
@@ -1803,15 +1949,12 @@ def verify_email():
         FROM users
         WHERE id = ?
         """,
-        (user_id,)
+        (user_id,),
     ).fetchone()
 
     if not user:
 
-        session.pop(
-            "pending_user_id",
-            None
-        )
+        session.clear()
 
         return redirect(
             url_for("register")
@@ -1821,24 +1964,11 @@ def verify_email():
         user["email_verified"]
     ):
 
-        session.pop(
-            "pending_user_id",
-            None
-        )
-
-        session.pop(
-            "pending_email",
-            None
-        )
-
-        session.pop(
-            "pending_name",
-            None
-        )
+        session.clear()
 
         flash(
             "Your email is already verified. Please log in.",
-            "success"
+            "success",
         )
 
         return redirect(
@@ -1851,12 +1981,18 @@ def verify_email():
             """
 <!doctype html>
 <html lang="en">
+
 <head>
+
 <meta charset="utf-8">
+
 <meta name="viewport"
       content="width=device-width, initial-scale=1">
+
 <title>Email Verification | FSSSMC Central Mosque</title>
+
 <style>
+
 * {
     box-sizing: border-box;
 }
@@ -1943,7 +2079,9 @@ button:hover {
     text-decoration: none;
     font-weight: 700;
 }
+
 </style>
+
 </head>
 
 <body>
@@ -1985,40 +2123,36 @@ Verify Email
 
 </form>
 
-<a class="resend"
-   href="{{ url_for('resend_verification') }}">
+<a
+    class="resend"
+    href="{{ url_for('resend_verification') }}"
+>
 Resend verification code
 </a>
 
 </div>
 
 </body>
+
 </html>
             """,
-            user=user
+            user=user,
         )
 
     code = request.form.get(
         "code",
-        ""
+        "",
     ).strip()
 
-    if not code:
-
-        flash(
-            "Please enter the verification code.",
-            "error"
-        )
-
-        return redirect(
-            url_for("verify_email")
-        )
-
-    if not code.isdigit() or len(code) != 6:
+    if (
+        not code
+        or not code.isdigit()
+        or len(code) != 6
+    ):
 
         flash(
             "The verification code must contain 6 digits.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2033,7 +2167,7 @@ Resend verification code
 
         flash(
             "Your verification code has expired. Please request a new one.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2048,15 +2182,16 @@ Resend verification code
 
     except ValueError:
 
-        expiry_time = datetime.utcnow() - timedelta(
-            seconds=1
+        expiry_time = (
+            datetime.utcnow()
+            - timedelta(seconds=1)
         )
 
     if datetime.utcnow() > expiry_time:
 
         flash(
             "Your verification code has expired. Please request a new one.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2065,12 +2200,12 @@ Resend verification code
 
     if not secrets.compare_digest(
         str(stored_code),
-        code
+        code,
     ):
 
         flash(
             "Incorrect verification code.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2086,7 +2221,7 @@ Resend verification code
             verification_sent_at = NULL
         WHERE id = ?
         """,
-        (user_id,)
+        (user_id,),
     )
 
     db.commit()
@@ -2119,7 +2254,7 @@ Resend verification code
 
     flash(
         f"Email verified successfully. Welcome, {name}.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -2154,7 +2289,7 @@ def resend_verification():
         FROM users
         WHERE id = ?
         """,
-        (user_id,)
+        (user_id,),
     ).fetchone()
 
     if not user:
@@ -2163,7 +2298,7 @@ def resend_verification():
 
         flash(
             "Account not found.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2174,9 +2309,11 @@ def resend_verification():
         user["email_verified"]
     ):
 
+        session.clear()
+
         flash(
             "Your email is already verified.",
-            "success"
+            "success",
         )
 
         return redirect(
@@ -2186,12 +2323,12 @@ def resend_verification():
     success, message = create_and_send_otp(
         user["id"],
         user["email"],
-        user["name"]
+        user["name"],
     )
 
     flash(
         message,
-        "success" if success else "error"
+        "success" if success else "error",
     )
 
     return redirect(
@@ -2212,7 +2349,7 @@ def logout():
 
     flash(
         "You have been logged out.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -2245,7 +2382,7 @@ def profile():
         """,
         (
             session["user_id"],
-        )
+        ),
     ).fetchone()
 
     if not user:
@@ -2254,7 +2391,7 @@ def profile():
 
         flash(
             "Your account could not be found.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2263,7 +2400,7 @@ def profile():
 
     return safe_render(
         "profile.html",
-        user=user
+        user=user,
     )
 
 
@@ -2279,16 +2416,11 @@ def home():
     )
 
 
-# IMPORTANT:
-# Older templates use url_for("index").
-# Your real homepage endpoint is "home".
-# This alias prevents contact.html and older templates from
-# producing BuildError: Could not build url for endpoint 'index'.
-
+# Older templates may use url_for("index")
 app.add_url_rule(
     "/",
     endpoint="index",
-    view_func=home
+    view_func=home,
 )
 
 
@@ -2304,7 +2436,7 @@ def about():
     return safe_render(
         "about.html",
         executive_members=EXECUTIVE_MEMBERS,
-        facilities=FACILITIES
+        facilities=FACILITIES,
     )
 
 
@@ -2322,12 +2454,12 @@ def get_prayer_times():
         "city": "Lagos",
         "country": "Nigeria",
         "method": 2,
-        "school": 0
+        "school": 0,
     })
 
     api_url = (
         "https://api.aladhan.com/v1/timingsByCity/"
-        f"{today}?{params}"
+        + f"{today}?{params}"
     )
 
     try:
@@ -2336,13 +2468,13 @@ def get_prayer_times():
             api_url,
             headers={
                 "User-Agent":
-                    "FSSSMC-Central-Mosque/1.0"
-            }
+                    "FSSSMC-Central-Mosque/1.0",
+            },
         )
 
         with urlopen(
             req,
-            timeout=10
+            timeout=10,
         ) as response:
 
             payload = json.loads(
@@ -2351,9 +2483,7 @@ def get_prayer_times():
                 )
             )
 
-        if payload.get(
-            "code"
-        ) != 200:
+        if payload.get("code") != 200:
 
             raise ValueError(
                 "AlAdhan returned an unsuccessful response."
@@ -2361,62 +2491,62 @@ def get_prayer_times():
 
         data = payload.get(
             "data",
-            {}
+            {},
         )
 
         timings = data.get(
             "timings",
-            {}
+            {},
         )
 
         date_info = data.get(
             "date",
-            {}
+            {},
         )
 
         prayer_times = {
             "Fajr": timings.get(
                 "Fajr",
-                "--:--"
+                "--:--",
             ),
             "Sunrise": timings.get(
                 "Sunrise",
-                "--:--"
+                "--:--",
             ),
             "Dhuhr": timings.get(
                 "Dhuhr",
-                "--:--"
+                "--:--",
             ),
             "Asr": timings.get(
                 "Asr",
-                "--:--"
+                "--:--",
             ),
             "Maghrib": timings.get(
                 "Maghrib",
-                "--:--"
+                "--:--",
             ),
             "Isha": timings.get(
                 "Isha",
-                "--:--"
-            )
+                "--:--",
+            ),
         }
 
         return {
             "times": prayer_times,
             "date": date_info.get(
                 "readable",
-                today
+                today,
             ),
             "hijri": date_info.get(
                 "hijri",
-                {}
+                {},
             ).get(
                 "date",
-                ""
+                "",
             ),
             "location": "Lagos, Nigeria",
             "method": "AlAdhan — ISNA (Method 2)",
-            "error": None
+            "error": None,
         }
 
     except (
@@ -2425,31 +2555,30 @@ def get_prayer_times():
         TimeoutError,
         ValueError,
         KeyError,
-        json.JSONDecodeError
+        json.JSONDecodeError,
     ) as error:
 
         app.logger.warning(
             "Prayer API request failed: %s",
-            error
+            error,
         )
 
         return {
             "times": {
-                "Fajr": "05:20",
-                "Sunrise": "06:35",
-                "Dhuhr": "12:38",
-                "Asr": "15:51",
-                "Maghrib": "18:40",
-                "Isha": "19:45"
+                "Fajr": "--:--",
+                "Sunrise": "--:--",
+                "Dhuhr": "--:--",
+                "Asr": "--:--",
+                "Maghrib": "--:--",
+                "Isha": "--:--",
             },
             "date": today,
             "hijri": "",
             "location": "Lagos, Nigeria",
             "method": "AlAdhan — ISNA (Method 2)",
             "error": (
-                "Live prayer-time service is temporarily unavailable. "
-                "Showing the latest fallback schedule."
-            )
+                "Live prayer-time service is temporarily unavailable."
+            ),
         }
 
 
@@ -2467,7 +2596,7 @@ def prayer():
         hijri_date=prayer_data["hijri"],
         location=prayer_data["location"],
         prayer_method=prayer_data["method"],
-        prayer_error=prayer_data["error"]
+        prayer_error=prayer_data["error"],
     )
 
 
@@ -2482,7 +2611,7 @@ def services():
 
     return safe_render(
         "services.html",
-        facilities=FACILITIES
+        facilities=FACILITIES,
     )
 
 
@@ -2514,7 +2643,7 @@ def events():
 
     return safe_render(
         "events.html",
-        announcements=event_announcements
+        announcements=event_announcements,
     )
 
 
@@ -2559,7 +2688,7 @@ def contact():
         committee["name"]: [
             (
                 committee["description"],
-                ""
+                "",
             )
         ]
         for committee in COMMITTEES
@@ -2574,34 +2703,50 @@ def contact():
         {
             "name": person.get(
                 "name",
-                ""
+                "",
             ),
             "status": person.get(
                 "status",
                 person.get(
                     "role",
-                    ""
-                )
-            )
+                    "",
+                ),
+            ),
         }
         for person in PAST_EXECUTIVE
     ]
 
-    db = get_db()
+    registered_members = []
 
-    registered_members = db.execute(
-        """
-        SELECT
-            id,
-            name,
-            surname,
-            post,
-            created_at
-        FROM members
-        ORDER BY created_at DESC
-        LIMIT 20
-        """
-    ).fetchall()
+    try:
+
+        db = get_db()
+
+        registered_members = db.execute(
+            """
+            SELECT
+                id,
+                name,
+                surname,
+                post,
+                created_at
+            FROM members
+            ORDER BY created_at DESC, id DESC
+            LIMIT 20
+            """
+        ).fetchall()
+
+    except sqlite3.OperationalError as error:
+
+        app.logger.warning(
+            "Could not load contact members: %s",
+            error,
+        )
+
+        try:
+            get_db().rollback()
+        except Exception:
+            pass
 
     return safe_render(
         "contact.html",
@@ -2610,7 +2755,7 @@ def contact():
         committees=committee_data,
         jummah_imams=jummah_data,
         posts=POSTS,
-        registered_members=registered_members
+        registered_members=registered_members,
     )
 
 
@@ -2629,14 +2774,14 @@ def announcements():
         """
         SELECT *
         FROM announcements
-        WHERE published = 1
-        ORDER BY created_at DESC
+        WHERE COALESCE(published, 0) = 1
+        ORDER BY created_at DESC, id DESC
         """
     ).fetchall()
 
     return safe_render(
         "announcements.html",
-        announcements=rows
+        announcements=rows,
     )
 
 
@@ -2646,196 +2791,50 @@ def announcements():
 
 @app.route(
     "/members/register",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 def member_register():
 
     if request.method == "GET":
 
-        try:
-
-            return render_template(
-                "member_register.html",
-                posts=POSTS
-            )
-
-        except Exception as error:
-
-            from jinja2 import TemplateNotFound
-
-            if not isinstance(
-                error,
-                TemplateNotFound
-            ):
-                raise
-
-            return render_template_string(
-                """
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport"
-      content="width=device-width,initial-scale=1">
-<title>Member Registration</title>
-<style>
-body {
-    font-family: Arial,sans-serif;
-    background:#f5f7f5;
-    margin:0;
-    padding:30px;
-    color:#17352d;
-}
-
-.box {
-    max-width:680px;
-    margin:auto;
-    background:#fff;
-    padding:28px;
-    border-radius:16px;
-    box-shadow:0 8px 30px rgba(0,0,0,.08);
-}
-
-h1 {
-    color:#006b57;
-}
-
-label {
-    display:block;
-    margin-top:14px;
-    font-weight:600;
-}
-
-input,
-textarea,
-select {
-    width:100%;
-    box-sizing:border-box;
-    padding:11px;
-    margin-top:6px;
-    border:1px solid #ccd7d2;
-    border-radius:8px;
-}
-
-button {
-    margin-top:20px;
-    padding:12px 18px;
-    border:0;
-    border-radius:8px;
-    background:#006b57;
-    color:white;
-    font-weight:700;
-    cursor:pointer;
-}
-</style>
-</head>
-
-<body>
-
-<div class="box">
-
-<h1>Member Registration</h1>
-
-<form method="post">
-
-<label>
-First Name
-<input name="name" required>
-</label>
-
-<label>
-Surname
-<input name="surname" required>
-</label>
-
-<label>
-Phone Number
-<input name="phone" required>
-</label>
-
-<label>
-Email
-<input type="email" name="email" required>
-</label>
-
-<label>
-Address
-<textarea name="address" required></textarea>
-</label>
-
-<label>
-Post / Occupation
-
-<select name="post" required>
-
-<option value="">
-Select occupation
-</option>
-
-{% for item in posts %}
-
-<option value="{{ item }}">
-{{ item }}
-</option>
-
-{% endfor %}
-
-</select>
-
-</label>
-
-<label>
-Notes
-<textarea name="notes"></textarea>
-</label>
-
-<button type="submit">
-Register as Member
-</button>
-
-</form>
-
-</div>
-
-</body>
-</html>
-                """,
-                posts=POSTS
-            )
+        return safe_render(
+            "member_register.html",
+            posts=POSTS,
+        )
 
     name = request.form.get(
         "name",
-        ""
+        "",
     ).strip()
 
     surname = request.form.get(
         "surname",
-        ""
+        "",
     ).strip()
 
     phone = request.form.get(
         "phone",
-        ""
+        "",
     ).strip()
 
     email = request.form.get(
         "email",
-        ""
+        "",
     ).strip().lower()
 
     address = request.form.get(
         "address",
-        ""
+        "",
     ).strip()
 
     post = request.form.get(
         "post",
-        ""
+        "",
     ).strip()
 
     notes = request.form.get(
         "notes",
-        ""
+        "",
     ).strip()
 
     if not all([
@@ -2844,12 +2843,23 @@ Register as Member
         phone,
         email,
         address,
-        post
+        post,
     ]):
 
         flash(
             "Please fill in all required fields.",
-            "error"
+            "error",
+        )
+
+        return redirect(
+            url_for("member_register")
+        )
+
+    if not basic_email_valid(email):
+
+        flash(
+            "Please enter a valid email address.",
+            "error",
         )
 
         return redirect(
@@ -2860,7 +2870,7 @@ Register as Member
 
         flash(
             "Please select a valid occupation.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2873,16 +2883,16 @@ Register as Member
         """
         SELECT id
         FROM members
-        WHERE email = ?
+        WHERE LOWER(email) = ?
         """,
-        (email,)
+        (email,),
     ).fetchone()
 
     if existing:
 
         flash(
             "A member with this email already exists.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2917,8 +2927,8 @@ Register as Member
                 post,
                 notes,
                 now,
-                now
-            )
+                now,
+            ),
         )
 
         db.commit()
@@ -2929,12 +2939,12 @@ Register as Member
 
         app.logger.exception(
             "MEMBER REGISTRATION DATABASE ERROR: %s",
-            error
+            error,
         )
 
         flash(
             "This member could not be registered.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -2943,7 +2953,7 @@ Register as Member
 
     flash(
         "Membership registration submitted successfully.",
-        "success"
+        "success",
     )
 
     if account_authenticated():
@@ -2957,12 +2967,11 @@ Register as Member
     )
 
 
-# Backward-compatible endpoint.
 app.add_url_rule(
     "/members/register",
     endpoint="register_member",
     view_func=member_register,
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 
 
@@ -2995,14 +3004,17 @@ def naira_to_kobo(amount):
         if value <= 0:
             return None
 
-        return int(
-            value * Decimal("100")
-        )
+        kobo = value * Decimal("100")
+
+        if kobo != kobo.to_integral_value():
+            return None
+
+        return int(kobo)
 
     except (
         InvalidOperation,
         ValueError,
-        TypeError
+        TypeError,
     ):
 
         return None
@@ -3011,18 +3023,18 @@ def naira_to_kobo(amount):
 def paystack_request(
     endpoint,
     method="GET",
-    payload=None
+    payload=None,
 ):
 
     if not PAYSTACK_SECRET_KEY:
 
         return (
             None,
-            "Paystack is not configured."
+            "PAYSTACK_SECRET_KEY is not configured.",
         )
 
     url = (
-        PAYSTACK_BASE_URL.rstrip("/")
+        PAYSTACK_BASE_URL
         + "/"
         + endpoint.lstrip("/")
     )
@@ -3033,7 +3045,9 @@ def paystack_request(
         "Content-Type":
             "application/json",
         "Cache-Control":
-            "no-cache"
+            "no-cache",
+        "User-Agent":
+            "FSSSMC-Central-Mosque/1.0",
     }
 
     data = None
@@ -3048,19 +3062,19 @@ def paystack_request(
         url,
         data=data,
         headers=headers,
-        method=method
+        method=method,
     )
 
     try:
 
         with urlopen(
             req,
-            timeout=30
+            timeout=30,
         ) as response:
 
             body = response.read().decode(
                 "utf-8",
-                errors="ignore"
+                errors="ignore",
             )
 
             parsed = json.loads(
@@ -3069,18 +3083,28 @@ def paystack_request(
 
             if not parsed.get(
                 "status",
-                False
+                False,
             ):
+
+                message = parsed.get(
+                    "message",
+                    "Paystack rejected the request.",
+                )
+
+                app.logger.error(
+                    "Paystack rejected request: %s",
+                    message,
+                )
 
                 return (
                     None,
-                    parsed.get(
-                        "message",
-                        "Paystack rejected the request."
-                    )
+                    message,
                 )
 
-            return parsed, None
+            return (
+                parsed,
+                None,
+            )
 
     except HTTPError as error:
 
@@ -3088,40 +3112,72 @@ def paystack_request(
 
             body = error.read().decode(
                 "utf-8",
-                errors="ignore"
+                errors="ignore",
             )
 
             parsed = json.loads(
                 body
             )
 
+            message = parsed.get(
+                "message",
+                f"Paystack HTTP error {error.code}.",
+            )
+
+            app.logger.error(
+                "Paystack HTTP %s: %s",
+                error.code,
+                message,
+            )
+
             return (
                 None,
-                parsed.get(
-                    "message",
-                    "Paystack request failed."
-                )
+                message,
             )
 
         except Exception:
 
-            return (
-                None,
-                f"Paystack HTTP error {error.code}."
+            app.logger.exception(
+                "Paystack HTTP error"
             )
 
-    except URLError:
+            return (
+                None,
+                f"Paystack HTTP error {error.code}.",
+            )
+
+    except URLError as error:
+
+        app.logger.error(
+            "Could not connect to Paystack: %s",
+            error,
+        )
 
         return (
             None,
-            "Could not connect to Paystack."
+            "Could not connect to Paystack.",
+        )
+
+    except json.JSONDecodeError:
+
+        app.logger.exception(
+            "Paystack returned invalid JSON."
+        )
+
+        return (
+            None,
+            "Paystack returned an invalid response.",
         )
 
     except Exception as error:
 
+        app.logger.exception(
+            "Unexpected Paystack error"
+        )
+
         return (
             None,
-            str(error)
+            str(error),
         )
 
 
@@ -3130,15 +3186,15 @@ def initialize_paystack_transaction(
     amount_kobo,
     reference,
     callback_url,
-    metadata=None
+    metadata=None,
 ):
 
     payload = {
         "email": email,
         "amount": amount_kobo,
-        "currency": "NGN",
+        "currency": PAYSTACK_CURRENCY,
         "reference": reference,
-        "callback_url": callback_url
+        "callback_url": callback_url,
     }
 
     if metadata:
@@ -3147,23 +3203,23 @@ def initialize_paystack_transaction(
     return paystack_request(
         "/transaction/initialize",
         "POST",
-        payload
+        payload,
     )
 
 
 def verify_paystack_transaction(
-    reference
+    reference,
 ):
 
     return paystack_request(
         f"/transaction/verify/{reference}",
-        "GET"
+        "GET",
     )
 
 
 def mark_donation_as_paid(
     reference,
-    transaction=None
+    transaction=None,
 ):
 
     db = get_db()
@@ -3174,7 +3230,7 @@ def mark_donation_as_paid(
         FROM donations
         WHERE payment_reference = ?
         """,
-        (reference,)
+        (reference,),
     ).fetchone()
 
     if not donation:
@@ -3194,28 +3250,35 @@ def mark_donation_as_paid(
             received_kobo = int(
                 transaction.get(
                     "amount",
-                    0
+                    0,
                 )
             )
 
             currency = str(
                 transaction.get(
                     "currency",
-                    ""
+                    "",
                 )
             ).upper()
 
             tx_reference = str(
                 transaction.get(
                     "reference",
-                    ""
+                    "",
                 )
             ).strip()
+
+            tx_status = str(
+                transaction.get(
+                    "status",
+                    "",
+                )
+            ).lower()
 
         except (
             TypeError,
             ValueError,
-            InvalidOperation
+            InvalidOperation,
         ):
 
             return False
@@ -3227,11 +3290,13 @@ def mark_donation_as_paid(
 
             return False
 
-        if (
-            currency != PAYSTACK_CURRENCY
-            or tx_reference != reference
-        ):
+        if currency != PAYSTACK_CURRENCY:
+            return False
 
+        if tx_reference != reference:
+            return False
+
+        if tx_status != "success":
             return False
 
     db.execute(
@@ -3243,8 +3308,8 @@ def mark_donation_as_paid(
         """,
         (
             datetime.utcnow().isoformat(),
-            reference
-        )
+            reference,
+        ),
     )
 
     db.commit()
@@ -3258,7 +3323,7 @@ def mark_donation_as_paid(
 
 @app.route(
     "/paystack/webhook",
-    methods=["POST"]
+    methods=["POST"],
 )
 def paystack_webhook():
 
@@ -3267,7 +3332,7 @@ def paystack_webhook():
 
     signature = request.headers.get(
         "X-Paystack-Signature",
-        ""
+        "",
     )
 
     payload = request.get_data()
@@ -3277,7 +3342,7 @@ def paystack_webhook():
             "utf-8"
         ),
         payload,
-        hashlib.sha512
+        hashlib.sha512,
     ).hexdigest()
 
     if not signature:
@@ -3285,7 +3350,7 @@ def paystack_webhook():
 
     if not hmac.compare_digest(
         signature,
-        expected
+        expected,
     ):
 
         return "", 401
@@ -3302,7 +3367,7 @@ def paystack_webhook():
 
             transaction = data.get(
                 "data",
-                {}
+                {},
             )
 
             reference = transaction.get(
@@ -3318,7 +3383,7 @@ def paystack_webhook():
 
                 mark_donation_as_paid(
                     reference,
-                    transaction
+                    transaction,
                 )
 
         return "", 200
@@ -3338,21 +3403,19 @@ def paystack_webhook():
 
 @app.route(
     "/donate",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 def donate():
 
     user_email = session.get(
         "user_email",
-        ""
+        "",
     )
 
     user_name = session.get(
         "user_name",
-        ""
+        "",
     )
-
-    
 
     if request.method == "GET":
 
@@ -3361,37 +3424,36 @@ def donate():
             donation_purposes=DONATION_PURPOSES,
             user_email=user_email,
             user_name=user_name,
-            
         )
 
     donor_name = request.form.get(
         "donor_name",
-        ""
+        "",
     ).strip()
 
     phone = request.form.get(
         "phone",
-        ""
+        "",
     ).strip()
 
     email = request.form.get(
         "email",
-        ""
+        "",
     ).strip().lower()
 
     amount = request.form.get(
         "amount",
-        ""
+        "",
     ).strip()
 
     purpose = request.form.get(
         "purpose",
-        ""
+        "",
     ).strip()
 
     notes = request.form.get(
         "notes",
-        ""
+        "",
     ).strip()
 
     if not donor_name:
@@ -3407,7 +3469,18 @@ def donate():
 
         flash(
             "Please provide your name and email.",
-            "error"
+            "error",
+        )
+
+        return redirect(
+            url_for("donate")
+        )
+
+    if not basic_email_valid(email):
+
+        flash(
+            "Please provide a valid email address.",
+            "error",
         )
 
         return redirect(
@@ -3422,7 +3495,7 @@ def donate():
 
         flash(
             "Please enter a valid donation amount.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -3433,7 +3506,7 @@ def donate():
 
         flash(
             "Please select a valid donation purpose.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -3476,8 +3549,8 @@ def donate():
                 "paystack",
                 "pending",
                 notes,
-                datetime.utcnow().isoformat()
-            )
+                datetime.utcnow().isoformat(),
+            ),
         )
 
         db.commit()
@@ -3488,27 +3561,31 @@ def donate():
 
         app.logger.exception(
             "DONATION DATABASE ERROR: %s",
-            error
+            error,
         )
 
         flash(
             "The donation could not be saved. Please try again.",
-            "error"
+            "error",
         )
 
         return redirect(
             url_for("donate")
         )
 
+    # ------------------------------------------------------------
+    # PAYSTACK CALLBACK
+    # ------------------------------------------------------------
+
     callback_url = url_for(
         "paystack_callback",
-        _external=True
+        _external=True,
     )
 
     metadata = {
         "donor_name": donor_name,
         "phone": phone,
-        "purpose": purpose
+        "purpose": purpose,
     }
 
     result, error = (
@@ -3517,11 +3594,16 @@ def donate():
             amount_kobo,
             reference,
             callback_url,
-            metadata
+            metadata,
         )
     )
 
     if error or not result:
+
+        app.logger.error(
+            "PAYSTACK INITIALIZATION FAILED: %s",
+            error,
+        )
 
         db.execute(
             """
@@ -3531,15 +3613,18 @@ def donate():
             """,
             (
                 "failed",
-                reference
-            )
+                reference,
+            ),
         )
 
         db.commit()
 
+        # Keep the detailed error in server logs,
+        # but don't expose secret/configuration details
+        # to the public user.
         flash(
-            "Payment could not be initialized.",
-            "error"
+            "Payment could not be initialized. Please try again.",
+            "error",
         )
 
         return redirect(
@@ -3550,7 +3635,7 @@ def donate():
         result
         .get(
             "data",
-            {}
+            {},
         )
         .get(
             "authorization_url"
@@ -3559,9 +3644,25 @@ def donate():
 
     if not authorization_url:
 
+        app.logger.error(
+            "Paystack response did not contain authorization_url: %s",
+            result,
+        )
+
+        db.execute(
+            """
+            UPDATE donations
+            SET payment_status = 'failed'
+            WHERE payment_reference = ?
+            """,
+            (reference,),
+        )
+
+        db.commit()
+
         flash(
-            "Paystack did not return a payment link.",
-            "error"
+            "Paystack did not return a payment link. Please try again.",
+            "error",
         )
 
         return redirect(
@@ -3584,14 +3685,14 @@ def paystack_callback():
 
     reference = request.args.get(
         "reference",
-        ""
+        "",
     ).strip()
 
     if not reference:
 
         flash(
             "No payment reference was provided.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -3606,9 +3707,14 @@ def paystack_callback():
 
     if error or not result:
 
+        app.logger.error(
+            "PAYSTACK VERIFICATION FAILED: %s",
+            error,
+        )
+
         flash(
             "Unable to verify the payment.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -3617,7 +3723,7 @@ def paystack_callback():
 
     transaction = result.get(
         "data",
-        {}
+        {},
     )
 
     if (
@@ -3627,16 +3733,16 @@ def paystack_callback():
 
         if mark_donation_as_paid(
             reference,
-            transaction
+            transaction,
         ):
 
             flash(
-                "Donation payment completed successfully. "
-                "Thank you for your support.",
-                "success"
+                "Donation payment completed successfully. Thank you for your support.",
+                "success",
             )
 
             if account_authenticated():
+
                 return redirect(
                     url_for("profile")
                 )
@@ -3646,9 +3752,8 @@ def paystack_callback():
             )
 
         flash(
-            "Payment verification failed because the transaction details "
-            "did not match the donation record.",
-            "error"
+            "Payment verification failed because the transaction details did not match the donation record.",
+            "error",
         )
 
         return redirect(
@@ -3657,7 +3762,7 @@ def paystack_callback():
 
     flash(
         "The donation payment was not completed.",
-        "error"
+        "error",
     )
 
     return redirect(
@@ -3671,7 +3776,7 @@ def paystack_callback():
 
 @app.route(
     "/admin/login",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 def admin_login():
 
@@ -3689,12 +3794,12 @@ def admin_login():
 
     email = request.form.get(
         "email",
-        ""
+        "",
     ).strip().lower()
 
     password = request.form.get(
         "password",
-        ""
+        "",
     )
 
     db = get_db()
@@ -3705,7 +3810,7 @@ def admin_login():
         FROM admins
         WHERE email = ?
         """,
-        (email,)
+        (email,),
     ).fetchone()
 
     try:
@@ -3714,7 +3819,7 @@ def admin_login():
             admin
             and check_password_hash(
                 admin["password_hash"],
-                password
+                password,
             )
         )
 
@@ -3726,7 +3831,7 @@ def admin_login():
 
         flash(
             "Invalid administrator credentials.",
-            "error"
+            "error",
         )
 
         return safe_render(
@@ -3747,7 +3852,7 @@ def admin_login():
 
     flash(
         "Administrator login successful.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -3768,11 +3873,11 @@ def admin_logout():
 
     flash(
         "Administrator logged out.",
-        "success"
+        "success",
     )
 
     return redirect(
-        url_for("admin_login")
+        url_for("login")
     )
 
 
@@ -3835,7 +3940,7 @@ def admin_dashboard():
         member_count=member_count,
         donation_count=donation_count,
         donation_total=donation_total,
-        announcement_count=announcement_count
+        announcement_count=announcement_count,
     )
 
 
@@ -3855,20 +3960,20 @@ def admin_members():
         """
         SELECT *
         FROM members
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC, id DESC
         """
     ).fetchall()
 
     return safe_render(
         "admin_members.html",
         members=members,
-        posts=POSTS
+        posts=POSTS,
     )
 
 
 @app.route(
     "/admin/members/add",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 @admin_required
 def admin_add_member():
@@ -3878,42 +3983,42 @@ def admin_add_member():
         return safe_render(
             "admin_member_form.html",
             member=None,
-            posts=POSTS
+            posts=POSTS,
         )
 
     name = request.form.get(
         "name",
-        ""
+        "",
     ).strip()
 
     surname = request.form.get(
         "surname",
-        ""
+        "",
     ).strip()
 
     phone = request.form.get(
         "phone",
-        ""
+        "",
     ).strip()
 
     email = request.form.get(
         "email",
-        ""
+        "",
     ).strip().lower()
 
     address = request.form.get(
         "address",
-        ""
+        "",
     ).strip()
 
     post = request.form.get(
         "post",
-        ""
+        "",
     ).strip()
 
     notes = request.form.get(
         "notes",
-        ""
+        "",
     ).strip()
 
     if not all([
@@ -3922,34 +4027,56 @@ def admin_add_member():
         phone,
         email,
         address,
-        post
+        post,
     ]):
 
         flash(
             "Please complete all required fields.",
-            "error"
+            "error",
         )
 
         return safe_render(
             "admin_member_form.html",
             member=None,
-            posts=POSTS
+            posts=POSTS,
         )
 
     if post not in POSTS:
 
         flash(
             "Please select a valid occupation.",
-            "error"
+            "error",
         )
 
         return safe_render(
             "admin_member_form.html",
             member=None,
-            posts=POSTS
+            posts=POSTS,
         )
 
     db = get_db()
+
+    existing = db.execute(
+        """
+        SELECT id
+        FROM members
+        WHERE LOWER(email) = ?
+        """,
+        (email,),
+    ).fetchone()
+
+    if existing:
+
+        flash(
+            "A member with this email already exists.",
+            "error",
+        )
+
+        return safe_render(
+            "admin_member_form.html",
+            member=None,
+            posts=POSTS,
+        )
 
     now = datetime.utcnow().isoformat()
 
@@ -3979,8 +4106,8 @@ def admin_add_member():
                 post,
                 notes,
                 now,
-                now
-            )
+                now,
+            ),
         )
 
         db.commit()
@@ -3991,18 +4118,18 @@ def admin_add_member():
 
         flash(
             "A member with this information already exists.",
-            "error"
+            "error",
         )
 
         return safe_render(
             "admin_member_form.html",
             member=None,
-            posts=POSTS
+            posts=POSTS,
         )
 
     flash(
         "Member added successfully.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -4012,7 +4139,7 @@ def admin_add_member():
 
 @app.route(
     "/admin/members/<int:member_id>/edit",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 @admin_required
 def admin_edit_member(
@@ -4027,14 +4154,14 @@ def admin_edit_member(
         FROM members
         WHERE id = ?
         """,
-        (member_id,)
+        (member_id,),
     ).fetchone()
 
     if not member:
 
         flash(
             "Member not found.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -4046,42 +4173,42 @@ def admin_edit_member(
         return safe_render(
             "admin_member_form.html",
             member=member,
-            posts=POSTS
+            posts=POSTS,
         )
 
     name = request.form.get(
         "name",
-        ""
+        "",
     ).strip()
 
     surname = request.form.get(
         "surname",
-        ""
+        "",
     ).strip()
 
     phone = request.form.get(
         "phone",
-        ""
+        "",
     ).strip()
 
     email = request.form.get(
         "email",
-        ""
+        "",
     ).strip().lower()
 
     address = request.form.get(
         "address",
-        ""
+        "",
     ).strip()
 
     post = request.form.get(
         "post",
-        ""
+        "",
     ).strip()
 
     notes = request.form.get(
         "notes",
-        ""
+        "",
     ).strip()
 
     if not all([
@@ -4090,31 +4217,57 @@ def admin_edit_member(
         phone,
         email,
         address,
-        post
+        post,
     ]):
 
         flash(
             "Please complete all required fields.",
-            "error"
+            "error",
         )
 
         return safe_render(
             "admin_member_form.html",
             member=member,
-            posts=POSTS
+            posts=POSTS,
         )
 
     if post not in POSTS:
 
         flash(
             "Please select a valid occupation.",
-            "error"
+            "error",
         )
 
         return safe_render(
             "admin_member_form.html",
             member=member,
-            posts=POSTS
+            posts=POSTS,
+        )
+
+    duplicate = db.execute(
+        """
+        SELECT id
+        FROM members
+        WHERE LOWER(email) = ?
+        AND id != ?
+        """,
+        (
+            email,
+            member_id,
+        ),
+    ).fetchone()
+
+    if duplicate:
+
+        flash(
+            "Another member already uses this email.",
+            "error",
+        )
+
+        return safe_render(
+            "admin_member_form.html",
+            member=member,
+            posts=POSTS,
         )
 
     db.execute(
@@ -4139,15 +4292,15 @@ def admin_edit_member(
             post,
             notes,
             datetime.utcnow().isoformat(),
-            member_id
-        )
+            member_id,
+        ),
     )
 
     db.commit()
 
     flash(
         "Member updated successfully.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -4157,7 +4310,7 @@ def admin_edit_member(
 
 @app.route(
     "/admin/members/<int:member_id>/delete",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 @admin_required
 def admin_delete_member(
@@ -4171,14 +4324,14 @@ def admin_delete_member(
         DELETE FROM members
         WHERE id = ?
         """,
-        (member_id,)
+        (member_id,),
     )
 
     db.commit()
 
     flash(
         "Member deleted successfully.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -4202,23 +4355,23 @@ def admin_donations():
         """
         SELECT *
         FROM donations
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC, id DESC
         """
     ).fetchall()
 
     return safe_render(
         "admin_donations.html",
-        donations=donations
+        donations=donations,
     )
 
 
 @app.route(
     "/admin/donations/<int:donation_id>/update",
-    methods=["POST"]
+    methods=["POST"],
 )
 @app.route(
     "/admin/donations/<int:donation_id>/status",
-    methods=["POST"]
+    methods=["POST"],
 )
 @admin_required
 def admin_update_donation_status(
@@ -4227,19 +4380,19 @@ def admin_update_donation_status(
 
     status = request.form.get(
         "payment_status",
-        ""
+        "",
     ).strip().lower()
 
     if status not in {
         "pending",
         "paid",
         "failed",
-        "cancelled"
+        "cancelled",
     }:
 
         flash(
             "Invalid donation status.",
-            "error"
+            "error",
         )
 
         return redirect(
@@ -4249,7 +4402,6 @@ def admin_update_donation_status(
     paid_at = None
 
     if status == "paid":
-
         paid_at = datetime.utcnow().isoformat()
 
     db = get_db()
@@ -4264,15 +4416,15 @@ def admin_update_donation_status(
         (
             status,
             paid_at,
-            donation_id
-        )
+            donation_id,
+        ),
     )
 
     db.commit()
 
     flash(
         "Donation updated successfully.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -4282,7 +4434,7 @@ def admin_update_donation_status(
 
 @app.route(
     "/admin/donations/<int:donation_id>/delete",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 @admin_required
 def admin_delete_donation(
@@ -4296,14 +4448,14 @@ def admin_delete_donation(
         DELETE FROM donations
         WHERE id = ?
         """,
-        (donation_id,)
+        (donation_id,),
     )
 
     db.commit()
 
     flash(
         "Donation deleted successfully.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -4317,7 +4469,7 @@ def admin_delete_donation(
 
 @app.route(
     "/admin/announcements",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 @admin_required
 def admin_announcements():
@@ -4328,12 +4480,12 @@ def admin_announcements():
 
         title = request.form.get(
             "title",
-            ""
+            "",
         ).strip()
 
         body = request.form.get(
             "body",
-            ""
+            "",
         ).strip()
 
         published = (
@@ -4348,7 +4500,7 @@ def admin_announcements():
 
             flash(
                 "Title and body are required.",
-                "error"
+                "error",
             )
 
             return redirect(
@@ -4373,15 +4525,15 @@ def admin_announcements():
                 body,
                 published,
                 now,
-                now
-            )
+                now,
+            ),
         )
 
         db.commit()
 
         flash(
             "Announcement created successfully.",
-            "success"
+            "success",
         )
 
         return redirect(
@@ -4392,19 +4544,19 @@ def admin_announcements():
         """
         SELECT *
         FROM announcements
-        ORDER BY created_at DESC
+        ORDER BY created_at DESC, id DESC
         """
     ).fetchall()
 
     return safe_render(
         "admin_announcements.html",
-        announcements=announcements
+        announcements=announcements,
     )
 
 
 @app.route(
     "/admin/announcements/<int:announcement_id>/delete",
-    methods=["GET", "POST"]
+    methods=["GET", "POST"],
 )
 @admin_required
 def admin_delete_announcement(
@@ -4418,14 +4570,14 @@ def admin_delete_announcement(
         DELETE FROM announcements
         WHERE id = ?
         """,
-        (announcement_id,)
+        (announcement_id,),
     )
 
     db.commit()
 
     flash(
         "Announcement deleted successfully.",
-        "success"
+        "success",
     )
 
     return redirect(
@@ -4434,7 +4586,7 @@ def admin_delete_announcement(
 
 
 # ================================================================
-# HEALTH
+# HEALTH CHECK
 # ================================================================
 
 @app.route(
@@ -4503,7 +4655,7 @@ def internal_error(error):
 
     app.logger.exception(
         "UNHANDLED APPLICATION ERROR: %s",
-        error
+        error,
     )
 
     try:
@@ -4539,7 +4691,7 @@ if __name__ == "__main__":
         debug=(
             os.environ.get(
                 "FLASK_DEBUG",
-                "0"
+                "0",
             ) == "1"
         ),
         use_reloader=False,
@@ -4547,7 +4699,8 @@ if __name__ == "__main__":
         port=int(
             os.environ.get(
                 "PORT",
-                "5000"
+                "5000",
             )
-        )
+        ),
     )
+
