@@ -94,7 +94,7 @@ DATABASE_DIR = os.path.join(
     "database"
 )
 
-DATABASE = os.environ.get("DATABASE_PATH", "").strip()
+DATABASE = os.environ.get("DATABASE_PATH", "fss.db").strip()
 if not DATABASE:
     DATABASE = os.path.join(DATABASE_DIR, "fss.db")
 
@@ -119,7 +119,7 @@ PAYSTACK_SECRET_KEY = os.environ.get(
 
 PAYSTACK_PUBLIC_KEY = os.environ.get(
     "PAYSTACK_PUBLIC_KEY",
-    "pk_test_0d971bb72ebed6d23d0471924df87bd5941db555"
+    "pk_test_3a23b0594bd9ee4878b78d7d090f4d4a12a62721"
 ).strip()
 
 PAYSTACK_BASE_URL = os.environ.get(
@@ -257,15 +257,20 @@ FACILITIES = [
 # Posts/roles used by the Contact & Leadership page and member registration.
 # Keep this as a simple list so the existing contact template can render it safely.
 POSTS = [
-    "Amir",
     "Imam",
-    "Secretary",
-    "Treasurer",
-    "Executive Member",
-    "Committee Member",
-    "Member"
+    "Doctor",
+    "Engineer",
+    "Teacher",
+    "Student",
+    "Business Owner",
+    "Accountant",
+    "Lawyer",
+    "Civil Servant",
+    "Trader",
+    "Artisan",
+    "Retired",
+    "Other"
 ]
-
 
 # ================================================================
 # DATABASE HELPERS
@@ -535,7 +540,7 @@ def init_db():
 
     admin_password = os.environ.get(
         "ADMIN_PASSWORD",
-        "FsssmcCentralMosque_2026!Secure"
+        ""
     )
 
     if not admin_password:
@@ -936,20 +941,12 @@ def login():
 # CREATE ACCOUNT ENTRY POINT
 # ================================================================
 
-@app.route(
-    "/create-account"
-)
+@app.route("/create-account")
 def open_registration():
-
-    # This route is linked from login.html.
-    # It allows registration to be opened without
-    # opening /register directly to everybody.
-
-    session["allow_registration"] = True
-
-    return redirect(
-        url_for("register")
-    )
+    # Keep a dedicated endpoint for the Create an Account link.
+    # Registration itself is public, so this cannot get trapped
+    # behind the login gate.
+    return redirect(url_for("register"))
 
 
 # ================================================================
@@ -1286,8 +1283,22 @@ def services():
 @app.route("/events")
 def events():
 
+    # Events are powered by the same published announcements
+    # created from the admin dashboard.
+    db = get_db()
+
+    event_announcements = db.execute(
+        """
+        SELECT id, title, body, published, created_at, updated_at
+        FROM announcements
+        WHERE COALESCE(published, 0) = 1
+        ORDER BY created_at DESC, id DESC
+        """
+    ).fetchall()
+
     return safe_render(
-        "events.html"
+        "events.html",
+        announcements=event_announcements
     )
 
 
