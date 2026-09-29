@@ -540,7 +540,7 @@ def init_db():
 
     admin_password = os.environ.get(
         "ADMIN_PASSWORD",
-        ""
+        "FsssmcCentralMosque_2026!Secure"
     )
 
     if not admin_password:
