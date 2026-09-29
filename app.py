@@ -153,12 +153,12 @@ SMTP_PORT = int(
 
 SMTP_USERNAME = os.environ.get(
     "SMTP_USERNAME",
-    ""
+    "ojugbelehabeeb06@gmail.com"
 ).strip()
 
 SMTP_PASSWORD = os.environ.get(
     "SMTP_PASSWORD",
-    ""
+    "clwyraarljdpvgvj"
 )
 
 SMTP_FROM = os.environ.get(
@@ -176,7 +176,7 @@ OTP_RESEND_SECONDS = 60
 
 MAILBOXLAYER_API_KEY = os.environ.get(
     "MAILBOXLAYER_API_KEY",
-    ""
+    "edb349802dd334a9479417e4b16e060a"
 ).strip()
 
 
